@@ -157,7 +157,7 @@ export const Login: React.FC = () => {
             <Link to="/register" className="w-full py-3 px-4 rounded-xl bg-white hover:bg-slate-100 text-[#1F497D] font-bold text-sm flex items-center justify-center gap-2">
               <Fingerprint className="w-4 h-4 text-[#0070C0]" /> Create business account
             </Link>
-            <p className="text-[11px] text-slate-400">Officer sign-in through e-Pramaan single sign-on is planned for the pilot. The prototype uses the demo officer roles on the left.</p>
+            <p className="text-[11px] text-slate-400">Officer sign-in through e-Pramaan single sign-on is planned for the pilot. The prototype uses the evaluator accounts listed here.</p>
           </div>
 
           {/* Registered account sign-in (one-time code) */}

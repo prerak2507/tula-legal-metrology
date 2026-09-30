@@ -71,6 +71,9 @@ export const OfficerInspection: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [queuedMsg, setQueuedMsg] = useState<string | null>(null);
+  // Practice run on an already-completed job: the full screen works, nothing is saved.
+  const [practice, setPractice] = useState(false);
+  const [practiceMsg, setPracticeMsg] = useState<string | null>(null);
   const [queueCount, setQueueCount] = useState(storage.getOfflineQueue().length);
 
   useEffect(() => {
@@ -97,21 +100,21 @@ export const OfficerInspection: React.FC = () => {
 
   const app = jobs.find(a => a.id === appId);
   const inst = app ? storage.getInstrumentById(app.instrumentId) : undefined;
-  const editable = !!app && ['ASSIGNED', 'SCHEDULED', 'INSPECTION_IN_PROGRESS', 'RETEST_REQUIRED'].includes(app.status);
+  const editable = !!app && (practice || ['ASSIGNED', 'SCHEDULED', 'INSPECTION_IN_PROGRESS', 'RETEST_REQUIRED'].includes(app.status));
 
   // Load the saved draft or start a fresh one for the selected job.
   useEffect(() => {
     if (!appId) { setDraft(null); return; }
-    const saved = loadDraft(appId);
+    const saved = practice ? null : loadDraft(appId);
     if (saved) { setDraft(saved); return; }
     const fresh = storage.newInspectionDraft(appId);
     if (!fresh) { setDraft(null); return; }
     setDraft({ checklist: fresh.checklist, readings: fresh.readings, photos: [], remarks: '', decision: '', adjustment: '', stampType: 'LEAD_WIRE_SEAL', declared: false });
-  }, [appId]);
+  }, [appId, practice]);
 
   // Autosave the draft on the device, so a reload or dead network loses nothing.
   useEffect(() => {
-    if (!appId || !draft || !editable) return;
+    if (!appId || !draft || !editable || practice) return;
     try { localStorage.setItem(draftKey(appId), JSON.stringify(draft)); } catch { /* storage full */ }
   }, [draft, appId, editable]);
 
@@ -174,6 +177,11 @@ export const OfficerInspection: React.FC = () => {
     setError(null);
     if (!draft.decision) { setError('Choose a decision.'); return; }
     if (!draft.declared) { setError('Confirm the declaration before submitting.'); return; }
+    if (practice) {
+      setPracticeMsg(`Practice result: ${draft.decision.replace(/_/g, ' ').toLowerCase()}. Nothing was saved. On a real job this would ${draft.decision === 'PASS' ? 'issue and sign the certificate' : 'go back to the owner with your instructions'}.`);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
     setSubmitting(true);
     try {
       const res = await storage.submitInspection({
@@ -237,12 +245,31 @@ export const OfficerInspection: React.FC = () => {
         </div>
       )}
 
+      {practiceMsg && (
+        <div role="status" className="p-4 rounded-xl bg-sky-50 border border-sky-300 text-sm text-sky-900 flex gap-2">
+          <Info className="w-5 h-5 shrink-0" /><span>{practiceMsg}</span>
+        </div>
+      )}
+
+      {openJobs.length === 0 && doneJobs.length > 0 && !practice && (
+        <section className="p-4 rounded-xl bg-amber-50 border border-amber-300 text-sm text-amber-950 space-y-3">
+          <p><strong>No open jobs right now.</strong> Try the inspection screen on {doneJobs[0].instrumentId} as a practice run (nothing is saved), or run the live demo to get a real job assigned to you in about two minutes.</p>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <button type="button" onClick={() => { setPractice(true); setPracticeMsg(null); setError(null); setAppId(doneJobs[0].id); }}
+              className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg bg-gov-700 text-white font-bold min-h-[44px]">
+              <Smartphone className="w-4 h-4" /> Practice an inspection
+            </button>
+            <Link to="/demo" className="inline-flex items-center justify-center px-4 py-2.5 rounded-lg bg-white border border-amber-400 font-bold min-h-[44px]">Run the live demo</Link>
+          </div>
+        </section>
+      )}
+
       {/* Job picker */}
       <section className="bg-white p-4 rounded-xl border border-slate-200 space-y-2">
         <h2 className="text-xs font-bold uppercase tracking-wider text-slate-700">Your jobs ({openJobs.length} open)</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {[...openJobs, ...doneJobs].map(a => (
-            <button key={a.id} type="button" onClick={() => { setAppId(a.id); setQueuedMsg(null); setError(null); }}
+            <button key={a.id} type="button" onClick={() => { setPractice(false); setPracticeMsg(null); setAppId(a.id); setQueuedMsg(null); setError(null); }}
               className={`p-3 rounded-lg border text-left min-h-[64px] ${a.id === appId ? 'border-gov-700 bg-gov-50 ring-2 ring-gov-600/20' : 'border-slate-200 bg-slate-50'}`}>
               <div className="flex items-center justify-between gap-2">
                 <span className="font-mono font-bold text-xs text-gov-800">{a.id}</span>
@@ -263,6 +290,9 @@ export const OfficerInspection: React.FC = () => {
           </div>
         ) : (
           <>
+            {practice && (
+              <p className="p-3 rounded-lg bg-sky-50 border border-sky-200 text-xs text-sky-900 font-semibold">Practice run on {app.id}. Everything works the same, but nothing is saved or issued.</p>
+            )}
             {/* Instrument + location */}
             <section className="bg-white p-4 rounded-xl border border-slate-200 space-y-3">
               <div className="flex flex-wrap items-start justify-between gap-2">
@@ -413,7 +443,7 @@ export const OfficerInspection: React.FC = () => {
               {error && <p role="alert" className="text-sm text-rose-700 bg-rose-50 border border-rose-200 rounded-lg p-2.5 flex gap-2"><AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />{error}</p>}
               <button type="button" onClick={submit} disabled={submitting} className="w-full inline-flex items-center justify-center gap-2 bg-gov-700 hover:bg-gov-800 text-white font-extrabold py-3.5 rounded-lg text-sm disabled:opacity-50">
                 {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <ShieldCheck className="w-5 h-5" />}
-                {submitting ? 'Saving…' : !online ? 'Save offline' : draft.decision === 'PASS' ? 'Submit and issue certificate' : 'Submit result'}
+                {submitting ? 'Saving…' : practice ? 'Check my result (practice)' : !online ? 'Save offline' : draft.decision === 'PASS' ? 'Submit and issue certificate' : 'Submit result'}
               </button>
               <p className="text-[11px] text-slate-500 text-center">Draft is saved on this phone as you type.</p>
             </section>
