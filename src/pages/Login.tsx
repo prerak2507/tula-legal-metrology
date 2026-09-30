@@ -25,14 +25,23 @@ export const Login: React.FC = () => {
   const [busyRole, setBusyRole] = useState<string | null>(null);
   const next = new URLSearchParams(window.location.search).get('next') || '/dashboard';
 
-  const demoAccounts: { role: UserRole; label: string; email: string; name: string; icon: string; clearance: string }[] = [
-    { role: 'BUSINESS', label: 'Commercial Business Occupier', email: 'business.demo@example.com', name: 'Rajesh Varma (Apex Agro Logistics)', icon: '💼', clearance: 'Commercial User Token #2601' },
-    { role: 'LMO', label: 'Legal Metrology Officer (Inspector)', email: 'lmo.demo@example.com', name: 'Insp. Amit Sharma (Central Delhi)', icon: '🔍', clearance: 'Inspector Badge #DL-LMO-042' },
-    { role: 'GATC', label: 'Accredited GATC Testing Centre', email: 'gatc.demo@example.com', name: 'Dr. Hardik Patel (Gujarat Metrology)', icon: '🔬', clearance: 'NABL / GATC Code GATC-GJ-08' },
-    { role: 'CONTROLLER', label: 'Controller / Senior Officer', email: 'controller.demo@example.com', name: 'Sunita Meena (Delhi HQ)', icon: '⚖️', clearance: 'Regulatory Controller Key' },
-    { role: 'STATE_ADMIN', label: 'State Administrator', email: 'stateadmin.demo@example.com', name: 'Bhavna Jadav (Govt of Gujarat)', icon: '🏛️', clearance: 'State Metrology Admin' },
-    { role: 'CENTRAL_ADMIN', label: 'Central Administrator', email: 'centraladmin.demo@example.com', name: 'Venkatesh Ramanathan (DoCA)', icon: '🇮🇳', clearance: 'Ministry National Admin' },
-  ];
+  // Built from the seeded evaluator accounts, so names and badges always match the database.
+  const ROLE_META: Record<string, { label: string; icon: string }> = {
+    BUSINESS: { label: 'Commercial Business Occupier', icon: '💼' },
+    LMO: { label: 'Legal Metrology Officer (Inspector)', icon: '🔍' },
+    GATC: { label: 'Government Approved Test Centre', icon: '🔬' },
+    CONTROLLER: { label: 'Controller of Legal Metrology', icon: '⚖️' },
+    STATE_ADMIN: { label: 'State Administrator', icon: '🏛️' },
+    CENTRAL_ADMIN: { label: 'Central Administrator (DoCA)', icon: '🇮🇳' },
+  };
+  const demoAccounts = storage.getAllDemoUsers().map(u => ({
+    role: u.role,
+    label: ROLE_META[u.role]?.label || u.role,
+    icon: ROLE_META[u.role]?.icon || '👤',
+    email: u.email,
+    name: `${u.fullName} (${u.role === 'CENTRAL_ADMIN' ? 'All States' : `${u.district}, ${u.state}`})`,
+    clearance: u.badgeNumber || u.gatcCode || u.designation || u.organization,
+  }));
 
   const handleOneClickLogin = async (role: UserRole) => {
     setLoginError(null);

@@ -1,209 +1,85 @@
-import React from 'react';
-import { 
-  X, 
-  ArrowRight, 
-  CheckCircle2, 
-  ShieldCheck, 
-  Scale, 
-  FileText, 
-  QrCode, 
-  Building, 
-  Users, 
-  Cpu, 
-  AlertTriangle,
-  BadgeCheck,
-  Search
-} from 'lucide-react';
-import { TulaLogo } from './TulaLogo';
+import React, { useMemo } from 'react';
+import { Link } from 'react-router-dom';
+import { X, Store, Landmark, ClipboardCheck, ShieldCheck, QrCode, Clock } from 'lucide-react';
+import { storage } from '../../services/storage';
+import { formatDuration } from '../../services/analytics';
 
 interface ConnectedWorkflowModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
+interface Step { icon: React.ElementType; who: string; what: string; detail: string; at?: string }
+
+/** Traces the most recent completed application the signed-in account can see, from the real records. */
 export const ConnectedWorkflowModal: React.FC<ConnectedWorkflowModalProps> = ({ isOpen, onClose }) => {
+  const trace = useMemo(() => {
+    if (!isOpen) return null;
+    const certs = storage.getCertificatesForUser();
+    const apps = storage.getApplicationsForUser().filter(a => a.status === 'COMPLETED')
+      .map(a => ({ a, c: certs.find(c => c.applicationId === a.id) }))
+      .filter(x => x.c)
+      .sort((x, y) => (y.c!.issuedAt || '').localeCompare(x.c!.issuedAt || ''));
+    const pick = apps[0];
+    if (!pick) return null;
+    const { a, c } = pick;
+    const cert = c!;
+    const logs = storage.getAuditLogs().filter(l => l.entityId === a.id || l.entityId === cert.id);
+    const when = (action: string) => logs.filter(l => l.action === action).map(l => l.timestamp).sort()[0];
+    const insp = storage.getInspections().find(i => i.id === cert.inspectionId);
+    // Largest absolute error among the recorded readings.
+    const worstRow = (insp?.testReadings || [])
+      .map(r => ({ r, err: r.nominal !== undefined && r.observedValue !== '' ? Math.abs(parseFloat(r.observedValue.replace(/,/g, '')) - r.nominal) : NaN }))
+      .filter(x => !Number.isNaN(x.err))
+      .sort((x, y) => y.err - x.err)[0];
+    const worst = worstRow ? `${worstRow.r.error} against a limit of ${worstRow.r.permissibleTolerance}` : '';
+    const steps: Step[] = [
+      { icon: Store, who: a.applicantName, what: 'Applied online', detail: `${a.id} for ${a.instrumentId}, fee ₹${a.feeAmount.toLocaleString('en-IN')} ${a.feeStatus.toLowerCase()}`, at: a.createdAt },
+      { icon: Landmark, who: logs.find(l => l.action === 'APPLICATION_ASSIGNED')?.actorName || 'District office', what: 'Scrutiny and assignment', detail: `Assigned to ${a.assignedToName || 'officer'} (${a.assignedToType || 'LMO'})${a.scheduledDate ? `, visit ${a.scheduledDate}` : ''}`, at: when('APPLICATION_ASSIGNED') },
+      { icon: ClipboardCheck, who: insp?.inspectorName || cert.issuingOfficerName, what: 'Inspected on site', detail: `${insp?.testReadings?.length || 0} readings, all within limits${worst ? ` (largest error ${worst})` : ''}${insp?.syncStatus === 'SYNCED' && logs.some(l => l.action === 'OFFLINE_INSPECTION_SYNCED') ? ', recorded offline' : ''}`, at: insp?.inspectionDate },
+      { icon: ShieldCheck, who: 'TULA server', what: 'Certificate issued and signed', detail: `${cert.certificateNumber}, valid until ${cert.validUntil}${cert.signatureStatus === 'SIGNED' ? `, signed with key ${cert.signingKid}` : ', signature pending'}`, at: cert.signedAt || cert.issuedAt },
+      { icon: QrCode, who: 'Any buyer', what: 'Checks the QR', detail: 'No login. Works offline. Edited copies are rejected.' },
+    ];
+    const total = cert.issuedAt ? Date.parse(cert.issuedAt) - Date.parse(a.createdAt) : null;
+    return { steps, total, cert, app: a };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
-  const steps = [
-    {
-      step: '1',
-      actor: 'Commercial Occupier',
-      name: 'Rajesh Varma (Apex Agro Logistics)',
-      role: 'BUSINESS',
-      icon: '💼',
-      color: 'border-blue-500 bg-blue-50/50',
-      badgeColor: 'bg-blue-100 text-blue-800',
-      title: 'Fleet Registration & Verification Application',
-      description: 'Business registers weighing instruments (UID: LM-DL-2026-001290) and files periodic re-verification application (APP-2026-00101) with statutory fee payment.',
-      artifacts: ['Instrument UID: LM-DL-2026-001290', 'Application ID: APP-2026-00101', 'BharatKosh Fee: ₹250']
-    },
-    {
-      step: '2',
-      actor: 'Legal Metrology Officer',
-      name: 'Insp. Amit K. Sharma (Central Delhi)',
-      role: 'LMO',
-      icon: '🔍',
-      color: 'border-sky-500 bg-sky-50/50',
-      badgeColor: 'bg-sky-100 text-sky-800',
-      title: 'Statutory Scrutiny & On-Site Inspection',
-      description: 'LMO reviews model approval in the Central Register, visits warehouse at Okhla, runs 4-point MPE tolerance testing with standard weights, and applies official lead seal (STAMP-DL-26-0842).',
-      artifacts: ['Inspection: INSP-2026-00814', 'MPE Tolerance: ±0.008 kg (PASS)', 'Physical Lead Seal: STAMP-DL-26-0842']
-    },
-    {
-      step: '3',
-      actor: 'Accredited GATC Testing Lab',
-      name: 'Dr. Hardik Patel (Gujarat Metrology)',
-      role: 'GATC',
-      icon: '🔬',
-      color: 'border-emerald-500 bg-emerald-50/50',
-      badgeColor: 'bg-emerald-100 text-emerald-800',
-      title: 'Specialized High-Capacity / Fuel Verification',
-      description: 'Complex instruments (100T weighbridges & CNG/LPG mass flow meters) are routed to accredited GATC labs per Legal Metrology (GATC) Rules 2026 for high-precision calibration.',
-      artifacts: ['Accreditation: GATC-GJ-2026-08', 'Application: APP-2026-00103', 'Calibrated Flow Tolerance: PASS']
-    },
-    {
-      step: '4',
-      actor: 'TULA Core Cryptographic Engine',
-      name: 'Automated verification Minting',
-      role: 'SYSTEM',
-      icon: '⚡',
-      color: 'border-indigo-500 bg-indigo-50/50',
-      badgeColor: 'bg-indigo-100 text-indigo-800',
-      title: 'Digital Seal & QR Generation',
-      description: 'System automatically issues tamper-evident Verification Certificate (CERT-2026-08912), generates a SHA-256 hash digest, and creates a scannable QR verification payload.',
-      artifacts: ['Certificate: CERT-2026-08912', 'SHA-256 Integrity Digest', 'Statutory 12-Month Validity Window']
-    },
-    {
-      step: '5',
-      actor: 'General Public & Citizen',
-      name: 'Consumer / Fair-Trade Verification',
-      role: 'CITIZEN',
-      icon: '📱',
-      color: 'border-amber-500 bg-amber-50/50',
-      badgeColor: 'bg-amber-100 text-amber-800',
-      title: 'Live QR Instant Verification',
-      description: 'Consumers scan the physical QR sticker attached to the weighing scale in grocery shops or petrol pumps to verify authenticity, validity dates, and report tampered seals.',
-      artifacts: ['Live Camera QR Scan', 'Tamper Evident Seal Audit', 'Sec 30 Grievance Lodging']
-    },
-    {
-      step: '6',
-      actor: 'State Regulatory Controller',
-      name: 'Sunita Meena, IAS (Delhi State HQ)',
-      role: 'CONTROLLER',
-      icon: '⚖️',
-      color: 'border-indigo-500 bg-indigo-50/50',
-      badgeColor: 'bg-indigo-100 text-indigo-800',
-      title: 'Regulatory Oversight & Compounding Settlement',
-      description: 'State Controller monitors jurisdiction pendency, oversees quota compliance, and resolves Section 48 compounding settlements for expired instruments (ENF-2026-0044).',
-      artifacts: ['State Pendency SLA Monitor', 'Section 48 Compounding Desk', 'Inspection Quota Audit']
-    }
-  ];
-
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
-      <div className="bg-white rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200">
-        {/* Header */}
-        <div className="p-6 bg-gradient-to-r from-[#1F497D] via-[#163a66] to-[#0070C0] text-white flex items-center justify-between sticky top-0 z-10">
-          <div className="flex items-center gap-3">
-            <TulaLogo variant="mark" size="sm" theme="light" />
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] uppercase font-bold tracking-wider text-sky-300 bg-white/10 px-2 py-0.5 rounded-full">
-                  Architecture &amp; Data Relatability
-                </span>
-                <span className="text-xs text-white/60">• SIH 26036</span>
-              </div>
-              <h3 className="text-xl font-extrabold tracking-tight mt-0.5">
-                How TULA Connects Every Role in Real Time
-              </h3>
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/60 sm:p-4" role="dialog" aria-modal="true" aria-labelledby="wf-title" onClick={onClose}>
+      <div className="bg-white w-full sm:max-w-2xl rounded-t-2xl sm:rounded-2xl shadow-2xl max-h-[92dvh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <div className="sticky top-0 bg-slate-900 text-white px-5 py-4 flex items-start justify-between gap-3">
+          <div>
+            <h2 id="wf-title" className="font-bold text-base">How one application moved through TULA</h2>
+            <p className="text-xs text-slate-400">{trace ? `Traced from the records of ${trace.app.id}, the latest completed application you can see.` : 'Each role works on the same record. No re-entry between offices.'}</p>
+          </div>
+          <button onClick={onClose} className="p-2 -m-1 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800" aria-label="Close"><X className="w-5 h-5" /></button>
+        </div>
+
+        {trace ? (
+          <div className="p-5 space-y-4">
+            <ol className="relative border-l-2 border-gov-200 ml-4 space-y-5">
+              {trace.steps.map(({ icon: Icon, who, what, detail, at }) => (
+                <li key={what} className="ml-6">
+                  <span className="absolute -left-[17px] w-8 h-8 rounded-full bg-gov-800 text-white flex items-center justify-center"><Icon className="w-4 h-4" /></span>
+                  <p className="text-sm"><strong>{what}</strong> <span className="text-slate-500">· {who}</span></p>
+                  <p className="text-sm text-slate-700">{detail}</p>
+                  {at && <p className="text-[11px] text-slate-400">{new Date(at).toLocaleString('en-IN')}</p>}
+                </li>
+              ))}
+            </ol>
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-emerald-50 border border-emerald-200 p-3 text-sm">
+              <span className="flex items-center gap-2 text-emerald-900"><Clock className="w-4 h-4" /> Application to certificate: <strong>{formatDuration(trace.total)}</strong></span>
+              <Link to={`/certificates/${trace.cert.id}`} onClick={onClose} className="font-bold text-gov-700 hover:underline">Open the certificate →</Link>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Content Body */}
-        <div className="p-6 space-y-6">
-          <div className="p-4 rounded-2xl bg-blue-50/60 border border-blue-200/80 text-xs text-blue-900 leading-relaxed">
-            <p className="font-semibold text-sm mb-1 text-[#1F497D]">
-              No Disconnected Data: One Unified Relational Lifecycle
-            </p>
-            <p>
-              In TULA, every application, certificate, and enforcement notice is directly connected across all 6 stakeholder roles. When <strong>Rajesh Varma (Business)</strong> submits an application, <strong>Insp. Amit Sharma (LMO)</strong> sees the exact same case in his scrutiny queue. Once inspected, <strong>CERT-2026-08912</strong> is verifiable by any citizen via the <strong>Live QR Scanner</strong>, and visible to <strong>Controller Sunita Meena</strong> for compliance oversight.
-            </p>
+        ) : (
+          <div className="p-5 space-y-3 text-sm text-slate-700">
+            <p>The trader applies, the district office clears documents and assigns an officer, the officer inspects on a phone (offline if needed), the server signs the certificate, and any buyer checks the QR.</p>
+            <p>No completed application is visible to this account yet. Run the <Link to="/demo" onClick={onClose} className="font-semibold text-gov-700 underline">live demo</Link> and this view will trace it step by step.</p>
           </div>
-
-          {/* Workflow Steps */}
-          <div className="space-y-4">
-            {steps.map((s, idx) => (
-              <div
-                key={s.step}
-                className={`p-4 rounded-2xl border-2 ${s.color} transition-all hover:shadow-md flex flex-col md:flex-row md:items-start gap-4`}
-              >
-                <div className="flex items-center gap-3 md:flex-col md:items-center shrink-0">
-                  <span className="w-8 h-8 rounded-full bg-white border border-slate-200 text-slate-800 font-extrabold text-sm flex items-center justify-center shadow-xs">
-                    {s.step}
-                  </span>
-                  <span className="text-2xl p-1 bg-white rounded-xl border border-slate-200 shadow-2xs">
-                    {s.icon}
-                  </span>
-                </div>
-
-                <div className="flex-1 space-y-1.5 min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full ${s.badgeColor}`}>
-                      {s.actor}
-                    </span>
-                    <span className="text-xs font-bold text-slate-900">• {s.name}</span>
-                  </div>
-
-                  <h4 className="font-extrabold text-slate-900 text-sm">{s.title}</h4>
-                  <p className="text-xs text-slate-600 leading-relaxed">{s.description}</p>
-
-                  <div className="flex flex-wrap gap-2 pt-1">
-                    {s.artifacts.map((art, aIdx) => (
-                      <span
-                        key={aIdx}
-                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white border border-slate-200 text-[10px] font-mono font-semibold text-slate-700 shadow-2xs"
-                      >
-                        <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                        {art}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Statutory Anchor */}
-          <div className="p-4 rounded-2xl bg-slate-900 text-white space-y-2 text-xs">
-            <div className="flex items-center gap-2">
-              <ShieldCheck className="w-5 h-5 text-amber-400" />
-              <span className="font-bold text-sm">Statutory Legal Framework Compliance</span>
-            </div>
-            <p className="text-slate-300 leading-relaxed text-[11px]">
-              Every transition in this lifecycle strictly implements the statutory mandates of <strong>The Legal Metrology Act, 2009 (Act 1 of 2010)</strong>, <strong>verification Verification Certificates</strong>, and the <strong>2026 GATC Decentralized Verification Guidelines</strong> issued by the Department of Consumer Affairs.
-            </p>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
-          <span className="text-[11px] text-slate-500 font-medium">
-            Team FriendlyFire • SIH Problem Statement 26036
-          </span>
-          <button
-            onClick={onClose}
-            className="px-5 py-2 rounded-xl bg-[#1F497D] hover:bg-[#163a66] text-white font-bold text-xs transition-colors shadow-xs"
-          >
-            Close &amp; Continue Exploration
-          </button>
-        </div>
+        )}
       </div>
     </div>
   );

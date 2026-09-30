@@ -20,63 +20,42 @@ export const RoleSwitcherDropdown: React.FC<RoleSwitcherDropdownProps> = ({
     role: UserRole;
     label: string;
     icon: string;
-    name: string;
-    org: string;
-    state: string;
     description: string;
   }[] = [
     {
       role: 'BUSINESS',
       label: 'Commercial Occupier',
       icon: '💼',
-      name: 'Rajesh Varma',
-      org: 'Apex Agro Logistics & Retail Pvt Ltd',
-      state: 'Delhi',
       description: 'Fleet management, verification applications, premises inspection tracker',
     },
     {
       role: 'LMO',
       label: 'Legal Metrology Officer',
       icon: '🔍',
-      name: 'Insp. Amit K. Sharma',
-      org: 'Controllerate of Legal Metrology, GNCTD',
-      state: 'Delhi (Central/South)',
       description: 'Document scrutiny, on-site GPS inspection, MPE test tolerance & official stamping',
     },
     {
       role: 'GATC',
       label: 'Govt Approved Test Centre',
       icon: '🔬',
-      name: 'Dr. Hardik Patel',
-      org: 'Gujarat Metrology Calibration & Testing Lab',
-      state: 'Gujarat',
       description: 'GATC Rules, 2013 mandate: CNG/LPG, weighbridges, and flow meter laboratory testing',
     },
     {
       role: 'CONTROLLER',
       label: 'State Controller',
       icon: '⚖️',
-      name: 'Sunita Meena, IAS',
-      org: 'Dept. of Consumer Affairs, Delhi HQ',
-      state: 'Delhi State',
       description: 'Statewide regulatory oversight, pendency audits, and compounding approval',
     },
     {
       role: 'STATE_ADMIN',
       label: 'State Administrator',
       icon: '🏛️',
-      name: 'Bhavna Jadav',
-      org: 'Commissionerate of Legal Metrology',
-      state: 'Gujarat State',
       description: 'State fee schedules, district quotas, and GATC accreditation governance',
     },
     {
       role: 'CENTRAL_ADMIN',
       label: 'Ministry Central Admin',
       icon: '🇮🇳',
-      name: 'Venkatesh Ramanathan',
-      org: 'Ministry of Consumer Affairs, Krishi Bhawan',
-      state: 'National (Pan-India)',
       description: 'National standards, Central Model Approvals, and inter-state analytics',
     },
   ];
@@ -110,7 +89,7 @@ export const RoleSwitcherDropdown: React.FC<RoleSwitcherDropdownProps> = ({
         {/* Name + Role — hidden on small screens */}
         <div className="hidden sm:block leading-tight max-w-[140px]">
           <p className="text-xs font-bold text-slate-800 truncate group-hover:text-gov-800 transition-colors">
-            {currentRoleConfig.name.split(' ').slice(0, 2).join(' ')}
+            {currentUser.fullName.split(' ').slice(0, 2).join(' ')}
           </p>
           <p className="text-[10px] text-slate-500 font-medium truncate">{currentRoleConfig.label}</p>
         </div>
@@ -145,7 +124,7 @@ export const RoleSwitcherDropdown: React.FC<RoleSwitcherDropdownProps> = ({
               </div>
               <div className="p-2.5 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-0.5">
                 <span className="text-[10px] font-semibold text-slate-400 uppercase">Jurisdiction</span>
-                <p className="font-bold text-slate-900 text-xs">{currentRoleConfig.state}</p>
+                <p className="font-bold text-slate-900 text-xs">{currentUser.role === 'CENTRAL_ADMIN' ? 'All States' : `${currentUser.district}, ${currentUser.state}`}</p>
               </div>
             </div>
 

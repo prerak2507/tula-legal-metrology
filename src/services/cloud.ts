@@ -325,6 +325,20 @@ export const cloud = {
     return error ? null : (data as { id: string; n: string; reason: string; at: string }[]);
   },
 
+  /** Headline counts for the public landing page (no personal data). */
+  async publicStats(): Promise<Record<string, number> | null> {
+    if (!sb || !navigator.onLine) return null;
+    const { data, error } = await sb.rpc('public_stats');
+    return error ? null : (data as Record<string, number>);
+  },
+
+  /** Current fee schedule (public read). */
+  async publicFeeRules(): Promise<unknown[] | null> {
+    if (!sb || !navigator.onLine) return null;
+    const { data, error } = await sb.from('fee_rules').select('data');
+    return error ? null : (data || []).map((r: { data: unknown }) => r.data);
+  },
+
   async reportProblem(p: Record<string, string>): Promise<string> {
     if (!sb) throw new Error('offline');
     const { data, error } = await sb.rpc('report_problem', { p });

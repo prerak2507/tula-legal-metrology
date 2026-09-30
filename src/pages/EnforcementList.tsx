@@ -50,7 +50,7 @@ export const EnforcementList: React.FC = () => {
     if (user.role === 'BUSINESS') return `Statutory Notices for ${user.organization}`;
     if (user.role === 'LMO') return `${user.state} Enforcement Division (Officer: ${user.fullName})`;
     if (user.role === 'GATC') return `GATC Surveillance Reports (${user.state})`;
-    if (user.role === 'CONTROLLER') return `${user.state} State Controllerate (Section 24/27/30/48)`;
+    if (user.role === 'CONTROLLER') return `${user.state}: all districts`;
     if (user.role === 'STATE_ADMIN') return `${user.state} State Legal Metrology Enforcement`;
     return 'Pan-India National Metrology Enforcement Registry';
   };
@@ -234,7 +234,7 @@ export const EnforcementList: React.FC = () => {
             <div className="bg-rose-900 text-white px-6 py-4 flex items-center justify-between">
               <div>
                 <h3 className="font-bold text-base text-white">File Legal Metrology Enforcement Citation</h3>
-                <p className="text-xs text-rose-200">Statutory Notice under Section 24/27/30</p>
+                <p className="text-xs text-rose-200">Statutory notice under the Legal Metrology Act, 2009</p>
               </div>
               <button
                 onClick={() => setIsModalOpen(false)}
@@ -292,10 +292,10 @@ export const EnforcementList: React.FC = () => {
                     onChange={e => setOffenseCategory(e.target.value as any)}
                     className="w-full bg-slate-50 border border-slate-300 rounded p-2 text-xs font-semibold"
                   >
-                    <option value="UNVERIFIED_USE">Unverified Commercial Use (Sec 24)</option>
-                    <option value="TAMPERED_SEAL">Tampered Official Stamp / Seal (Sec 30)</option>
-                    <option value="EXCEEDED_MPE_ERROR">Indication Exceeds MPE Error Limits (Sec 30)</option>
-                    <option value="UNAPPROVED_MODEL">Use of Non-Approved Model (Sec 22)</option>
+                    <option value="UNVERIFIED_USE">Unverified instrument used for trade (Sec 24)</option>
+                    <option value="TAMPERED_SEAL">Tampered stamp or seal</option>
+                    <option value="EXCEEDED_MPE_ERROR">Error beyond permitted limits (MPE)</option>
+                    <option value="UNAPPROVED_MODEL">Model not approved (Sec 22)</option>
                     <option value="NON_DISPLAY_OF_CERTIFICATE">Certificate not displayed</option>
                   </select>
                 </div>

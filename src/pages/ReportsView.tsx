@@ -47,15 +47,15 @@ export const ReportsView: React.FC = () => {
     }
     if (user.role === 'LMO') {
       return {
-        title: `${user.state} Zonal Legal Metrology Inspection Report`,
+        title: `${user.district} inspection report`,
         subtitle: `Workload, pending inspections, and enforcement surveillance for ${user.jurisdictionOffice || user.state}.`,
-        scope: `${user.state} Central & South Zonal Jurisdiction`
+        scope: `${user.district}, ${user.state}`
       };
     }
     if (user.role === 'GATC') {
       return {
         title: 'GATC Laboratory Testing & Calibration Report',
-        subtitle: `Accredited testing centre audits under GATC Rules 2013/2026 (${user.gatcCode || user.organization}).`,
+        subtitle: `Accredited testing centre audits under the GATC Rules, 2013 (${user.gatcCode || user.organization}).`,
         scope: `GATC Facility (${user.state})`
       };
     }

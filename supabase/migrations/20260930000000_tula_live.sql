@@ -325,3 +325,27 @@ do $$ declare t text; begin
     end;
   end loop;
 end $$;
+
+-- ---------------------------------------------------------------- public headline numbers (counts only)
+create or replace function public.public_stats() returns jsonb language sql stable security definer set search_path = public as $$
+  select jsonb_build_object(
+    'instruments', (select count(*) from public.instruments),
+    'certificates', (select count(*) from public.certificates),
+    'validCertificates', (select count(*) from public.certificates where status = 'VALID'),
+    'signedCertificates', (select count(*) from public.certificates where data->>'signatureStatus' = 'SIGNED'),
+    'applications', (select count(*) from public.applications),
+    'openApplications', (select count(*) from public.applications where status not in ('COMPLETED','REJECTED','CANCELLED')),
+    'states', (select count(distinct state) from public.instruments),
+    'districts', (select count(distinct district) from public.instruments),
+    'medianMinutes', (
+      select round((percentile_cont(0.5) within group (order by extract(epoch from ((c.data->>'issuedAt')::timestamptz - (a.data->>'createdAt')::timestamptz)) / 60))::numeric, 1)
+      from public.applications a join public.certificates c on c.data->>'applicationId' = a.id
+      where a.status = 'COMPLETED' and (a.data->>'createdAt')::timestamptz > now() - interval '180 days'
+        and (c.data->>'issuedAt')::timestamptz >= (a.data->>'createdAt')::timestamptz),
+    'completedRuns', (
+      select count(*) from public.applications a join public.certificates c on c.data->>'applicationId' = a.id
+      where a.status = 'COMPLETED' and (a.data->>'createdAt')::timestamptz > now() - interval '180 days'),
+    'updatedAt', now()
+  )
+$$;
+grant execute on function public.public_stats() to anon, authenticated;

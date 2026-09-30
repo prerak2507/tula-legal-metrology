@@ -22,11 +22,11 @@ export const AuditLogView: React.FC = () => {
 
   const getScopeLabel = () => {
     if (user.role === 'BUSINESS') return `Action Audit Trail for ${user.organization}`;
-    if (user.role === 'LMO') return `${user.state} Zonal Actions (Officer: ${user.fullName})`;
+    if (user.role === 'LMO') return `${user.district}, ${user.state} (officer: ${user.fullName})`;
     if (user.role === 'GATC') return `GATC Lab Operations Audit (${user.gatcCode || user.organization})`;
     if (user.role === 'CONTROLLER') return `${user.state} State Legal Metrology Audit Trail`;
     if (user.role === 'STATE_ADMIN') return `${user.state} State Governance Audit Trail`;
-    return 'Pan-India National Cryptographic Audit Registry';
+    return 'All States';
   };
 
   const filteredLogs = logs.filter(log => {

@@ -1,5 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { cloud } from '../services/cloud';
+import { storage } from '../services/storage';
+import { calculateStatutoryFee } from '../services/rulesEngine';
+import { FeeRule } from '../types';
 import { TulaLogo } from '../components/common/TulaLogo';
 import { CheckCircle2, CircleDashed, Clock, Home, PlayCircle, ShieldCheck, Map, WifiOff } from 'lucide-react';
 
@@ -31,6 +35,12 @@ const LABEL: Record<State, string> = { LIVE: 'Working', PARTIAL: 'Partly', PLANN
 export const StatusPage: React.FC = () => {
   const [health, setHealth] = useState<null | { signing: boolean; ai: boolean; email: boolean; sms: boolean; kid: string }>(null);
   const [healthError, setHealthError] = useState(false);
+  const [rules, setRules] = useState<FeeRule[]>(storage.getFeeRules());
+  useEffect(() => { void cloud.publicFeeRules().then(r => { if (r && r.length) setRules(r as FeeRule[]); }); }, []);
+  const inr = (n: number) => `₹${n.toLocaleString('en-IN')}`;
+  const wbDefault = calculateStatutoryFee('WEIGHBRIDGE', undefined, rules).total;
+  const wbGujarat = calculateStatutoryFee('WEIGHBRIDGE', 'Gujarat', rules).total;
+  const wbDelhi = calculateStatutoryFee('WEIGHBRIDGE', 'Delhi', rules).total;
   useEffect(() => {
     fetch('/api/health')
       .then(r => (r.ok ? r.json() : Promise.reject()))
@@ -101,7 +111,7 @@ export const StatusPage: React.FC = () => {
           </section>
           <section className="bg-white rounded-xl border border-slate-200 p-4 space-y-2 text-sm">
             <h2 className="font-bold text-slate-900 flex items-center gap-2"><Map className="w-5 h-5 text-gov-700" /> Different States</h2>
-            <p className="text-slate-600">Fees and validity periods are data, stored per State. A State joins by loading its schedule and officer list, with no code change. Officers only see their own State's work. Certificate numbers carry the State code (DL, GJ). Demo: the same weighbridge costs ₹4,500 by default and ₹3,900 under the Gujarat demo schedule.</p>
+            <p className="text-slate-600">Fees and validity periods are data, stored per State. A State joins by loading its schedule and officer list, with no code change. Officers only see their own State's work. Certificate numbers carry the State code (DL, GJ). Right now, from the live fee rules: a weighbridge costs {inr(wbDelhi)} in Delhi and {inr(wbGujarat)} in Gujarat (default schedule {inr(wbDefault)}).</p>
           </section>
         </div>
 

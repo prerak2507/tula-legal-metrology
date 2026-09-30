@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   QrCode, PlayCircle, ListChecks, LogIn, Menu, X, Check, Minus, Store, ClipboardCheck, Landmark, Users, FlaskConical,
@@ -9,6 +9,8 @@ import { ForgeChallenge } from '../components/landing/ForgeChallenge';
 import { InspectorSim } from '../components/landing/InspectorSim';
 import { storage } from '../services/storage';
 import { UserRole } from '../types';
+import { cloud } from '../services/cloud';
+import { formatDuration } from '../services/analytics';
 
 // ---------------------------------------------------------------------------
 // Content (one place, so the page and the deck say the same thing)
@@ -81,6 +83,10 @@ export const LandingPage: React.FC = () => {
   const [menu, setMenu] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [stats, setStats] = useState<Record<string, number> | null>(null);
+  useEffect(() => { void cloud.publicStats().then(setStats); }, []);
+  const working = ASKED.filter(a => a.state === 'LIVE').length;
+  const stat = (v: React.ReactNode) => (stats ? v : <span className="inline-block w-12 h-5 rounded bg-slate-200 animate-pulse align-middle" />);
 
   const enterAs = async (role: UserRole | 'PUBLIC', to: string) => {
     setErr(null);
@@ -137,12 +143,15 @@ export const LandingPage: React.FC = () => {
               <Link to="/demo" className="inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl bg-gov-800 hover:bg-gov-900 text-white font-bold"><PlayCircle className="w-5 h-5 text-amber-300" /> 5-minute guided demo</Link>
               <a href="#explore" className="inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 font-bold">Explore as any role</a>
             </div>
-            <dl className="mt-8 grid grid-cols-3 gap-3 text-center">
-              <div className="rounded-xl bg-white border border-slate-200 p-3"><dt className="text-[11px] text-slate-500">PS requirements working</dt><dd className="text-base sm:text-xl font-black whitespace-nowrap">11 / 11</dd></div>
-              <div className="rounded-xl bg-white border border-slate-200 p-3"><dt className="text-[11px] text-slate-500">Application to signed certificate</dt><dd className="text-base sm:text-xl font-black whitespace-nowrap">2 min 51 s</dd></div>
-              <div className="rounded-xl bg-white border border-slate-200 p-3"><dt className="text-[11px] text-slate-500">Fake copies caught in tests</dt><dd className="text-base sm:text-xl font-black whitespace-nowrap">6 / 6</dd></div>
+            <dl className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+              <div className="rounded-xl bg-white border border-slate-200 p-3"><dt className="text-[11px] text-slate-500">PS requirements working</dt><dd className="text-base sm:text-xl font-black whitespace-nowrap">{working} / {ASKED.length}</dd></div>
+              <div className="rounded-xl bg-white border border-slate-200 p-3"><dt className="text-[11px] text-slate-500">Instruments on the live registry</dt><dd className="text-base sm:text-xl font-black whitespace-nowrap">{stat(stats?.instruments)}</dd></div>
+              <div className="rounded-xl bg-white border border-slate-200 p-3"><dt className="text-[11px] text-slate-500">Signed certificates issued</dt><dd className="text-base sm:text-xl font-black whitespace-nowrap">{stat(stats?.signedCertificates)}</dd></div>
+              <div className="rounded-xl bg-white border border-slate-200 p-3"><dt className="text-[11px] text-slate-500">States / districts live</dt><dd className="text-base sm:text-xl font-black whitespace-nowrap">{stat(`${stats?.states} / ${stats?.districts}`)}</dd></div>
             </dl>
-            <p className="mt-2 text-[11px] text-slate-500">Measured on the live system, 30 Sep 2026 (software time; the physical test on site is extra).</p>
+            <p className="mt-2 text-[11px] text-slate-500">
+              Live from the database{stats?.completedRuns ? `. Median time from application to certificate over the last ${stats.completedRuns} completed run${stats.completedRuns === 1 ? '' : 's'}: ${formatDuration((stats.medianMinutes || 0) * 60_000)}` : ''}. In tests, 6 of 6 forged or edited certificates were rejected.
+            </p>
           </div>
           <ForgeChallenge />
         </div>

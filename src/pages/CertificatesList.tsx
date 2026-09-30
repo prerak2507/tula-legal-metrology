@@ -49,11 +49,11 @@ export const CertificatesList: React.FC = () => {
 
   const getScopeLabel = () => {
     if (user.role === 'BUSINESS') return `Issued to ${user.organization}`;
-    if (user.role === 'LMO') return `${user.state} Zonal Office (${user.badgeNumber || 'Inspector Grade-I'})`;
+    if (user.role === 'LMO') return `${user.district}, ${user.state} (${user.badgeNumber || user.designation || 'LMO'})`;
     if (user.role === 'GATC') return `GATC Accredited Facility (${user.gatcCode || user.organization})`;
     if (user.role === 'CONTROLLER') return `${user.state} State Controllerate (All Districts)`;
     if (user.role === 'STATE_ADMIN') return `${user.state} State Metrology Administration`;
-    return 'National Metrology Central Registry (Pan-India)';
+    return 'All States';
   };
 
   return (

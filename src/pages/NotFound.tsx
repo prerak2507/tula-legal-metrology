@@ -169,7 +169,7 @@ export const NotFound: React.FC = () => {
         {/* Diagnostic info */}
         <div className="mt-10 inline-flex items-center gap-2 text-[11px] text-slate-400 bg-slate-100/80 px-3.5 py-1.5 rounded-full">
           <Compass className="w-3.5 h-3.5" />
-          <span>Error Code: LM_HTTP_404_NOT_FOUND • Registry Node: Delhi Central Gateway</span>
+          <span>Error 404: this page does not exist. Use the links above to continue.</span>
         </div>
       </main>
 

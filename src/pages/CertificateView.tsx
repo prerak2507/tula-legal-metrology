@@ -5,6 +5,7 @@ import { VerificationCertificate } from '../types';
 import { StatusBadge } from '../components/common/StatusBadge';
 import { QRCodeSVG } from 'qrcode.react';
 import { generateCertificatePdf } from '../services/pdf';
+import { quarterMark } from '../services/rulesEngine';
 import { 
   Award, 
   ArrowLeft, 
@@ -201,7 +202,7 @@ export const CertificateView: React.FC = () => {
             </div>
             <div>
               <span className="text-slate-500">Quarter &amp; Year Seal Mark:</span>
-              <p className="font-bold text-slate-900">A-26 (Quarter 1, 2026)</p>
+              <p className="font-bold text-slate-900">{(() => { const m = storage.getStampings().find(s => s.id === cert.stampId)?.quarterAndYear || quarterMark(new Date(cert.verificationDate)); return `${m} (quarter ${'ABCD'.indexOf(m[0]) + 1}, 20${m.slice(-2)})`; })()}</p>
             </div>
             <div>
               <span className="text-slate-500">Inspection Record Ref:</span>
