@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { storage } from '../services/storage';
+import { sanitizeInput } from '../services/crypto';
 import { VerificationCertificate } from '../types';
 import { StatusBadge } from '../components/common/StatusBadge';
 import { QRCodeSVG } from 'qrcode.react';
@@ -8,27 +9,20 @@ import {
   ShieldCheck, 
   ShieldAlert, 
   Search, 
-  QrCode, 
   CheckCircle2, 
   XCircle, 
   AlertTriangle, 
-  Calendar, 
   Building, 
   Scale, 
-  ExternalLink,
-  Award,
-  ArrowRight,
   Camera,
   Upload,
-  RefreshCw,
   MapPin,
   Check,
   FileText,
   Printer,
   Flag,
   Globe,
-  LayoutDashboard,
-  Sparkles
+  LayoutDashboard
 } from 'lucide-react';
 import { TulaLogo } from '../components/common/TulaLogo';
 
@@ -38,7 +32,7 @@ export const PublicVerify: React.FC = () => {
   const [certificate, setCertificate] = useState<VerificationCertificate | undefined>(undefined);
   const [searched, setSearched] = useState(false);
   const [activeTab, setActiveTab] = useState<'camera' | 'upload' | 'manual'>('camera');
-  const [isScanning, setIsScanning] = useState(true);
+  const [_isScanning, setIsScanning] = useState(true);
   const [cameraActive, setCameraActive] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
@@ -53,20 +47,40 @@ export const PublicVerify: React.FC = () => {
 
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  useEffect(() => {
-    if (certificateId) {
-      setSearchInput(certificateId);
-      lookupCert(certificateId);
-    } else {
-      // Auto-load sample valid certificate so the page is immediately engaging
-      lookupCert('CERT-2026-08912');
+  const stopCamera = () => {
+    if (videoRef.current && videoRef.current.srcObject) {
+      const stream = videoRef.current.srcObject as MediaStream;
+      stream.getTracks().forEach(track => track.stop());
+      videoRef.current.srcObject = null;
     }
+    setCameraActive(false);
+  };
+
+  const lookupCert = (term: string) => {
+    const sanitized = sanitizeInput(term);
+    if (!sanitized) return;
+    const found = storage.getCertificateById(sanitized);
+    setCertificate(found);
+    setSearchInput(sanitized);
+    setSearched(true);
+  };
+
+  useEffect(() => {
+    const targetId = certificateId || 'CERT-2026-08912';
+    setTimeout(() => {
+      lookupCert(targetId);
+    }, 0);
   }, [certificateId]);
 
   // Clean up camera stream on unmount
   useEffect(() => {
+    const currentVideo = videoRef.current;
     return () => {
-      stopCamera();
+      if (currentVideo && currentVideo.srcObject) {
+        const stream = currentVideo.srcObject as MediaStream;
+        stream.getTracks().forEach(track => track.stop());
+        currentVideo.srcObject = null;
+      }
     };
   }, []);
 
@@ -85,28 +99,10 @@ export const PublicVerify: React.FC = () => {
       } else {
         setCameraError('Camera access not supported on this browser. Using interactive scanner simulation.');
       }
-    } catch (err: any) {
+    } catch (_err: unknown) {
       setCameraError('Camera permission was denied or not available. Using interactive scanner simulation.');
       setCameraActive(false);
     }
-  };
-
-  const stopCamera = () => {
-    if (videoRef.current && videoRef.current.srcObject) {
-      const stream = videoRef.current.srcObject as MediaStream;
-      stream.getTracks().forEach(track => track.stop());
-      videoRef.current.srcObject = null;
-    }
-    setCameraActive(false);
-  };
-
-  const lookupCert = (term: string) => {
-    const trimmed = term.trim();
-    if (!trimmed) return;
-    const found = storage.getCertificateById(trimmed);
-    setCertificate(found);
-    setSearchInput(trimmed);
-    setSearched(true);
   };
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -136,10 +132,14 @@ export const PublicVerify: React.FC = () => {
 
   const handleReportSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const cleanLocation = sanitizeInput(reportData.location);
+    const cleanDesc = sanitizeInput(reportData.description);
+    const cleanPhone = sanitizeInput(reportData.contactPhone);
+
     const newCase = storage.createEnforcementCase({
       businessName: certificate?.organization || 'Retail Commercial Premises',
       violatorName: certificate?.issuedToName || 'Commercial Occupier',
-      location: certificate?.address || reportData.location || 'Local Market Area',
+      location: certificate?.address || cleanLocation || 'Local Market Area',
       state: certificate?.state || 'Delhi',
       district: certificate?.district || 'South Delhi',
       instrumentId: certificate?.instrumentId || 'UNVERIFIED-SCALE',
@@ -150,7 +150,7 @@ export const PublicVerify: React.FC = () => {
       actionTaken: 'Citizen Grievance Registered via Live QR Portal. Spot verification notice dispatched under Section 31.',
       status: 'OPEN',
       penaltyAmount: 5000,
-      evidenceNotes: `${reportData.issueType}: ${reportData.description}. Consumer Contact: ${reportData.contactPhone || 'Anonymous Citizen'}`
+      evidenceNotes: `${reportData.issueType}: ${cleanDesc}. Consumer Contact: ${cleanPhone || 'Anonymous Citizen'}`
     });
     setSubmittedCaseId(newCase.id);
     setReportSubmitted(true);

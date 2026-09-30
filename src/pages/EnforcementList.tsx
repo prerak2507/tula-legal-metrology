@@ -1,17 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import { storage } from '../services/storage';
 import { EnforcementCase, Instrument } from '../types';
 import { StatusBadge } from '../components/common/StatusBadge';
 import { 
   ShieldAlert, 
   Search, 
-  Filter, 
   Plus, 
-  AlertTriangle, 
   Scale, 
-  MapPin, 
-  Calendar,
   X 
 } from 'lucide-react';
 
@@ -26,9 +21,9 @@ export const EnforcementList: React.FC = () => {
   const [selectedInstId, setSelectedInstId] = useState(instruments[0]?.id || '');
   const [businessName, setBusinessName] = useState('');
   const [violatorName, setViolatorName] = useState('');
-  const [location, setLocation] = useState('');
+  const [location, _setLocation] = useState('');
   const [offenseCategory, setOffenseCategory] = useState<EnforcementCase['offenseCategory']>('UNVERIFIED_USE');
-  const [actSection, setActSection] = useState('Section 24 read with Section 33, Legal Metrology Act, 2009');
+  const [actSection, _setActSection] = useState('Section 24 read with Section 33, Legal Metrology Act, 2009');
   const [actionTaken, setActionTaken] = useState('');
   const [penaltyAmount, setPenaltyAmount] = useState<number>(10000);
   const [evidenceNotes, setEvidenceNotes] = useState('');

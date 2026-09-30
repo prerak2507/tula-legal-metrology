@@ -1,5 +1,5 @@
 import React from 'react';
-import { Scale, ShieldCheck, FileText, ExternalLink } from 'lucide-react';
+import { ShieldCheck, FileText } from 'lucide-react';
 import { TulaLogo } from '../common/TulaLogo';
 
 export const Footer: React.FC = () => {

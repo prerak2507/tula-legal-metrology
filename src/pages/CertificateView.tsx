@@ -10,9 +10,6 @@ import {
   ArrowLeft, 
   Printer, 
   FileDown, 
-  ShieldCheck, 
-  Calendar, 
-  ExternalLink,
   Scale
 } from 'lucide-react';
 
@@ -22,7 +19,9 @@ export const CertificateView: React.FC = () => {
 
   useEffect(() => {
     if (!id) return;
-    setCert(storage.getCertificateById(id));
+    setTimeout(() => {
+      setCert(storage.getCertificateById(id));
+    }, 0);
   }, [id]);
 
   if (!cert) {

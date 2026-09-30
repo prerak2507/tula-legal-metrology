@@ -8,9 +8,9 @@ import { StatCard } from '../components/common/StatCard';
 import { StatusBadge } from '../components/common/StatusBadge';
 import { 
   Scale, FileText, Award, AlertTriangle, CheckCircle, Clock, Smartphone, PlusCircle, 
-  ShieldAlert, ArrowRight, MapPin, Calendar, TrendingUp, Users, Globe, BarChart3, Eye
+  ShieldAlert, ArrowRight, MapPin, Calendar, BarChart3, Eye
 } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
 export const Dashboard: React.FC = () => {
   const [user, setUser] = useState<UserProfile>(storage.getCurrentUser());
@@ -77,7 +77,7 @@ export const Dashboard: React.FC = () => {
   const activeInst = jurisdictionInstruments.filter(i => i.status === 'ACTIVE').length;
   const expiringInst = jurisdictionInstruments.filter(i => i.status === 'EXPIRING_SOON').length;
   const expiredInst = jurisdictionInstruments.filter(i => i.status === 'EXPIRED').length;
-  const pendingApps = myApplications.filter(a => a.status !== 'COMPLETED' && a.status !== 'REJECTED' && a.status !== 'CANCELLED').length;
+  const _pendingApps = myApplications.filter(a => a.status !== 'COMPLETED' && a.status !== 'REJECTED' && a.status !== 'CANCELLED').length;
   const scheduledInsp = myApplications.filter(a => a.status === 'SCHEDULED' || a.status === 'ASSIGNED').length;
 
   // ── Chart data ──

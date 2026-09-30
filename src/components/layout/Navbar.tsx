@@ -94,6 +94,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentUser, notifications }) =>
             <div className="relative">
               <button
                 onClick={() => setNotifDropdownOpen(!notifDropdownOpen)}
+                aria-label="Toggle notifications menu"
                 className="relative p-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
                 title="Notifications"
               >
@@ -176,6 +177,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentUser, notifications }) =>
             {/* Mobile menu toggle */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label="Toggle mobile navigation menu"
               className="xl:hidden p-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100"
             >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
