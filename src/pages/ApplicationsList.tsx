@@ -31,15 +31,8 @@ export const ApplicationsList: React.FC = () => {
   }, []);
 
   // Role-based filtering
-  const applications = user.role === 'BUSINESS'
-    ? allApplications.filter(a => a.applicantId === user.id)
-    : (user.role === 'LMO')
-    ? allApplications.filter(a => a.assignedToId === user.id || a.state === user.state)
-    : (user.role === 'GATC')
-    ? allApplications.filter(a => a.assignedToId === user.id || (a.state === user.state && a.assignedToType === 'GATC'))
-    : (user.role === 'CONTROLLER' || user.role === 'STATE_ADMIN')
-    ? allApplications.filter(a => a.state === user.state)
-    : allApplications;
+  const applications = storage.getApplicationsForUser(user);
+  void allApplications;
 
   const filteredApps = applications.filter(app => {
     const matchesSearch = 

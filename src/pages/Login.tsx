@@ -19,30 +19,46 @@ import { TulaLogo } from '../components/common/TulaLogo';
 
 export const Login: React.FC = () => {
   const navigate = useNavigate();
-  const [email, setEmail] = useState('business@demo.gov.in');
-  const [password, setPassword] = useState('••••••••');
-  const [loginMethod, setLoginMethod] = useState<'sso' | 'demo' | 'password'>('demo');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const [busyRole, setBusyRole] = useState<string | null>(null);
+  const next = new URLSearchParams(window.location.search).get('next') || '/dashboard';
 
   const demoAccounts: { role: UserRole; label: string; email: string; name: string; icon: string; clearance: string }[] = [
-    { role: 'BUSINESS', label: 'Commercial Business Occupier', email: 'business@demo.gov.in', name: 'Rajesh Varma (Apex Agro Logistics)', icon: '💼', clearance: 'Commercial User Token #2601' },
-    { role: 'LMO', label: 'Legal Metrology Officer (Inspector)', email: 'lmo@demo.gov.in', name: 'Insp. Amit Sharma (Central Delhi)', icon: '🔍', clearance: 'Inspector Badge #DL-LMO-042' },
-    { role: 'GATC', label: 'Accredited GATC Testing Centre', email: 'gatc@demo.gov.in', name: 'Dr. Hardik Patel (Gujarat Metrology)', icon: '🔬', clearance: 'NABL / GATC Code GATC-GJ-08' },
-    { role: 'CONTROLLER', label: 'Controller / Senior Officer', email: 'controller@demo.gov.in', name: 'Sunita Meena, IAS (Delhi HQ)', icon: '⚖️', clearance: 'Regulatory Controller Key' },
-    { role: 'STATE_ADMIN', label: 'State Administrator', email: 'stateadmin@demo.gov.in', name: 'Bhavna Jadav (Govt of Gujarat)', icon: '🏛️', clearance: 'State Metrology Admin' },
-    { role: 'CENTRAL_ADMIN', label: 'Central Administrator', email: 'centraladmin@demo.gov.in', name: 'Venkatesh Ramanathan (DoCA)', icon: '🇮🇳', clearance: 'Ministry National Admin' },
+    { role: 'BUSINESS', label: 'Commercial Business Occupier', email: 'business.demo@example.com', name: 'Rajesh Varma (Apex Agro Logistics)', icon: '💼', clearance: 'Commercial User Token #2601' },
+    { role: 'LMO', label: 'Legal Metrology Officer (Inspector)', email: 'lmo.demo@example.com', name: 'Insp. Amit Sharma (Central Delhi)', icon: '🔍', clearance: 'Inspector Badge #DL-LMO-042' },
+    { role: 'GATC', label: 'Accredited GATC Testing Centre', email: 'gatc.demo@example.com', name: 'Dr. Hardik Patel (Gujarat Metrology)', icon: '🔬', clearance: 'NABL / GATC Code GATC-GJ-08' },
+    { role: 'CONTROLLER', label: 'Controller / Senior Officer', email: 'controller.demo@example.com', name: 'Sunita Meena (Delhi HQ)', icon: '⚖️', clearance: 'Regulatory Controller Key' },
+    { role: 'STATE_ADMIN', label: 'State Administrator', email: 'stateadmin.demo@example.com', name: 'Bhavna Jadav (Govt of Gujarat)', icon: '🏛️', clearance: 'State Metrology Admin' },
+    { role: 'CENTRAL_ADMIN', label: 'Central Administrator', email: 'centraladmin.demo@example.com', name: 'Venkatesh Ramanathan (DoCA)', icon: '🇮🇳', clearance: 'Ministry National Admin' },
   ];
 
-  const handleOneClickLogin = (role: UserRole) => {
-    storage.switchDemoRole(role);
-    navigate('/dashboard');
+  const handleOneClickLogin = async (role: UserRole) => {
+    setLoginError(null);
+    setBusyRole(role);
+    try {
+      await storage.switchDemoRole(role);
+      navigate(next);
+    } catch (e) {
+      setLoginError((e as Error).message);
+    } finally {
+      setBusyRole(null);
+    }
   };
 
-  const handleCustomLogin = (e: React.FormEvent) => {
+  const handlePasswordLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const allUsers = storage.getAllDemoUsers();
-    const matched = allUsers.find(u => u.email.toLowerCase() === email.toLowerCase()) || allUsers[0];
-    storage.setCurrentUser(matched);
-    navigate('/dashboard');
+    setLoginError(null);
+    setBusyRole('password');
+    try {
+      await storage.signIn(email, password);
+      navigate(next);
+    } catch (err) {
+      setLoginError((err as Error).message);
+    } finally {
+      setBusyRole(null);
+    }
   };
 
   return (
@@ -88,9 +104,9 @@ export const Login: React.FC = () => {
             <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
               Instant Access
             </span>
-            <h2 className="text-base font-bold text-slate-900 mt-1">1-Click Demo Profiles</h2>
+            <h2 className="text-base font-bold text-slate-900 mt-1">Evaluator accounts</h2>
             <p className="text-xs text-slate-500">
-              Select any stakeholder role to test end-to-end workflows without passwords:
+              Real accounts on the live database, one per role. Tap to sign in. Password for all six: <span className="font-mono font-bold text-slate-800">TulaDemo@2026</span>
             </p>
           </div>
 
@@ -100,6 +116,7 @@ export const Login: React.FC = () => {
                 key={acc.role}
                 type="button"
                 onClick={() => handleOneClickLogin(acc.role)}
+                disabled={busyRole !== null}
                 className="w-full p-3 rounded-xl border border-slate-200 hover:border-[#0070C0] hover:bg-blue-50/40 text-left transition-all flex items-center justify-between group"
               >
                 <div className="flex items-center gap-3">
@@ -108,7 +125,8 @@ export const Login: React.FC = () => {
                   </span>
                   <div>
                     <h3 className="font-bold text-xs text-slate-900 group-hover:text-[#1F497D]">{acc.label}</h3>
-                    <p className="text-[11px] text-slate-500 font-medium">{acc.name}</p>
+                    <p className="text-[11px] text-slate-500 font-medium">{busyRole === acc.role ? 'Signing in…' : acc.name}</p>
+                    <p className="text-[10px] text-slate-400 font-mono">{acc.email}</p>
                     <span className="text-[9px] font-mono text-[#0070C0] bg-blue-50 px-1.5 py-0.5 rounded inline-block mt-0.5">
                       {acc.clearance}
                     </span>
@@ -122,84 +140,45 @@ export const Login: React.FC = () => {
 
         {/* Right: National SSO & Custom Credentials Sign In */}
         <div className="space-y-4">
-          {/* National SSO Gateway Option */}
-          <div className="bg-gradient-to-br from-[#1F497D] to-[#0d223f] text-white p-6 rounded-2xl shadow-lg border border-slate-800 space-y-4">
-            <div>
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] uppercase font-bold tracking-wider text-sky-300">
-                  Government of India Gateway
-                </span>
-                <span className="text-[10px] text-white/70">e-Pramaan / MeriPehchan</span>
-              </div>
-              <h2 className="text-base font-bold text-white mt-1">National Single Sign-On (SSO)</h2>
-              <p className="text-xs text-slate-300 mt-0.5 leading-relaxed">
-                Seamless multi-factor authentication via MeriPehchan, JanParichay, or DigiLocker Metrology Service.
-              </p>
-            </div>
-
-            <div className="space-y-2 pt-1">
-              <button
-                type="button"
-                onClick={() => handleOneClickLogin('BUSINESS')}
-                className="w-full py-2.5 px-4 rounded-xl bg-white hover:bg-slate-100 text-[#1F497D] font-bold text-xs transition-colors flex items-center justify-center gap-2 shadow-xs"
-              >
-                <Fingerprint className="w-4 h-4 text-[#0070C0]" />
-                <span>Sign In with e-Pramaan National SSO</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleOneClickLogin('LMO')}
-                className="w-full py-2 px-4 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white font-semibold text-xs transition-colors flex items-center justify-center gap-2"
-              >
-                <KeyRound className="w-3.5 h-3.5 text-amber-300" />
-                <span>Sign In via Official DoCA Gov-Net</span>
-              </button>
-            </div>
+          {/* New business registration */}
+          <div className="bg-gradient-to-br from-[#1F497D] to-[#0d223f] text-white p-6 rounded-2xl shadow-lg space-y-3">
+            <span className="text-[10px] uppercase font-bold tracking-wider text-sky-300">New here?</span>
+            <h2 className="text-base font-bold">Register your business</h2>
+            <p className="text-xs text-slate-300 leading-relaxed">Create an account, add your scales or pumps, and apply for verification online. Takes about two minutes.</p>
+            <Link to="/register" className="w-full py-3 px-4 rounded-xl bg-white hover:bg-slate-100 text-[#1F497D] font-bold text-sm flex items-center justify-center gap-2">
+              <Fingerprint className="w-4 h-4 text-[#0070C0]" /> Create business account
+            </Link>
+            <p className="text-[11px] text-slate-400">Officer sign-in through e-Pramaan single sign-on is planned for the pilot. The prototype uses the demo officer roles on the left.</p>
           </div>
 
-          {/* Standard Credentials Sign In */}
+          {/* Registered account sign-in (one-time code) */}
           <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-md space-y-4">
             <div>
-              <h2 className="text-sm font-bold text-slate-900">Department Credentials Sign In</h2>
-              <p className="text-[11px] text-slate-500">Enter your assigned username and portal token</p>
+              <h2 className="text-sm font-bold text-slate-900">Sign in</h2>
+              <p className="text-[11px] text-slate-500">Business accounts and any evaluator account</p>
             </div>
-
-            <form onSubmit={handleCustomLogin} className="space-y-3 text-xs">
-              <div>
-                <label className="block font-semibold text-slate-700 mb-1">Official Email Address</label>
-                <div className="relative">
-                  <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
-                  <input
-                    type="email"
-                    required
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-300 rounded-lg pl-9 pr-3 py-2 text-xs focus:ring-2 focus:ring-[#0070C0] focus:bg-white"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block font-semibold text-slate-700 mb-1">Password</label>
-                <div className="relative">
-                  <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
-                  <input
-                    type="password"
-                    required
-                    value={password}
-                    onChange={e => setPassword(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-300 rounded-lg pl-9 pr-3 py-2 text-xs focus:ring-2 focus:ring-[#0070C0] focus:bg-white"
-                  />
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                className="w-full bg-[#1F497D] hover:bg-[#163a66] text-white font-bold py-2.5 rounded-lg text-xs transition-colors shadow-xs"
-              >
-                Sign In to TULA Portal
+            <form onSubmit={handlePasswordLogin} className="space-y-3 text-xs">
+              <label className="block">
+                <span className="block font-semibold text-slate-700 mb-1">Email</span>
+                <span className="relative block">
+                  <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                  <input type="email" required value={email} onChange={e => setEmail(e.target.value)} autoComplete="email"
+                    className="w-full bg-slate-50 border border-slate-300 rounded-lg pl-9 pr-3 py-2.5 text-sm" />
+                </span>
+              </label>
+              <label className="block">
+                <span className="block font-semibold text-slate-700 mb-1">Password</span>
+                <span className="relative block">
+                  <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                  <input type="password" required value={password} onChange={e => setPassword(e.target.value)} autoComplete="current-password"
+                    className="w-full bg-slate-50 border border-slate-300 rounded-lg pl-9 pr-3 py-2.5 text-sm" />
+                </span>
+              </label>
+              <button type="submit" disabled={busyRole !== null} className="w-full bg-[#1F497D] hover:bg-[#163a66] text-white font-bold py-3 rounded-lg text-sm disabled:opacity-50">
+                {busyRole === 'password' ? 'Signing in…' : 'Sign in'}
               </button>
             </form>
+            {loginError && <p role="alert" className="text-xs text-rose-700">{loginError}</p>}
           </div>
 
           {/* Public Verification Shortcut */}

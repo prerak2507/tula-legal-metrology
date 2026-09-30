@@ -17,24 +17,8 @@ export const AuditLogView: React.FC = () => {
     return unsub;
   }, []);
 
-  const logs = user.role === 'BUSINESS'
-    ? allLogs.filter(l => 
-        l.actorId === user.id || 
-        l.details.toLowerCase().includes('apex agro') || 
-        l.details.toLowerCase().includes(user.fullName.toLowerCase()) ||
-        l.entityId.includes('00101') || l.entityId.includes('00102') || 
-        l.entityId.includes('001290') || l.entityId.includes('001550') || 
-        l.entityId.includes('003819') || l.entityId.includes('08912') || l.entityId.includes('0031')
-      )
-    : user.role === 'LMO'
-    ? allLogs.filter(l => l.actorId === user.id || l.actorRole === 'LMO' || l.details.includes('DL') || l.details.includes('Delhi'))
-    : user.role === 'GATC'
-    ? allLogs.filter(l => l.actorId === user.id || l.actorRole === 'GATC' || l.details.includes('GATC') || l.details.includes('GJ') || l.details.includes('Gujarat'))
-    : user.role === 'CONTROLLER'
-    ? allLogs.filter(l => l.details.includes('DL') || l.details.includes('Delhi') || l.actorRole === 'LMO' || l.actorRole === 'CONTROLLER')
-    : user.role === 'STATE_ADMIN'
-    ? allLogs.filter(l => l.details.includes('GJ') || l.details.includes('Gujarat') || l.actorRole === 'GATC' || l.actorRole === 'STATE_ADMIN')
-    : allLogs;
+  const logs = storage.getAuditLogsForUser(user);
+  void allLogs;
 
   const getScopeLabel = () => {
     if (user.role === 'BUSINESS') return `Action Audit Trail for ${user.organization}`;

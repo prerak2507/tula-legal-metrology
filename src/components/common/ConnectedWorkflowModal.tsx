@@ -64,7 +64,7 @@ export const ConnectedWorkflowModal: React.FC<ConnectedWorkflowModalProps> = ({ 
     {
       step: '4',
       actor: 'TULA Core Cryptographic Engine',
-      name: 'Automated Schedule IX Minting',
+      name: 'Automated verification Minting',
       role: 'SYSTEM',
       icon: '⚡',
       color: 'border-indigo-500 bg-indigo-50/50',
@@ -187,7 +187,7 @@ export const ConnectedWorkflowModal: React.FC<ConnectedWorkflowModalProps> = ({ 
               <span className="font-bold text-sm">Statutory Legal Framework Compliance</span>
             </div>
             <p className="text-slate-300 leading-relaxed text-[11px]">
-              Every transition in this lifecycle strictly implements the statutory mandates of <strong>The Legal Metrology Act, 2009 (Act 1 of 2010)</strong>, <strong>Schedule IX Verification Certificates</strong>, and the <strong>2026 GATC Decentralized Verification Guidelines</strong> issued by the Department of Consumer Affairs.
+              Every transition in this lifecycle strictly implements the statutory mandates of <strong>The Legal Metrology Act, 2009 (Act 1 of 2010)</strong>, <strong>verification Verification Certificates</strong>, and the <strong>2026 GATC Decentralized Verification Guidelines</strong> issued by the Department of Consumer Affairs.
             </p>
           </div>
         </div>

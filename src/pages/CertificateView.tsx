@@ -20,9 +20,12 @@ export const CertificateView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [cert, setCert] = useState<VerificationCertificate | undefined>(undefined);
 
+  const [signing, setSigning] = useState(false);
   useEffect(() => {
     if (!id) return;
-    setCert(storage.getCertificateById(id));
+    const load = () => setCert(storage.getCertificateById(decodeURIComponent(id)));
+    load();
+    return storage.subscribe(load);
   }, [id]);
 
   if (!cert) {
@@ -63,7 +66,7 @@ export const CertificateView: React.FC = () => {
             Print Certificate
           </button>
           <button
-            onClick={() => generateCertificatePdf(cert)}
+            onClick={() => { void generateCertificatePdf(cert); }}
             className="inline-flex items-center gap-1.5 bg-gov-700 hover:bg-gov-800 text-white font-bold px-4 py-2 rounded-lg text-xs transition-colors shadow-xs"
           >
             <FileDown className="w-4 h-4" />
@@ -72,7 +75,7 @@ export const CertificateView: React.FC = () => {
         </div>
       </div>
 
-      {/* Official Schedule IX Certificate Document (Print-Ready) */}
+      {/* Official Verification Certificate Document (Print-Ready) */}
       <div className="bg-white border-4 border-gov-900 rounded-xl p-8 sm:p-12 shadow-xl print-page relative space-y-6">
         {/* Inner Gold Inset Border */}
         <div className="absolute inset-2 border-2 border-emblem-gold pointer-events-none rounded-lg" />
@@ -96,7 +99,7 @@ export const CertificateView: React.FC = () => {
               CERTIFICATE OF VERIFICATION
             </h4>
             <p className="text-[11px] text-slate-500 max-w-xl mx-auto mt-0.5 leading-snug">
-              [Issued under Section 24 of The Legal Metrology Act, 2009 (Act 1 of 2010) read with Rule 27, Schedule IX of The Legal Metrology (General) Rules, 2011]
+              [Issued under Section 24 of The Legal Metrology Act, 2009 and the rules made under it]
             </p>
           </div>
         </div>
@@ -117,7 +120,7 @@ export const CertificateView: React.FC = () => {
           </div>
           <div>
             <span className="text-slate-500 font-medium">Validity Expiration Date:</span>
-            <p className="font-bold text-slate-900">{cert.validUntil} (12 Months Periodic)</p>
+            <p className="font-bold text-slate-900">{cert.validUntil} ({cert.validityMonths} months)</p>
           </div>
         </div>
 
@@ -214,23 +217,38 @@ export const CertificateView: React.FC = () => {
               4. Cryptographic Authenticity &amp; Public Verification
             </h5>
             <div className="p-3 bg-slate-900 rounded-lg text-slate-300 font-mono text-[10px] break-all space-y-1">
-              <span className="text-amber-400 font-bold block">SHA-256 Canonical Checksum:</span>
+              <span className="text-amber-400 font-bold block">SHA-256 record hash:</span>
               <span>{cert.sha256Hash}</span>
             </div>
+            {cert.signatureStatus === 'SIGNED' ? (
+              <p className="text-[11px] text-emerald-800 bg-emerald-50 border border-emerald-200 rounded p-2">
+                Signed with ECDSA P-256 key <span className="font-mono">{cert.signingKid}</span> on {cert.signedAt?.slice(0, 10)}. The QR carries the signed details, so a copy with any field changed fails the check.
+              </p>
+            ) : (
+              <div className="text-[11px] text-amber-900 bg-amber-50 border border-amber-200 rounded p-2 space-y-1.5 no-print">
+                <p><strong>Not signed yet.</strong> {cert.signingError || (cert.signatureStatus === 'LEGACY_UNSIGNED' ? 'Older record issued before signing was enabled.' : 'Waiting for the signing service.')}</p>
+                {cert.signatureStatus === 'PENDING_SIGNATURE' && (
+                  <button disabled={signing} onClick={async () => { setSigning(true); await storage.signCertificate(cert.id); setSigning(false); }} className="px-3 py-1.5 rounded bg-amber-600 text-white font-bold disabled:opacity-50">
+                    {signing ? 'Signing…' : 'Retry signing now'}
+                  </button>
+                )}
+              </div>
+            )}
             <p className="text-[10px] text-slate-500 leading-tight">
-              Notice: Under Rule 24 of the Legal Metrology (General) Rules, 2011, this certificate must be exhibited prominently at the premises where the instrument is deployed for trade or commerce. Generated digitally via the TULA Online Verification System (SIH 26036 Prototype • Team FriendlyFire).
+              Display this certificate where the instrument is used for trade. Anyone can scan the QR to check it, even without internet. Issued through the TULA prototype (SIH 26036).
             </p>
           </div>
 
           <div className="flex flex-col items-center text-center shrink-0">
             <QRCodeSVG
               value={cert.qrPayloadUrl}
-              size={120}
-              level="H"
+              size={168}
+              level="M"
               includeMargin={true}
               className="border border-slate-300 rounded shadow-xs"
             />
-            <span className="text-[10px] font-semibold text-gov-800 mt-1">Scan to Verify</span>
+            <span className="text-[10px] font-semibold text-gov-800 mt-1">Scan to verify</span>
+            <Link to={cert.qrPayloadUrl.replace(/^https?:\/\/[^/]+/, '')} className="text-[10px] text-gov-700 underline no-print">Open check page</Link>
           </div>
         </div>
 
@@ -242,8 +260,8 @@ export const CertificateView: React.FC = () => {
           </div>
 
           <div className="text-right text-xs">
-            <div className="font-serif italic font-bold text-gov-800 text-sm">
-              Digitally Authenticated
+            <div className={`font-serif italic font-bold text-sm ${cert.signatureStatus === 'SIGNED' ? 'text-gov-800' : 'text-amber-700'}`}>
+              {cert.signatureStatus === 'SIGNED' ? 'Digitally signed' : 'Digital signature pending'}
             </div>
             <p className="font-bold text-slate-900 mt-1">{cert.issuingOfficerName}</p>
             <p className="text-[11px] text-slate-600">{cert.issuingOfficerDesignation}</p>

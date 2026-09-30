@@ -15,7 +15,7 @@ import {
   ChevronRight,
   Loader2
 } from 'lucide-react';
-import { askMetrologyAssistant, isGeminiConfigured, ChatMessage } from '../../services/gemini';
+import { askMetrologyAssistant, ChatMessage } from '../../services/gemini';
 
 interface AiAssistantModalProps {
   isOpen: boolean;
@@ -31,8 +31,8 @@ const PRESET_QUERIES = [
   },
   {
     icon: FileText,
-    title: 'Statutory Fees',
-    query: 'What are the statutory verification fees for platform scales, weighbridges, and fuel dispensers under Legal Metrology Rules 2011?'
+    title: 'Fees by state',
+    query: 'How are verification fees decided, and why can they differ between states?'
   },
   {
     icon: ShieldCheck,
@@ -51,7 +51,7 @@ export const AiAssistantModal: React.FC<AiAssistantModalProps> = ({ isOpen, onCl
     {
       id: 'welcome',
       sender: 'gemini',
-      text: `**Namaste! I am the TULA AI Metrology Assistant**, powered by Google Gemini.\n\nI can assist you with:\n* **Legal Metrology Act, 2009** provisions & compounding\n* **Legal Metrology (General) Rules, 2011** schedules & MPE tables\n* **Model Approval & GATC** verification frameworks\n* **Verification fee calculation** and stamping guidelines\n\nAsk a regulatory or technical question below, or select a suggested topic.`,
+      text: `**Namaste! I am the TULA help assistant** (Google Gemini).\n\nAsk me about:\n* How to register, apply, pay and track a verification\n* The Legal Metrology Act, 2009 and the General Rules, 2011\n* What an LMO or a GATC does\n\nYou can ask in English, Hindi or Gujarati. My answers are guidance only. Fees and deadlines are set by your State, so confirm with your district Legal Metrology office.`,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
   ]);
@@ -119,7 +119,7 @@ export const AiAssistantModal: React.FC<AiAssistantModalProps> = ({ isOpen, onCl
       const errorChatMsg: ChatMessage = {
         id: `err-${Date.now()}`,
         sender: 'system',
-        text: `⚠️ **Unable to fetch AI response**: ${errorMsg}\n\nPlease check your network or verify the \`VITE_GEMINI_API_KEY\` setting.`,
+        text: `**The assistant could not answer right now.** ${errorMsg}\n\nEverything else in TULA keeps working without it.`,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
       setMessages(prev => [...prev, errorChatMsg]);

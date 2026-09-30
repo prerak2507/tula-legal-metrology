@@ -1,0 +1,18 @@
+{
+  "name": "TULA: Legal Metrology Verification",
+  "short_name": "TULA",
+  "description": "Verify weighing and measuring instruments, inspect in the field offline, and check certificates by QR.",
+  "start_url": "/dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F8FAFC",
+  "theme_color": "#1F497D",
+  "icons": [
+    { "src": "/logo/tula-logo-badge.png", "sizes": "1024x1024", "type": "image/png", "purpose": "any" }
+  ],
+  "shortcuts": [
+    { "name": "Field inspection", "url": "/field" },
+    { "name": "Verify a certificate", "url": "/verify" }
+  ]
+}

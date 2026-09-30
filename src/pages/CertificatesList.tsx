@@ -32,15 +32,8 @@ export const CertificatesList: React.FC = () => {
   }, []);
 
   // Filter certificates according to persona role
-  const certificates = user.role === 'BUSINESS'
-    ? allCertificates.filter(c => c.organization === user.organization || c.issuedToName === user.fullName || c.organization.toLowerCase().includes('apex agro'))
-    : (user.role === 'LMO')
-    ? allCertificates.filter(c => c.state === user.state || c.issuingOfficerName === user.fullName)
-    : (user.role === 'GATC')
-    ? allCertificates.filter(c => c.issuingOfficerName === user.fullName || c.issuingAuthority.includes('GATC') || (c.state === user.state && (c.category.includes('FUEL') || c.category.includes('GAS'))))
-    : (user.role === 'CONTROLLER' || user.role === 'STATE_ADMIN')
-    ? allCertificates.filter(c => c.state === user.state)
-    : allCertificates;
+  const certificates = storage.getCertificatesForUser(user);
+  void allCertificates;
 
   const filteredCerts = certificates.filter(cert => {
     const matchesSearch = 
@@ -71,7 +64,7 @@ export const CertificatesList: React.FC = () => {
           <div className="flex items-center gap-2 mb-1">
             <Award className="w-5 h-5 text-gov-700" />
             <span className="text-xs font-bold text-gov-800 uppercase tracking-wider">
-              Schedule IX Statutory Certification
+              Statutory Certification
             </span>
           </div>
           <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
@@ -143,7 +136,7 @@ export const CertificatesList: React.FC = () => {
               <div className="flex items-start justify-between gap-2 border-b border-slate-100 pb-3 mb-3">
                 <div>
                   <span className="text-[10px] font-bold text-gov-700 uppercase tracking-wider">
-                    Schedule IX Certificate
+                    Verification Certificate
                   </span>
                   <h3 className="font-mono font-bold text-slate-900 text-sm mt-0.5">
                     {cert.certificateNumber}
@@ -199,7 +192,7 @@ export const CertificatesList: React.FC = () => {
 
               <div className="flex items-center gap-1.5">
                 <Link
-                  to={`/verify/${cert.id}`}
+                  to={cert.qrPayloadUrl ? cert.qrPayloadUrl.replace(/^https?:\/\/[^/]+/, '') : `/verify/${encodeURIComponent(cert.certificateNumber)}`}
                   className="p-1.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700"
                   title="Verify QR"
                 >

@@ -1,280 +1,195 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
-import { storage } from '../services/storage';
-import { Instrument, ApplicationServiceType, ApplicationDocument } from '../types';
-import { calculateStatutoryFee } from '../services/rulesEngine';
-import { 
-  FileText, 
-  Scale, 
-  UploadCloud, 
-  Check, 
-  ArrowLeft, 
-  ArrowRight, 
-  ShieldCheck, 
-  DollarSign, 
-  AlertCircle 
-} from 'lucide-react';
+import { storage, WorkflowError } from '../services/storage';
+import { ApplicationServiceType, ApplicationDocument } from '../types';
+import { FileText, Scale, UploadCloud, ArrowLeft, IndianRupee, AlertCircle, Trash2, Plus, CheckCircle2 } from 'lucide-react';
+
+const SERVICES: { value: ApplicationServiceType; title: string; text: string }[] = [
+  { value: 'INITIAL_VERIFICATION', title: 'First verification', text: 'New instrument, never stamped' },
+  { value: 'PERIODIC_RE_VERIFICATION', title: 'Periodic re-verification', text: 'Stamp is due or expired' },
+  { value: 'RE_VERIFICATION_AFTER_REPAIR', title: 'After repair', text: 'Repaired or parts replaced' },
+  { value: 'RE_VERIFICATION_AFTER_RELOCATION', title: 'After moving', text: 'Instrument moved to a new site' },
+];
+
+const DOC_TYPES: { type: ApplicationDocument['type']; title: string; required: boolean }[] = [
+  { type: 'MODEL_APPROVAL', title: 'Model approval certificate', required: true },
+  { type: 'PURCHASE_INVOICE', title: 'Purchase invoice', required: false },
+  { type: 'PREVIOUS_CERTIFICATE', title: 'Previous verification certificate', required: false },
+  { type: 'CALIBRATION_REPORT', title: 'Repairer report (after repair)', required: false },
+];
+
+const MAX_FILE = 1.5 * 1024 * 1024;
+
+function readAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result));
+    r.onerror = () => reject(new Error('Could not read the file.'));
+    r.readAsDataURL(file);
+  });
+}
 
 export const ApplicationNew: React.FC = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const preselectedInstrumentId = searchParams.get('instrumentId') || '';
+  const [params] = useSearchParams();
+  const user = storage.getCurrentUser();
+  const mine = useMemo(() => storage.getInstrumentsForUser(user), [user.id]);
+  const openIds = useMemo(() => new Set(storage.getApplications().filter(a => a.applicantId === user.id && !['COMPLETED', 'REJECTED', 'CANCELLED'].includes(a.status)).map(a => a.instrumentId)), [user.id]);
+  const preselect = params.get('instrumentId') || '';
+  const [instId, setInstId] = useState(mine.some(i => i.id === preselect) ? preselect : (mine.find(i => !openIds.has(i.id))?.id || ''));
+  const inst = mine.find(i => i.id === instId);
+  const [service, setService] = useState<ApplicationServiceType>(inst?.lastVerificationDate ? 'PERIODIC_RE_VERIFICATION' : 'INITIAL_VERIFICATION');
+  const [preferredDate, setPreferredDate] = useState('');
+  const [docs, setDocs] = useState<ApplicationDocument[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
-  const [instruments, setInstruments] = useState<Instrument[]>(storage.getInstruments());
-  const [selectedInstId, setSelectedInstId] = useState<string>(preselectedInstrumentId || (instruments[0]?.id || ''));
-  const [serviceType, setServiceType] = useState<ApplicationServiceType>('PERIODIC_RE_VERIFICATION');
-  const [preferredDate, setPreferredDate] = useState<string>('');
-  const [remarks, setRemarks] = useState('');
+  if (user.role !== 'BUSINESS') {
+    return (
+      <div className="max-w-xl mx-auto bg-white p-8 rounded-xl border border-slate-200 text-center space-y-2">
+        <h1 className="font-bold text-slate-900">Applications are filed by instrument owners</h1>
+        <p className="text-sm text-slate-600">Officers review them in the applications queue.</p>
+        <Link to="/applications" className="text-sm font-semibold text-gov-700 underline">Go to applications</Link>
+      </div>
+    );
+  }
 
-  // Documents State
-  const [documents, setDocuments] = useState<ApplicationDocument[]>([
-    {
-      id: 'doc-init-1',
-      title: 'Valid Model Approval Certificate (Section 22)',
-      type: 'MODEL_APPROVAL',
-      fileName: 'Model_Approval_Certified.pdf',
-      fileSize: '620 KB',
-      uploadedAt: new Date().toISOString(),
-      fileUrl: '#',
-    },
-    {
-      id: 'doc-init-2',
-      title: 'Original Purchase Tax Invoice',
-      type: 'PURCHASE_INVOICE',
-      fileName: 'Tax_Invoice_Equipment.pdf',
-      fileSize: '410 KB',
-      uploadedAt: new Date().toISOString(),
-      fileUrl: '#',
-    }
-  ]);
+  if (mine.length === 0) {
+    return (
+      <div className="max-w-xl mx-auto bg-white p-8 rounded-xl border border-slate-200 text-center space-y-3">
+        <Scale className="w-10 h-10 text-slate-300 mx-auto" />
+        <h1 className="font-bold text-slate-900">Register an instrument first</h1>
+        <p className="text-sm text-slate-600">Add your scale, pump or meter. It gets a Digital ID, and then you can apply.</p>
+        <Link to="/instruments?register=1" className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-gov-700 text-white text-sm font-bold"><Plus className="w-4 h-4" /> Register an instrument</Link>
+      </div>
+    );
+  }
 
-  const selectedInst = instruments.find(i => i.id === selectedInstId) || instruments[0];
+  const fee = inst ? storage.feeFor(inst) : null;
+  const hasModelApproval = docs.some(d => d.type === 'MODEL_APPROVAL');
 
-  // Dynamic fee calculation via rule engine
-  const feeCalculation = selectedInst ? calculateStatutoryFee(selectedInst.category) : { statutory: 200, userCharge: 50, total: 250, citation: 'First Schedule, General Rules 2011' };
-
-  const handleDocumentAdd = (type: ApplicationDocument['type'], title: string) => {
-    const newDoc: ApplicationDocument = {
-      id: `doc-${Date.now()}`,
-      title,
-      type,
-      fileName: `${title.replace(/\s+/g, '_')}_Uploaded.pdf`,
-      fileSize: '512 KB',
-      uploadedAt: new Date().toISOString(),
-      fileUrl: '#',
-    };
-    setDocuments([...documents, newDoc]);
+  const addDoc = async (e: React.ChangeEvent<HTMLInputElement>, type: ApplicationDocument['type'], title: string) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setError(null);
+    if (!/^(application\/pdf|image\/(jpeg|png|webp))$/.test(file.type)) { setError('Upload a PDF, JPG or PNG file.'); return; }
+    if (file.size > MAX_FILE) { setError('Files must be under 1.5 MB in the prototype. Scan at a lower resolution.'); return; }
+    const url = await readAsDataUrl(file);
+    setDocs(d => [...d.filter(x => x.type !== type), {
+      id: `doc-${Date.now()}`, title, type, fileName: file.name, fileSize: `${Math.max(1, Math.round(file.size / 1024))} KB`,
+      uploadedAt: new Date().toISOString(), fileUrl: url, reviewStatus: 'SUBMITTED',
+    }]);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedInst) return;
-
-    const user = storage.getCurrentUser();
-    const newApp = storage.createApplication({
-      instrumentId: selectedInst.id,
-      applicantId: user.id,
-      applicantName: user.fullName,
-      organization: user.organization,
-      serviceType,
-      state: selectedInst.state,
-      district: selectedInst.district,
-      location: selectedInst.installationAddress,
-      preferredDate: preferredDate || new Date(Date.now() + 7*24*60*60*1000).toISOString().split('T')[0],
-      feeAmount: feeCalculation.total,
-      feeStatus: 'UNPAID',
-      documents,
-    });
-
-    navigate(`/applications/${newApp.id}`);
+    setError(null);
+    if (!inst || !fee) { setError('Choose an instrument.'); return; }
+    if (!hasModelApproval) { setError('Upload the model approval certificate.'); return; }
+    setBusy(true);
+    try {
+      const app = await storage.createApplication({
+        instrumentId: inst.id, applicantId: user.id, applicantName: user.fullName, organization: user.organization,
+        serviceType: service, state: inst.state, district: inst.district, location: inst.installationAddress,
+        preferredDate: preferredDate || undefined, feeAmount: fee.total, feeStatus: 'UNPAID', documents: docs,
+      });
+      navigate(`/applications/${app.id}`);
+    } catch (err) {
+      setError(err instanceof WorkflowError || err instanceof Error ? err.message : String(err));
+      setBusy(false);
+    }
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      {/* Header */}
+    <div className="max-w-3xl mx-auto space-y-5">
       <div>
-        <Link to="/applications" className="inline-flex items-center gap-1.5 text-xs font-semibold text-gov-700 hover:text-gov-900 mb-2">
-          <ArrowLeft className="w-3.5 h-3.5" /> Back to Applications List
-        </Link>
-        <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
-          File Verification Application
-        </h1>
-        <p className="text-xs text-slate-500 mt-0.5">
-          Submit statutory verification request under Section 24 of The Legal Metrology Act, 2009.
-        </p>
+        <Link to="/applications" className="inline-flex items-center gap-1.5 text-xs font-semibold text-gov-700 mb-2"><ArrowLeft className="w-3.5 h-3.5" /> Applications</Link>
+        <h1 className="text-2xl font-extrabold text-slate-900">Apply for verification</h1>
+        <p className="text-sm text-slate-600">Three steps. You can pay the fee right after submitting.</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Step 1: Select Instrument */}
-        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-xs space-y-4">
-          <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-            <span className="w-6 h-6 rounded-full bg-gov-700 text-white font-bold text-xs flex items-center justify-center">1</span>
-            <h3 className="font-bold text-sm text-slate-900">Select Instrument from Fleet</h3>
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">Target Instrument *</label>
-            <select
-              value={selectedInstId}
-              onChange={e => setSelectedInstId(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-xs font-medium focus:ring-2 focus:ring-gov-600 focus:bg-white"
-            >
-              {instruments.map(i => (
-                <option key={i.id} value={i.id}>
-                  {i.id} — {i.categoryName} ({i.serialNumber}) • Status: {i.status}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {selectedInst && (
-            <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-              <div>
-                <span className="text-slate-500">Manufacturer &amp; Model:</span>
-                <p className="font-bold text-slate-900">{selectedInst.manufacturer} • {selectedInst.model}</p>
-              </div>
-              <div>
-                <span className="text-slate-500">Nominal Capacity:</span>
-                <p className="font-bold text-slate-900">{selectedInst.capacity}</p>
-              </div>
-              <div>
-                <span className="text-slate-500">Installation Site:</span>
-                <p className="font-semibold text-slate-800 line-clamp-1">{selectedInst.installationAddress}</p>
-              </div>
-            </div>
+      <form onSubmit={submit} className="space-y-5">
+        <section className="bg-white p-5 rounded-xl border border-slate-200 space-y-3">
+          <h2 className="font-bold text-sm text-slate-900 flex items-center gap-2"><span className="w-6 h-6 rounded-full bg-gov-700 text-white text-xs flex items-center justify-center">1</span> Instrument</h2>
+          <label htmlFor="inst" className="sr-only">Instrument</label>
+          <select id="inst" value={instId} onChange={e => setInstId(e.target.value)} className="w-full bg-white border border-slate-300 rounded-lg p-3 text-sm">
+            {mine.map(i => (
+              <option key={i.id} value={i.id} disabled={openIds.has(i.id)}>
+                {i.id} • {i.categoryName} • {i.status.replace(/_/g, ' ').toLowerCase()}{openIds.has(i.id) ? ' (application already open)' : ''}
+              </option>
+            ))}
+          </select>
+          {inst && (
+            <dl className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs bg-slate-50 rounded-lg p-3 border border-slate-200">
+              <div><dt className="text-slate-500">Make / model</dt><dd className="font-semibold text-slate-900">{inst.manufacturer} {inst.model}</dd></div>
+              <div><dt className="text-slate-500">Capacity / class</dt><dd className="font-semibold text-slate-900">{inst.capacity} • {inst.accuracyClass.replace('CLASS_', 'Class ').replace('NOT_APPLICABLE', 'n/a')}</dd></div>
+              <div><dt className="text-slate-500">Site</dt><dd className="font-semibold text-slate-900">{inst.installationAddress}</dd></div>
+            </dl>
           )}
-        </div>
+          <Link to="/instruments?register=1" className="inline-flex items-center gap-1 text-xs font-semibold text-gov-700"><Plus className="w-3.5 h-3.5" /> Register another instrument</Link>
+        </section>
 
-        {/* Step 2: Verification Service Type */}
-        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-xs space-y-4">
-          <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-            <span className="w-6 h-6 rounded-full bg-gov-700 text-white font-bold text-xs flex items-center justify-center">2</span>
-            <h3 className="font-bold text-sm text-slate-900">Verification Service Category</h3>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {[
-              { id: 'PERIODIC_RE_VERIFICATION', title: 'Periodic Re-Verification', desc: 'Mandatory annual or biennial re-testing under Section 24' },
-              { id: 'INITIAL_VERIFICATION', title: 'Initial Verification', desc: 'First-time stamping of newly installed instrument' },
-              { id: 'RE_VERIFICATION_AFTER_REPAIR', title: 'Re-Verification After Repair', desc: 'Mandatory testing following repair, calibration or part replacement' },
-              { id: 'RE_VERIFICATION_AFTER_RELOCATION', title: 'Re-Verification After Relocation', desc: 'Testing after physical dismantling or site change' },
-            ].map(srv => (
-              <label
-                key={srv.id}
-                className={`p-4 rounded-lg border text-xs cursor-pointer transition-all flex flex-col justify-between ${
-                  serviceType === srv.id
-                    ? 'border-gov-700 bg-gov-50/50 ring-1 ring-gov-600 shadow-xs'
-                    : 'border-slate-200 hover:border-slate-300'
-                }`}
-              >
-                <div className="flex items-start justify-between">
-                  <span className="font-bold text-slate-900">{srv.title}</span>
-                  <input
-                    type="radio"
-                    name="serviceType"
-                    checked={serviceType === srv.id}
-                    onChange={() => setServiceType(srv.id as ApplicationServiceType)}
-                    className="text-gov-700 focus:ring-gov-600"
-                  />
-                </div>
-                <p className="text-slate-500 mt-1 leading-relaxed text-[11px]">{srv.desc}</p>
+        <section className="bg-white p-5 rounded-xl border border-slate-200 space-y-3">
+          <h2 className="font-bold text-sm text-slate-900 flex items-center gap-2"><span className="w-6 h-6 rounded-full bg-gov-700 text-white text-xs flex items-center justify-center">2</span> What do you need?</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {SERVICES.map(s => (
+              <label key={s.value} className={`p-3 rounded-lg border cursor-pointer min-h-[56px] ${service === s.value ? 'border-gov-700 bg-gov-50 ring-2 ring-gov-600/20' : 'border-slate-200'}`}>
+                <input type="radio" name="service" className="sr-only" checked={service === s.value} onChange={() => setService(s.value)} />
+                <span className="block font-bold text-sm text-slate-900">{s.title}</span>
+                <span className="block text-xs text-slate-500">{s.text}</span>
               </label>
             ))}
           </div>
+          <label className="block text-xs">
+            <span className="font-semibold text-slate-700">Preferred visit date (optional)</span>
+            <input type="date" min={new Date().toISOString().slice(0, 10)} value={preferredDate} onChange={e => setPreferredDate(e.target.value)} className="mt-1 w-full sm:w-60 bg-white border border-slate-300 rounded-lg p-2.5 text-sm" />
+          </label>
+        </section>
 
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">Preferred Inspection Date</label>
-            <input
-              type="date"
-              value={preferredDate}
-              onChange={e => setPreferredDate(e.target.value)}
-              className="bg-slate-50 border border-slate-300 rounded p-2 text-xs"
-            />
-          </div>
-        </div>
-
-        {/* Step 3: Supporting Documents */}
-        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-xs space-y-4">
-          <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-            <span className="w-6 h-6 rounded-full bg-gov-700 text-white font-bold text-xs flex items-center justify-center">3</span>
-            <h3 className="font-bold text-sm text-slate-900">Mandatory Supporting Documents</h3>
-          </div>
-
+        <section className="bg-white p-5 rounded-xl border border-slate-200 space-y-3">
+          <h2 className="font-bold text-sm text-slate-900 flex items-center gap-2"><span className="w-6 h-6 rounded-full bg-gov-700 text-white text-xs flex items-center justify-center">3</span> Documents</h2>
+          <p className="text-xs text-slate-500">PDF, JPG or PNG, up to 1.5 MB each. A clear phone photo is fine.</p>
           <div className="space-y-2">
-            {documents.map((doc, idx) => (
-              <div key={doc.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200 text-xs">
-                <div className="flex items-center gap-2.5">
-                  <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <div>
-                    <span className="font-semibold text-slate-900">{doc.title}</span>
-                    <span className="block text-[10px] text-slate-500 font-mono">{doc.fileName} ({doc.fileSize})</span>
+            {DOC_TYPES.map(d => {
+              const up = docs.find(x => x.type === d.type);
+              return (
+                <div key={d.type} className="flex flex-wrap items-center justify-between gap-2 p-3 rounded-lg border border-slate-200 bg-slate-50">
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-slate-900">{d.title}{d.required && <span className="text-rose-600"> *</span>}</p>
+                    {up ? <p className="text-xs text-emerald-700 flex items-center gap-1 break-all"><CheckCircle2 className="w-3.5 h-3.5 shrink-0" /> {up.fileName} ({up.fileSize})</p> : <p className="text-xs text-slate-500">{d.required ? 'Required' : 'Optional'}</p>}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {up && <button type="button" onClick={() => setDocs(x => x.filter(y => y.type !== d.type))} className="p-2 rounded-lg text-rose-600 hover:bg-rose-50" aria-label={`Remove ${d.title}`}><Trash2 className="w-4 h-4" /></button>}
+                    <label className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white border border-slate-300 text-xs font-bold cursor-pointer min-h-[40px]">
+                      <UploadCloud className="w-4 h-4" /> {up ? 'Replace' : 'Upload'}
+                      <input type="file" accept="application/pdf,image/jpeg,image/png,image/webp" className="sr-only" onChange={e => addDoc(e, d.type, d.title)} />
+                    </label>
                   </div>
                 </div>
-                <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-bold">
-                  ATTACHED
-                </span>
-              </div>
-            ))}
+              );
+            })}
           </div>
+        </section>
 
-          <div className="flex flex-wrap gap-2 pt-2">
-            <button
-              type="button"
-              onClick={() => handleDocumentAdd('CALIBRATION_REPORT', 'Internal Calibration & Error Log')}
-              className="px-3 py-1.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium border border-slate-300"
-            >
-              + Attach Calibration Log
-            </button>
-            <button
-              type="button"
-              onClick={() => handleDocumentAdd('SITE_PLAN', 'Premises Layout & Safety Clearance')}
-              className="px-3 py-1.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium border border-slate-300"
-            >
-              + Attach Site Layout Plan
-            </button>
-          </div>
-        </div>
-
-        {/* Step 4: Statutory Fee Breakdown */}
-        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-xs space-y-4">
-          <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-            <span className="w-6 h-6 rounded-full bg-gov-700 text-white font-bold text-xs flex items-center justify-center">4</span>
-            <h3 className="font-bold text-sm text-slate-900">Statutory Fee Computation (Rule Engine)</h3>
-          </div>
-
-          <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-2 text-xs">
-            <div className="flex justify-between text-slate-600">
-              <span>Statutory Verification &amp; Stamping Fee (First Schedule):</span>
-              <span className="font-semibold text-slate-900">₹{feeCalculation.statutory}</span>
+        {fee && inst && (
+          <section className="bg-white p-5 rounded-xl border border-slate-200 space-y-2">
+            <h2 className="font-bold text-sm text-slate-900 flex items-center gap-2"><IndianRupee className="w-4 h-4 text-gov-700" /> Fee ({inst.state} rules)</h2>
+            <div className="text-sm space-y-1">
+              <div className="flex justify-between"><span className="text-slate-600">Verification fee</span><span className="font-semibold">₹{fee.statutory.toLocaleString('en-IN')}</span></div>
+              <div className="flex justify-between"><span className="text-slate-600">Service charge</span><span className="font-semibold">₹{fee.userCharge.toLocaleString('en-IN')}</span></div>
+              <div className="flex justify-between border-t border-slate-200 pt-1 text-base"><span className="font-bold">Total</span><span className="font-extrabold">₹{fee.total.toLocaleString('en-IN')}</span></div>
             </div>
-            <div className="flex justify-between text-slate-600">
-              <span>e-Governance User Processing Charge:</span>
-              <span className="font-semibold text-slate-900">₹{feeCalculation.userCharge}</span>
-            </div>
-            <div className="border-t border-slate-200 pt-2 flex justify-between text-sm font-extrabold text-slate-900">
-              <span>Total Payable Amount:</span>
-              <span className="text-gov-800">₹{feeCalculation.total}</span>
-            </div>
-            <p className="text-[10px] text-slate-400 mt-1 italic">
-              Governed by: {feeCalculation.citation}
-            </p>
-          </div>
-        </div>
+            <p className="text-[11px] text-slate-500">Rule {fee.ruleId} ({fee.jurisdiction === 'NATIONAL' ? 'default schedule' : `${inst.state} schedule`}). {fee.citation}.</p>
+          </section>
+        )}
 
-        {/* Submit Bar */}
-        <div className="flex items-center justify-end gap-3 pt-2">
-          <Link
-            to="/applications"
-            className="px-5 py-2.5 rounded-lg border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-50"
-          >
-            Cancel
-          </Link>
-          <button
-            type="submit"
-            className="inline-flex items-center gap-2 bg-gov-700 hover:bg-gov-800 text-white font-bold px-6 py-2.5 rounded-lg text-xs transition-colors shadow-md"
-          >
-            <span>Submit Verification Application</span>
-            <ArrowRight className="w-4 h-4" />
+        {error && <p role="alert" className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-sm text-rose-800 flex gap-2"><AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />{error}</p>}
+
+        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+          <Link to="/applications" className="px-5 py-3 rounded-lg bg-slate-100 text-slate-800 text-sm font-semibold text-center">Cancel</Link>
+          <button type="submit" disabled={busy || !inst || openIds.has(instId)} className="px-6 py-3 rounded-lg bg-gov-700 hover:bg-gov-800 text-white text-sm font-bold disabled:opacity-50 inline-flex items-center justify-center gap-2">
+            <FileText className="w-4 h-4" /> Submit application
           </button>
         </div>
       </form>

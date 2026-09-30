@@ -23,6 +23,12 @@ export interface UserProfile {
   badgeNumber?: string;  // For LMO
   gatcCode?: string;     // For GATC
   jurisdictionOffice?: string;
+  /** DEMO = seeded role account, SELF = registered through the sign-up form */
+  accountType?: 'DEMO' | 'SELF';
+  phoneVerified?: boolean;
+  gstin?: string;
+  notifyByEmail?: boolean;
+  notifyBySms?: boolean;
   createdAt: string;
 }
 
@@ -54,7 +60,7 @@ export type InstrumentStatus =
   | 'ACTIVE'              // Verified and stamped, within validity period
   | 'EXPIRING_SOON'        // Within 60 / 30 / 15 days of renewal
   | 'EXPIRED'              // Validity lapsed, unlawful for commercial use
-  | 'SUSPENDED'            // Seized or suspended under Section 27
+  | 'SUSPENDED'            // Seized or suspended by an officer
   | 'REVOKED'              // Revoked due to tampering or failed spot audit
   | 'RE_VERIFICATION_PENDING';
 
@@ -115,6 +121,7 @@ export type ApplicationStatus =
   | 'STAMPED'
   | 'CERTIFICATE_GENERATED'
   | 'COMPLETED'
+  | 'INSPECTED_PENDING_SYNC'
   | 'CANCELLED';
 
 export interface ApplicationDocument {
@@ -125,6 +132,8 @@ export interface ApplicationDocument {
   fileSize: string;
   uploadedAt: string;
   fileUrl: string;
+  /** SUBMITTED until an officer checks it during scrutiny */
+  reviewStatus?: 'SUBMITTED' | 'ACCEPTED' | 'REJECTED';
 }
 
 export interface ScrutinyCheckItem {
@@ -174,14 +183,19 @@ export interface TestReadingRow {
   observedValue: string;        // e.g., "10.002 kg"
   error: string;                // e.g., "+0.002 kg"
   permissibleTolerance: string; // e.g., "±0.005 kg" (MPE)
-  result: 'PASS' | 'FAIL';
+  result: 'PASS' | 'FAIL' | 'PENDING';
+  /** Numeric test point, unit and MPE used to compute the result */
+  nominal?: number;
+  unit?: string;
+  mpe?: number;
+  mpeRule?: string;
 }
 
 export interface InspectionChecklistItem {
   id: string;
   label: string;
   category: 'VISUAL' | 'METROLOGICAL' | 'ENVIRONMENTAL' | 'SECURITY';
-  status: 'PASS' | 'FAIL' | 'ADJUSTMENT_REQUIRED' | 'NOT_APPLICABLE';
+  status: 'NOT_CHECKED' | 'PASS' | 'FAIL' | 'ADJUSTMENT_REQUIRED' | 'NOT_APPLICABLE';
   remarks?: string;
 }
 
@@ -196,6 +210,10 @@ export interface InspectionRecord {
   location: string;
   latitude?: number;
   longitude?: number;
+  /** DEVICE_GPS = captured on the officer's phone; NOT_CAPTURED = permission denied / unavailable */
+  locationSource?: 'DEVICE_GPS' | 'NOT_CAPTURED';
+  gpsAccuracyM?: number;
+  distanceFromSiteM?: number;
   checklist: InspectionChecklistItem[];
   testReadings: TestReadingRow[];
   evidencePhotos: {
@@ -204,6 +222,7 @@ export interface InspectionRecord {
     url: string;
     type: 'INSTRUMENT_FRONT' | 'NAMEPLATE_SERIAL' | 'SEAL_APPLIED' | 'TEST_SETUP' | 'READING_DISPLAY';
     timestamp: string;
+    source?: 'CAMERA' | 'DEMO_SAMPLE';
   }[];
   inspectorRemarks: string;
   result: 'PASS' | 'FAIL' | 'ADJUSTMENT_REQUIRED' | 'RETEST_REQUIRED';
@@ -266,6 +285,13 @@ export interface VerificationCertificate {
   revokedAt?: string;
   sha256Hash: string;
   qrPayloadUrl: string;
+  /** Digital signature by the issuing authority (ECDSA P-256 via /api/sign) */
+  signatureStatus?: 'SIGNED' | 'PENDING_SIGNATURE' | 'LEGACY_UNSIGNED';
+  signedPayload?: string;
+  signature?: string;
+  signingKid?: string;
+  signedAt?: string;
+  signingError?: string;
   version: number;
   issuedAt: string;
 }
@@ -299,6 +325,29 @@ export interface NotificationItem {
   read: boolean;
   createdAt: string;
   channel: 'IN_APP' | 'SIMULATED_EMAIL' | 'SIMULATED_SMS';
+}
+
+export type NotificationTemplate =
+  | 'APPLICATION_SUBMITTED' | 'FEE_RECEIVED' | 'CORRECTION_REQUIRED' | 'INSPECTION_SCHEDULED'
+  | 'CERTIFICATE_ISSUED' | 'INSPECTION_FAILED' | 'EXPIRY_REMINDER';
+
+export type DeliveryStatus = 'sent' | 'not_configured' | 'failed' | 'skipped' | 'blocked' | 'queued_offline' | 'pending';
+
+/** One SMS / email message and what happened to it. */
+export interface OutboxMessage {
+  id: string;
+  template: NotificationTemplate;
+  recipientId: string;
+  email?: string;
+  phone?: string;
+  subject: string;
+  text: string;
+  params?: Record<string, string>;
+  emailStatus: DeliveryStatus;
+  smsStatus: DeliveryStatus;
+  error?: string;
+  createdAt: string;
+  attemptedAt?: string;
 }
 
 export interface EnforcementCase {

@@ -34,9 +34,13 @@ export const DemoControlModal: React.FC<DemoControlModalProps> = ({
 
   const handleFastForward = async () => {
     if (!selectedAppId) return;
-    await storage.fastForwardApplication(selectedAppId);
-    setActionMessage(`Application ${selectedAppId} fast-forwarded! Schedule IX Certificate & Stamp successfully issued.`);
-    setTimeout(() => setActionMessage(null), 4000);
+    try {
+      await storage.fastForwardApplication(selectedAppId);
+      setActionMessage(`${selectedAppId}: inspection recorded with sample readings and certificate issued (logged as a demo action).`);
+    } catch (e) {
+      setActionMessage(`Could not fast-forward: ${(e as Error).message}`);
+    }
+    setTimeout(() => setActionMessage(null), 5000);
   };
 
   const handleSimulateExpiry = () => {
@@ -49,13 +53,13 @@ export const DemoControlModal: React.FC<DemoControlModalProps> = ({
   const handleRevokeCert = () => {
     if (!selectedCertId) return;
     storage.revokeCertificate(selectedCertId, revocationReason);
-    setActionMessage(`Certificate ${selectedCertId} REVOKED. Public QR check will now display REVOKED!`);
+    setActionMessage(`Certificate ${selectedCertId} revoked. The QR check on this device now shows it as revoked. Other devices see it after the published list is updated.`);
     setTimeout(() => setActionMessage(null), 4000);
   };
 
   const handleTriggerReminders = () => {
     const count = storage.triggerBulkReminders();
-    setActionMessage(`Dispatched ${count} automated re-verification reminder notices.`);
+    setActionMessage(`${count} reminder(s) generated. See SMS / Email Updates for delivery status.`);
     setTimeout(() => setActionMessage(null), 4000);
   };
 
@@ -103,7 +107,7 @@ export const DemoControlModal: React.FC<DemoControlModalProps> = ({
               <h4 className="font-bold text-slate-900">1. Instant Fast-Forward Workflow</h4>
             </div>
             <p className="text-xs text-slate-600 mb-3">
-              Fast-forward an application through field inspection, MPE test readings, lead stamping, and Schedule IX Certificate generation in 1 click.
+              Fast-forward an application through field inspection, MPE test readings, lead stamping, and Verification Certificate generation in 1 click.
             </p>
             <div className="flex flex-col sm:flex-row gap-2">
               <select
