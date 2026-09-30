@@ -25,7 +25,9 @@ export const DemoControlModal: React.FC<DemoControlModalProps> = ({ isOpen, onCl
 
   const myJobs = useMemo(() => storage.getApplicationsForUser(user)
     .filter(a => a.assignedToId === user.id && ['ASSIGNED', 'SCHEDULED', 'RETEST_REQUIRED'].includes(a.status)), [user.id, isOpen]);
-  const revocable = useMemo(() => (isSupervisor ? storage.getCertificatesForUser(user).filter(c => c.status === 'VALID') : []), [user.id, isOpen]);
+  // Showcase samples used by the public pages are locked in the database, so they are not offered here.
+  const SHOWCASE = ['CERT-2026-08912', 'CERT-2026-01994', 'CERT-2026-06421', 'CERT-2025-10101', 'CERT-2025-09999'];
+  const revocable = useMemo(() => (isSupervisor ? storage.getCertificatesForUser(user).filter(c => c.status === 'VALID' && !SHOWCASE.includes(c.id)) : []), [user.id, isOpen]);
   const expirable = useMemo(() => (isSupervisor || isFieldOfficer ? storage.getInstrumentsForUser(user).filter(i => i.status === 'ACTIVE') : []), [user.id, isOpen]);
 
   const [appId, setAppId] = useState('');

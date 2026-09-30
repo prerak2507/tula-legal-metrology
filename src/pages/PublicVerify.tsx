@@ -24,6 +24,47 @@ type Outcome =
 
 const SAMPLE_ID = 'CERT-2026-08912';
 
+// Citizen-facing text in English and Hindi. The choice is remembered on the device.
+const TEXT = {
+  en: {
+    title: "Check an instrument's certificate",
+    intro: 'Scan the QR on the certificate or seal. The check runs on your phone, needs no login, and works without internet.',
+    tabs: ['Scan', 'Upload photo', 'Type number'],
+    point: 'Point the camera at the QR code', start: 'Start camera', sample: 'Try a sample',
+    samples: ['Genuine', 'Edited copy', 'Expired', 'Revoked'],
+    sampleNote: '"Edited copy" takes the genuine certificate and changes only its expiry date. The signature no longer matches, so the check fails.',
+    checking: 'Checking…',
+    genuine: 'Genuine and valid', genuineText: (d: string) => `Signed by the issuing authority and valid until ${d}. The signature was checked on this device.`,
+    expired: 'Genuine but expired', expiredText: (d: string) => `This certificate expired on ${d}. The instrument must be re-verified before it is used for trade.`,
+    revoked: 'Revoked. Do not rely on this instrument', revokedFallback: 'Revoked by the issuing office',
+    fake: 'Fake or edited certificate', fakeText: (reason: string, claim?: string) => `${reason}${claim ? ` It claims to be ${claim}.` : ''} Report it so the district office can inspect.`,
+    notFound: 'No certificate found', notFoundText: (t: string) => `Nothing matches "${t}". A certificate printed on an instrument should scan as a QR. If this number came from a seal or sticker, report it.`,
+    labels: { cert: 'Certificate', iid: 'Instrument ID', inst: 'Instrument', cap: 'Capacity / class', sn: 'Serial number', owner: 'Owner', place: 'Place', on: 'Verified on', until: 'Valid until', seal: 'Seal', by: 'Verified by' },
+    problem: 'Weight or reading looks wrong, seal broken, or certificate expired?', report: 'Report a problem',
+    rightsTitle: 'Your right as a buyer',
+    rights: 'Every scale, fuel pump or meter used for trade must be verified and stamped under the Legal Metrology Act, 2009. You can ask the seller to show the certificate.',
+  },
+  hi: {
+    title: 'तौल या माप उपकरण का प्रमाणपत्र जाँचें',
+    intro: 'प्रमाणपत्र या सील पर लगा QR स्कैन करें। जाँच आपके फ़ोन पर ही होती है, लॉगिन की ज़रूरत नहीं, और इंटरनेट के बिना भी चलती है।',
+    tabs: ['स्कैन करें', 'फ़ोटो अपलोड करें', 'नंबर लिखें'],
+    point: 'कैमरा QR कोड की ओर रखें', start: 'कैमरा चालू करें', sample: 'नमूना आज़माएँ',
+    samples: ['असली', 'बदली हुई कॉपी', 'अवधि समाप्त', 'रद्द'],
+    sampleNote: '"बदली हुई कॉपी" असली प्रमाणपत्र की सिर्फ़ समाप्ति तिथि बदलती है। हस्ताक्षर मेल नहीं खाता, इसलिए जाँच विफल होती है।',
+    checking: 'जाँच हो रही है…',
+    genuine: 'असली और मान्य', genuineText: (d: string) => `जारी करने वाले प्राधिकरण द्वारा हस्ताक्षरित, ${d} तक मान्य। हस्ताक्षर इसी फ़ोन पर जाँचा गया।`,
+    expired: 'असली, पर अवधि समाप्त', expiredText: (d: string) => `यह प्रमाणपत्र ${d} को समाप्त हो गया। व्यापार में उपयोग से पहले उपकरण का दोबारा सत्यापन ज़रूरी है।`,
+    revoked: 'रद्द किया गया। इस उपकरण पर भरोसा न करें', revokedFallback: 'जारी करने वाले कार्यालय ने रद्द किया',
+    fake: 'नकली या बदला हुआ प्रमाणपत्र', fakeText: (_r: string, claim?: string) => `हस्ताक्षर प्रमाणपत्र के विवरण से मेल नहीं खाता।${claim ? ` यह ${claim} होने का दावा करता है।` : ''} शिकायत करें ताकि ज़िला कार्यालय जाँच कर सके।`,
+    notFound: 'कोई प्रमाणपत्र नहीं मिला', notFoundText: (t: string) => `"${t}" से मेल खाता कोई प्रमाणपत्र नहीं है। अगर यह नंबर किसी सील या स्टिकर पर है, तो शिकायत करें।`,
+    labels: { cert: 'प्रमाणपत्र', iid: 'उपकरण आईडी', inst: 'उपकरण', cap: 'क्षमता / श्रेणी', sn: 'क्रम संख्या', owner: 'मालिक', place: 'स्थान', on: 'सत्यापन तिथि', until: 'कब तक मान्य', seal: 'सील', by: 'सत्यापनकर्ता' },
+    problem: 'वज़न या रीडिंग गलत लगे, सील टूटी हो, या प्रमाणपत्र समाप्त हो?', report: 'शिकायत करें',
+    rightsTitle: 'खरीदार के रूप में आपका अधिकार',
+    rights: 'व्यापार में इस्तेमाल होने वाला हर तराज़ू, ईंधन पंप या मीटर विधिक माप विज्ञान अधिनियम, 2009 के तहत सत्यापित और मुहरबंद होना चाहिए। आप विक्रेता से प्रमाणपत्र दिखाने को कह सकते हैं।',
+  },
+};
+type Lang = keyof typeof TEXT;
+
 export const PublicVerify: React.FC = () => {
   const { certificateId } = useParams<{ certificateId?: string }>();
   const [search] = useSearchParams();
@@ -36,6 +77,11 @@ export const PublicVerify: React.FC = () => {
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [online, setOnline] = useState(navigator.onLine);
   const [reportOpen, setReportOpen] = useState(false);
+  const [lang, setLang] = useState<Lang>(() => {
+    try { return (localStorage.getItem('tula-lang') as Lang) === 'hi' ? 'hi' : 'en'; } catch { return 'en'; }
+  });
+  const T = TEXT[lang];
+  const switchLang = (l: Lang) => { setLang(l); try { localStorage.setItem('tula-lang', l); } catch { /* ignore */ } };
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -184,6 +230,10 @@ export const PublicVerify: React.FC = () => {
         <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between gap-3">
           <Link to="/" aria-label="TULA home"><TulaLogo variant="full" theme="light" size="sm" /></Link>
           <nav className="flex items-center gap-2">
+            <div className="inline-flex rounded-lg border border-slate-300 overflow-hidden text-xs font-bold" role="group" aria-label="Language">
+              <button onClick={() => switchLang('en')} aria-pressed={lang === 'en'} className={`px-2.5 py-2 min-h-[40px] ${lang === 'en' ? 'bg-slate-900 text-white' : 'bg-white text-slate-700'}`}>EN</button>
+              <button onClick={() => switchLang('hi')} aria-pressed={lang === 'hi'} className={`px-2.5 py-2 min-h-[40px] ${lang === 'hi' ? 'bg-slate-900 text-white' : 'bg-white text-slate-700'}`} lang="hi">हिं</button>
+            </div>
             <Link to="/" className="inline-flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-100 min-h-[40px]"><Home className="w-4 h-4" /><span className="hidden sm:inline">Home</span></Link>
             <Link to="/dashboard" className="inline-flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-semibold bg-gov-800 text-white min-h-[40px]"><LayoutDashboard className="w-4 h-4" /><span className="hidden sm:inline">Portal</span></Link>
           </nav>
@@ -192,16 +242,16 @@ export const PublicVerify: React.FC = () => {
 
       <main className="max-w-4xl mx-auto px-4 py-6 space-y-5">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">Check an instrument's certificate</h1>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900" lang={lang}>{T.title}</h1>
           <p className="text-sm text-slate-600 mt-1">
-            Scan the QR on the certificate or seal. The check runs on your phone, needs no login, and works without internet.
+            {T.intro}
           </p>
           {!online && <p className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1"><WifiOff className="w-3.5 h-3.5" /> Offline: signatures are still checked. Revocations use the last saved list.</p>}
         </div>
 
         <section className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
           <div className="grid grid-cols-3 border-b border-slate-200" role="tablist">
-            {([['camera', 'Scan', Camera], ['upload', 'Upload photo', Upload], ['manual', 'Type number', Keyboard]] as const).map(([key, label, Icon]) => (
+            {([['camera', T.tabs[0], Camera], ['upload', T.tabs[1], Upload], ['manual', T.tabs[2], Keyboard]] as const).map(([key, label, Icon]) => (
               <button key={key} role="tab" aria-selected={tab === key} onClick={() => { setTab(key); if (key !== 'camera') stopCamera(); }}
                 className={`py-3 min-h-[48px] text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 ${tab === key ? 'text-gov-800 border-b-2 border-gov-700 bg-gov-50/50' : 'text-slate-500'}`}>
                 <Icon className="w-4 h-4" /> {label}
@@ -216,8 +266,8 @@ export const PublicVerify: React.FC = () => {
                   {!cameraOn && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 text-slate-300 gap-3">
                       <Camera className="w-10 h-10" />
-                      <p className="text-sm">Point the camera at the QR code</p>
-                      <button onClick={startCamera} className="px-5 py-3 rounded-xl bg-white text-slate-900 font-bold text-sm">Start camera</button>
+                      <p className="text-sm">{T.point}</p>
+                      <button onClick={startCamera} className="px-5 py-3 rounded-xl bg-white text-slate-900 font-bold text-sm">{T.start}</button>
                     </div>
                   )}
                   {cameraOn && <div className="absolute inset-8 border-2 border-emerald-400 rounded-xl pointer-events-none" />}
@@ -243,37 +293,37 @@ export const PublicVerify: React.FC = () => {
               </form>
             )}
             <div className="mt-5 pt-4 border-t border-slate-100">
-              <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2">Try a sample</p>
+              <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2">{T.sample}</p>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                <button onClick={() => runSample('genuine')} className="px-3 py-2.5 rounded-lg border border-emerald-300 bg-emerald-50 text-emerald-900 text-xs font-bold min-h-[44px]">Genuine</button>
-                <button onClick={() => runSample('tampered')} className="px-3 py-2.5 rounded-lg border border-rose-300 bg-rose-50 text-rose-900 text-xs font-bold min-h-[44px]">Edited copy</button>
-                <button onClick={() => runSample('expired')} className="px-3 py-2.5 rounded-lg border border-amber-300 bg-amber-50 text-amber-900 text-xs font-bold min-h-[44px]">Expired</button>
-                <button onClick={() => runSample('revoked')} className="px-3 py-2.5 rounded-lg border border-slate-300 bg-slate-50 text-slate-900 text-xs font-bold min-h-[44px]">Revoked</button>
+                <button onClick={() => runSample('genuine')} className="px-3 py-2.5 rounded-lg border border-emerald-300 bg-emerald-50 text-emerald-900 text-xs font-bold min-h-[44px]">{T.samples[0]}</button>
+                <button onClick={() => runSample('tampered')} className="px-3 py-2.5 rounded-lg border border-rose-300 bg-rose-50 text-rose-900 text-xs font-bold min-h-[44px]">{T.samples[1]}</button>
+                <button onClick={() => runSample('expired')} className="px-3 py-2.5 rounded-lg border border-amber-300 bg-amber-50 text-amber-900 text-xs font-bold min-h-[44px]">{T.samples[2]}</button>
+                <button onClick={() => runSample('revoked')} className="px-3 py-2.5 rounded-lg border border-slate-300 bg-slate-50 text-slate-900 text-xs font-bold min-h-[44px]">{T.samples[3]}</button>
               </div>
-              <p className="text-[11px] text-slate-500 mt-2">"Edited copy" takes the genuine certificate and changes only its expiry date. The signature no longer matches, so the check fails.</p>
+              <p className="text-[11px] text-slate-500 mt-2">{T.sampleNote}</p>
             </div>
           </div>
         </section>
 
-        {busy && <div className="flex items-center justify-center gap-2 text-sm text-slate-600 py-6"><Loader2 className="w-5 h-5 animate-spin" /> Checking…</div>}
+        {busy && <div className="flex items-center justify-center gap-2 text-sm text-slate-600 py-6"><Loader2 className="w-5 h-5 animate-spin" /> {T.checking}</div>}
 
         {!busy && outcome && (
           <section aria-live="polite" className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
             {outcome.kind === 'GENUINE' && (
-              <Banner tone="green" icon={<ShieldCheck className="w-7 h-7" />} title="Genuine and valid"
-                text={`Signed by the issuing authority and valid until ${outcome.payload.exp}. The signature was checked on this device.`} />
+              <Banner tone="green" icon={<ShieldCheck className="w-7 h-7" />} title={T.genuine}
+                text={T.genuineText(outcome.payload.exp)} />
             )}
             {outcome.kind === 'EXPIRED' && (
-              <Banner tone="amber" icon={<Clock className="w-7 h-7" />} title="Genuine but expired"
-                text={`This certificate expired on ${outcome.payload.exp}. The instrument must be re-verified before it is used for trade.`} />
+              <Banner tone="amber" icon={<Clock className="w-7 h-7" />} title={T.expired}
+                text={T.expiredText(outcome.payload.exp)} />
             )}
             {outcome.kind === 'REVOKED' && (
-              <Banner tone="red" icon={<ShieldX className="w-7 h-7" />} title="Revoked. Do not rely on this instrument"
-                text={`${outcome.revocation.revoked?.reason || 'Revoked by the issuing office'}${outcome.revocation.revoked?.at ? ` (${outcome.revocation.revoked.at})` : ''}.`} />
+              <Banner tone="red" icon={<ShieldX className="w-7 h-7" />} title={T.revoked}
+                text={`${outcome.revocation.revoked?.reason || T.revokedFallback}${outcome.revocation.revoked?.at ? ` (${outcome.revocation.revoked.at})` : ''}.`} />
             )}
             {outcome.kind === 'TAMPERED' && (
-              <Banner tone="red" icon={<ShieldAlert className="w-7 h-7" />} title="Fake or edited certificate"
-                text={`${outcome.reason}${outcome.claimedNo ? ` It claims to be ${outcome.claimedNo}.` : ''} Report it so the district office can inspect.`} />
+              <Banner tone="red" icon={<ShieldAlert className="w-7 h-7" />} title={T.fake}
+                text={T.fakeText(outcome.reason, outcome.claimedNo)} />
             )}
             {outcome.kind === 'UNKNOWN_KEY' && (
               <Banner tone="red" icon={<ShieldAlert className="w-7 h-7" />} title="Not signed by a recognised authority"
@@ -284,17 +334,17 @@ export const PublicVerify: React.FC = () => {
                 text="This record exists on this device but has not been signed yet (it was issued while the signing service was unreachable). Treat it as unconfirmed." />
             )}
             {outcome.kind === 'NOT_FOUND' && (
-              <Banner tone="red" icon={<ShieldAlert className="w-7 h-7" />} title="No certificate found"
-                text={`Nothing matches "${outcome.term}". A certificate printed on an instrument should scan as a QR. If this number came from a seal or sticker, report it.`} />
+              <Banner tone="red" icon={<ShieldAlert className="w-7 h-7" />} title={T.notFound}
+                text={T.notFoundText(outcome.term)} />
             )}
             {outcome.kind === 'ERROR' && <Banner tone="slate" icon={<Info className="w-7 h-7" />} title="Could not check" text={outcome.reason} />}
 
             {(shown || (outcome.kind === 'UNSIGNED' && outcome.cert)) && (
               <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 p-5 text-sm">
                 {(shown ? [
-                  ['Certificate', shown.n], ['Instrument ID', shown.iu], ['Instrument', shown.cat], ['Capacity / class', `${shown.cap} • ${shown.cls}`],
-                  ['Serial number', shown.sn], ['Owner', `${shown.org} (${shown.own})`], ['Place', `${shown.dist}, ${shown.st}`],
-                  ['Verified on', shown.dt], ['Valid until', shown.exp], ['Seal', shown.sid], ['Verified by', `${shown.off} (${shown.auth})`],
+                  [T.labels.cert, shown.n], [T.labels.iid, shown.iu], [T.labels.inst, shown.cat], [T.labels.cap, `${shown.cap} • ${shown.cls}`],
+                  [T.labels.sn, shown.sn], [T.labels.owner, `${shown.org} (${shown.own})`], [T.labels.place, `${shown.dist}, ${shown.st}`],
+                  [T.labels.on, shown.dt], [T.labels.until, shown.exp], [T.labels.seal, shown.sid], [T.labels.by, `${shown.off} (${shown.auth})`],
                 ] : [
                   ['Certificate', outcome.kind === 'UNSIGNED' ? outcome.cert.certificateNumber : ''], ['Instrument', outcome.kind === 'UNSIGNED' ? outcome.cert.instrumentType : ''],
                   ['Owner', outcome.kind === 'UNSIGNED' ? outcome.cert.organization : ''], ['Valid until', outcome.kind === 'UNSIGNED' ? outcome.cert.validUntil : ''],
@@ -314,17 +364,17 @@ export const PublicVerify: React.FC = () => {
             )}
 
             <div className="border-t border-slate-100 p-4 flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between bg-slate-50">
-              <p className="text-xs text-slate-600">Weight or reading looks wrong, seal broken, or certificate expired?</p>
+              <p className="text-xs text-slate-600">{T.problem}</p>
               <button onClick={() => setReportOpen(true)} className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold min-h-[44px]">
-                <Flag className="w-4 h-4" /> Report a problem
+                <Flag className="w-4 h-4" /> {T.report}
               </button>
             </div>
           </section>
         )}
 
         <section className="text-xs text-slate-600 bg-white rounded-xl border border-slate-200 p-4 space-y-1">
-          <p className="font-bold text-slate-800">Your right as a buyer</p>
-          <p>Every scale, fuel pump or meter used for trade must be verified and stamped under the Legal Metrology Act, 2009. You can ask the seller to show the certificate.</p>
+          <p className="font-bold text-slate-800">{T.rightsTitle}</p>
+          <p>{T.rights}</p>
         </section>
       </main>
 

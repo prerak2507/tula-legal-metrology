@@ -349,3 +349,33 @@ create or replace function public.public_stats() returns jsonb language sql stab
   )
 $$;
 grant execute on function public.public_stats() to anon, authenticated;
+
+-- ---------------------------------------------------------------- certificate guard (server-side verdict)
+-- A certificate can only be created by the officer who recorded a PASS inspection in which every
+-- checklist item passed and every reading is within the limit. Showcase samples used by the public
+-- pages are locked so shared demo accounts cannot break them.
+create or replace function public.guard_certificate() returns trigger language plpgsql security definer set search_path = public as $$
+declare insp public.inspections;
+begin
+  if auth.uid() is null then return new; end if;
+  if tg_op = 'UPDATE' and old.id in ('CERT-2026-08912','CERT-2026-01994','CERT-2026-06421','CERT-2025-10101','CERT-2025-09999') then
+    raise exception 'This is a locked showcase certificate used by the public demo';
+  end if;
+  if tg_op = 'INSERT' then
+    select * into insp from public.inspections where id = new.data->>'inspectionId';
+    if insp.id is null then raise exception 'A certificate needs a recorded inspection'; end if;
+    if insp.inspector_id <> public.app_uid() then raise exception 'Only the inspecting officer can issue this certificate'; end if;
+    if coalesce(insp.data->>'result','') <> 'PASS' then raise exception 'The inspection did not pass'; end if;
+    if jsonb_array_length(coalesce(insp.data->'testReadings','[]'::jsonb)) = 0
+       or exists (select 1 from jsonb_array_elements(insp.data->'testReadings') r where r->>'result' <> 'PASS') then
+      raise exception 'A reading is missing or outside the permitted limit';
+    end if;
+    if exists (select 1 from jsonb_array_elements(coalesce(insp.data->'checklist','[]'::jsonb)) c where c->>'status' in ('FAIL','NOT_CHECKED','ADJUSTMENT_REQUIRED')) then
+      raise exception 'The checklist is incomplete or has a failed item';
+    end if;
+    if (new.data->>'instrumentId') <> insp.instrument_id then raise exception 'Certificate and inspection are for different instruments'; end if;
+  end if;
+  return new;
+end $$;
+drop trigger if exists guard_certificate on public.certificates;
+create trigger guard_certificate before insert or update on public.certificates for each row execute function public.guard_certificate();
