@@ -1,5 +1,7 @@
 # SIH portal fields (PS 26036, Team FriendlyFire)
 
+Deck to upload: TULA_SIH2026_FriendlyFire_v6.pdf (v4 and v5 kept for reference).
+
 ## Idea Title (98 of 100 characters)
 
 TULA: Online Verification, Signed QR Certificates and Offline Field Inspection for Legal Metrology
@@ -12,8 +14,8 @@ What it does, mapped to the problem statement:
 - Online registration: traders create an account and register their scales, fuel dispensers and meters. Officers, GATCs, Controllers and administrators have role-based accounts.
 - Online application for verification and re-verification, with document upload and the fee computed from the State's own schedule.
 - Scheduling and allocation: after scrutiny and fee payment, the Controller assigns an LMO by district and workload, or a GATC for heavy and specialised equipment, and books the visit.
-- Digital inspection record: the officer's phone app shows a checklist and a test plan sized to the instrument. The officer types what the instrument shows; TULA computes the error against the OIML R 76 / R 117 limit. A certificate cannot be issued while any reading is out of limit. Camera photos and GPS location are saved with the record.
-- Digital certificate with QR and authentication: the server signs the certificate (ECDSA P-256). The QR carries the certificate details and the signature, so any phone can check it without login and even without internet. An edited or forged copy is rejected, and revoked certificates are flagged from a live revocation list.
+- Digital inspection record: the officer's phone app shows a checklist and a test plan sized to the instrument. The officer types what the instrument shows; TULA computes the error against the OIML R 76 / R 117 limit. A certificate cannot be issued while any reading is out of limit, and the database enforces this, not only the app. Camera photos and GPS location are saved with the record.
+- Digital certificate with QR and authentication: the server signs the certificate (ECDSA P-256). The QR carries the certificate details and the signature, so any phone can check it without login and even without internet, in Hindi or English. An edited or forged copy is rejected, and revoked certificates are flagged from a live revocation list.
 - Validity tracking and alerts: status follows the dates, and owners get SMS / email reminders at 30, 15, 7 and 1 days before expiry.
 - Dashboards: pending applications by stage, age and district, inspections due and overdue, officer workload, and results measured from the records.
 - Search, export and print: search across records, certificate PDF with QR, CSV reports.
