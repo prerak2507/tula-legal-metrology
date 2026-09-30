@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
-  ShieldCheck, WifiOff, Calculator, Map, Sparkles, QrCode, PlayCircle, ListChecks, LogIn, Menu, X, Check, Minus,
-  Store, ClipboardCheck, Landmark, Users, ArrowRight, CircleDashed,
+  QrCode, PlayCircle, ListChecks, LogIn, Menu, X, Check, Minus, Store, ClipboardCheck, Landmark, Users, FlaskConical,
+  ArrowRight, Loader2, Scale, WifiOff, Map as MapIcon, Lock, Plug,
 } from 'lucide-react';
 import { TulaLogo } from '../components/common/TulaLogo';
+import { ForgeChallenge } from '../components/landing/ForgeChallenge';
+import { InspectorSim } from '../components/landing/InspectorSim';
+import { storage } from '../services/storage';
+import { UserRole } from '../types';
 
 // ---------------------------------------------------------------------------
 // Content (one place, so the page and the deck say the same thing)
@@ -24,17 +28,6 @@ const ASKED: { asked: string; delivered: string; where: string; to: string; stat
   { asked: 'Documentation: architecture, security, deployment', delivered: 'In the repository, plus a live "built vs planned" page', where: 'Built vs planned', to: '/status', state: 'LIVE' },
 ];
 
-const STEPS = ['Register', 'Apply', 'Scrutiny', 'Assign', 'Inspect', 'Decide', 'Certificate', 'Verify'];
-const STEP_NOTES = ['account + Digital ID', 'docs, fee', 'officer checks', 'district + load', 'phone, offline', 'computed vs MPE', 'signed QR', 'any phone'];
-
-const NEW: { icon: React.ElementType; title: string; text: string }[] = [
-  { icon: ShieldCheck, title: 'A QR that cannot be faked', text: 'The server signs the certificate. The QR carries the details and the signature, so any phone can tell a real certificate from an edited one without logging in or going online.' },
-  { icon: WifiOff, title: 'Works where the network does not', text: 'Officers inspect at mandis and highway weighbridges with no signal. Work saves on the phone and is issued, signed and sent automatically once back online.' },
-  { icon: Calculator, title: 'Pass or fail is calculated', text: 'The officer types what the scale shows. TULA computes the error and the legal limit. A certificate cannot be issued while any reading is out of limit.' },
-  { icon: Map, title: 'One system, every State\'s rules', text: 'Fees, validity periods and officers are data per State. A new State joins without code changes, and sees only its own records.' },
-  { icon: Sparkles, title: 'AI that assists, never decides', text: 'Gemini flags odd documents and answers traders in Hindi, Gujarati or English. It never approves, prices or passes anything.' },
-];
-
 const COMPARE: { row: string; paper: string; portal: string; tula: string }[] = [
   { row: 'Applying', paper: 'Visit the office with forms', portal: 'Online form', tula: 'Online, fee computed by State rule' },
   { row: 'Inspection record', paper: 'Paper register', portal: 'Entered later at the office', tula: 'On the officer\'s phone at the site, offline too' },
@@ -46,13 +39,6 @@ const COMPARE: { row: string; paper: string; portal: string; tula: string }[] = 
   { row: 'Across States', paper: 'Separate', portal: 'One system per State', tula: 'One platform, rules and data per State' },
 ];
 
-const WHO: { icon: React.ElementType; who: string; gets: string[] }[] = [
-  { icon: Store, who: 'Traders and MSMEs', gets: ['Apply and pay without a visit', 'An update at every step', 'A reminder before the stamp lapses'] },
-  { icon: ClipboardCheck, who: 'LMOs and GATCs', gets: ['Today\'s jobs on the phone', 'Verdict calculated, no maths errors', 'Certificate issued at the site'] },
-  { icon: Landmark, who: 'Controllers and DoCA', gets: ['Pendency by district, live', 'Every action in an audit trail', 'Rules updated without IT'] },
-  { icon: Users, who: 'Buyers and consumers', gets: ['Check any scale or pump in seconds', 'Fakes are shown as fakes', 'Report a problem in two taps'] },
-];
-
 const SCALE: { phase: string; when: string; what: string }[] = [
   { phase: 'Field trial', when: 'Months 0–2', what: '5 LMOs and 1 GATC in one district test it on real inspections. Proceed only if the usability score is 70 or more.' },
   { phase: 'District pilot', when: 'Months 3–6', what: 'All instruments of one district. Measure turnaround and paperwork against the old register.' },
@@ -60,9 +46,22 @@ const SCALE: { phase: string; when: string; what: string }[] = [
   { phase: 'Multi-State', when: 'Year 2', what: 'Offered by DoCA to other States as a shared platform, or hosted on a State\'s own cloud.' },
 ];
 
-// ---------------------------------------------------------------------------
 
-const NAV = [['#asked', 'Asked vs delivered'], ['#new', 'What is new'], ['#compare', 'Compared'], ['#who', 'Who it helps'], ['#scale', 'How it scales']];
+const ROLES: { role: UserRole | 'PUBLIC'; icon: React.ElementType; who: string; tryThis: string; to: string }[] = [
+  { role: 'BUSINESS', icon: Store, who: 'Shop owner', tryThis: 'Apply for re-verification and pay the fee', to: '/applications/new' },
+  { role: 'LMO', icon: ClipboardCheck, who: 'Field officer (LMO)', tryThis: 'Record an inspection, even with the network off', to: '/field' },
+  { role: 'CONTROLLER', icon: Landmark, who: 'Controller, Delhi', tryThis: 'Clear documents, assign an officer, see pendency', to: '/applications' },
+  { role: 'GATC', icon: FlaskConical, who: 'Test centre (GATC)', tryThis: 'Handle a weighbridge routed to a GATC', to: '/field' },
+  { role: 'PUBLIC', icon: Users, who: 'Buyer at a shop', tryThis: 'Scan a certificate. No login needed', to: '/verify' },
+];
+
+const FIT: { icon: React.ElementType; title: string; text: string }[] = [
+  { icon: Scale, title: 'Follows the law as written', text: 'Section 24 verification, GATC route under the 2013 Rules, MPE limits from OIML R 76 / R 117.' },
+  { icon: MapIcon, title: 'Each State keeps its rules', text: 'Fees, validity and officers are set per State in a screen, not in code. Each State sees only its data.' },
+  { icon: Plug, title: 'Works beside existing portals', text: 'A State portal can keep its forms and payments and call TULA for the officer app, certificate and public check.' },
+  { icon: WifiOff, title: 'Built for the field', text: 'Mandis and highway weighbridges have weak signal. The officer app works offline and syncs later.' },
+  { icon: Lock, title: 'Privacy by default', text: 'Database rules decide who reads what. The public check shows only what a buyer needs (DPDP Act, 2023).' },
+];
 
 const Section: React.FC<{ id: string; kicker: string; title: string; intro?: string; tint?: boolean; children: React.ReactNode }> = ({ id, kicker, title, intro, tint, children }) => (
   <section id={id} className={`py-14 sm:py-20 scroll-mt-16 ${tint ? 'bg-slate-50 border-y border-slate-200' : 'bg-white'}`}>
@@ -75,8 +74,27 @@ const Section: React.FC<{ id: string; kicker: string; title: string; intro?: str
   </section>
 );
 
+const NAV: [string, string][] = [['#explore', 'Try it'], ['#requirements', 'PS 26036 coverage'], ['#inspector', 'Be the inspector'], ['#fit', 'Fits government'], ['#compare', 'Compared'], ['#scale', 'Scale']];
+
 export const LandingPage: React.FC = () => {
+  const navigate = useNavigate();
   const [menu, setMenu] = useState(false);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+
+  const enterAs = async (role: UserRole | 'PUBLIC', to: string) => {
+    setErr(null);
+    if (role === 'PUBLIC') { navigate(to); return; }
+    setBusy(role);
+    try {
+      await storage.switchDemoRole(role);
+      navigate(to);
+    } catch (e) {
+      setErr((e as Error).message);
+    } finally {
+      setBusy(null);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-white text-slate-900">
@@ -105,91 +123,83 @@ export const LandingPage: React.FC = () => {
         )}
       </header>
 
-      {/* Hero */}
-      <section className="bg-gradient-to-b from-slate-50 to-white">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12 sm:py-20 grid lg:grid-cols-[1.15fr_0.85fr] gap-10 items-center">
+      {/* Hero: the forgery challenge */}
+      <section className="bg-gradient-to-b from-slate-50 via-white to-white overflow-hidden">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-16 grid lg:grid-cols-2 gap-10 items-center">
           <div>
-            <p className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gov-50 border border-gov-200 text-gov-800 text-xs font-bold">SIH 2026 · Problem statement 26036 · Ministry of Consumer Affairs</p>
-            <h1 className="mt-4 text-3xl sm:text-5xl font-black leading-tight">Verify every scale, pump and meter online, and let anyone check the certificate.</h1>
-            <p className="mt-4 text-base sm:text-lg text-slate-600 max-w-2xl">
-              TULA gives each weighing and measuring instrument one Digital ID. Application, inspection, certificate, reminders and enforcement all attach to it. Working prototype on a live database.
+            <p className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gov-50 border border-gov-200 text-gov-800 text-xs font-bold">SIH 2026 · PS 26036 · Department of Consumer Affairs</p>
+            <h1 className="mt-4 text-3xl sm:text-5xl font-black leading-[1.1]">Scale verification, online end to end. With a certificate nobody can fake.</h1>
+            <p className="mt-4 text-base sm:text-lg text-slate-600">
+              TULA runs the whole Legal Metrology process for weighing and measuring instruments: apply, inspect, certify, remind, enforce. Every certificate carries a QR that any phone can check.
             </p>
-            <div className="mt-7 flex flex-col sm:flex-row gap-3">
-              <Link to="/demo" className="inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl bg-gov-800 hover:bg-gov-900 text-white font-bold"><PlayCircle className="w-5 h-5 text-amber-300" /> Run the live demo</Link>
-              <Link to="/verify" className="inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 font-bold"><QrCode className="w-5 h-5" /> Check a certificate</Link>
-              <Link to="/status" className="inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl text-slate-700 hover:bg-slate-100 font-semibold"><ListChecks className="w-5 h-5" /> Built vs planned</Link>
+            <p className="mt-5 text-sm font-bold text-slate-800 flex items-center gap-2"><ArrowRight className="w-4 h-4 text-rose-600 hidden lg:block" />Try to forge the real certificate <span className="lg:hidden">below</span><span className="hidden lg:inline">on the right</span>: change its expiry date or capacity.</p>
+            <div className="mt-6 flex flex-col sm:flex-row gap-3">
+              <Link to="/demo" className="inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl bg-gov-800 hover:bg-gov-900 text-white font-bold"><PlayCircle className="w-5 h-5 text-amber-300" /> 5-minute guided demo</Link>
+              <a href="#explore" className="inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 font-bold">Explore as any role</a>
             </div>
-          </div>
-          <div className="rounded-2xl bg-slate-900 text-white p-6 shadow-xl">
-            <p className="text-[11px] uppercase tracking-wider text-emerald-300 font-bold">Real certificate on the live system</p>
-            <p className="font-mono text-xl font-bold mt-1">DL/LM/2026/08912</p>
-            <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
-              <div><dt className="text-slate-400 text-xs">Instrument</dt><dd>Platform scale, 150 kg</dd></div>
-              <div><dt className="text-slate-400 text-xs">Class</dt><dd>III, e = 20 g</dd></div>
-              <div><dt className="text-slate-400 text-xs">Test at 150 kg</dt><dd>+8 g</dd></div>
-              <div><dt className="text-slate-400 text-xs">Legal limit</dt><dd>±30 g (OIML R 76)</dd></div>
+            <dl className="mt-8 grid grid-cols-3 gap-3 text-center">
+              <div className="rounded-xl bg-white border border-slate-200 p-3"><dt className="text-[11px] text-slate-500">PS requirements working</dt><dd className="text-base sm:text-xl font-black whitespace-nowrap">11 / 11</dd></div>
+              <div className="rounded-xl bg-white border border-slate-200 p-3"><dt className="text-[11px] text-slate-500">Application to signed certificate</dt><dd className="text-base sm:text-xl font-black whitespace-nowrap">2 min 51 s</dd></div>
+              <div className="rounded-xl bg-white border border-slate-200 p-3"><dt className="text-[11px] text-slate-500">Fake copies caught in tests</dt><dd className="text-base sm:text-xl font-black whitespace-nowrap">6 / 6</dd></div>
             </dl>
-            <div className="mt-5 flex items-center justify-between gap-3 rounded-xl bg-white/10 p-3">
-              <span className="text-sm flex items-center gap-2"><ShieldCheck className="w-5 h-5 text-emerald-400" /> ECDSA-signed</span>
-              <Link to="/verify/CERT-2026-08912" className="inline-flex items-center gap-1 text-sm font-bold text-emerald-300 hover:text-emerald-200">Check it <ArrowRight className="w-4 h-4" /></Link>
-            </div>
+            <p className="mt-2 text-[11px] text-slate-500">Measured on the live system, 30 Sep 2026 (software time; the physical test on site is extra).</p>
           </div>
+          <ForgeChallenge />
         </div>
       </section>
 
-      <Section id="asked" kicker="For the jury" title="What the problem statement asks, and what TULA delivers" intro="Every requirement in PS 26036, what we built for it, and where to see it working.">
-        <div className="rounded-xl border border-slate-200 overflow-hidden">
-          <div className="hidden md:grid grid-cols-[1.1fr_1.6fr_0.8fr] bg-slate-900 text-white text-xs font-bold px-4 py-2.5 gap-4">
-            <span>Asked</span><span>Delivered</span><span>See it</span>
-          </div>
-          <ul className="divide-y divide-slate-100">
-            {ASKED.map(r => (
-              <li key={r.asked} className="grid md:grid-cols-[1.1fr_1.6fr_0.8fr] gap-1 md:gap-4 px-4 py-3 text-sm">
-                <span className="font-bold text-slate-900">{r.asked}</span>
-                <span className="text-slate-700 flex gap-2">{r.state === 'LIVE' ? <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" /> : <CircleDashed className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />}{r.delivered}</span>
-                <Link to={r.to} className="text-gov-700 font-semibold hover:underline">{r.where} →</Link>
-              </li>
-            ))}
-          </ul>
+      <Section id="explore" kicker="Try it yourself" title="Step into any role in one click" intro="Each card signs you in to a real evaluator account on the live database. Nothing to install.">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-3">
+          {ROLES.map(({ role, icon: Icon, who, tryThis, to }) => (
+            <button key={role} onClick={() => enterAs(role, to)} disabled={busy !== null}
+              className="text-left rounded-2xl border border-slate-200 p-4 hover:border-gov-500 hover:shadow-md transition-all disabled:opacity-60 group">
+              <Icon className="w-6 h-6 text-gov-700" />
+              <p className="font-bold mt-3">{who}</p>
+              <p className="text-sm text-slate-600 mt-1">{tryThis}</p>
+              <span className="mt-3 inline-flex items-center gap-1 text-sm font-bold text-gov-700 group-hover:gap-2 transition-all">
+                {busy === role ? <><Loader2 className="w-4 h-4 animate-spin" /> Signing in</> : <>Enter <ArrowRight className="w-4 h-4" /></>}
+              </span>
+            </button>
+          ))}
         </div>
-        <p className="text-xs text-slate-500 mt-3">Simulated in the prototype: the fee payment (demo UPI reference) and SMS / email delivery until provider keys are added. Details on <Link to="/status" className="underline">built vs planned</Link>.</p>
+        {err && <p role="alert" className="mt-3 text-sm text-rose-700">{err}</p>}
       </Section>
 
-      <Section id="how" kicker="How it works" title="One instrument, one Digital ID, one flow" tint>
-        <ol className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
-          {STEPS.map((s, i) => (
-            <li key={s} className="rounded-xl bg-white border border-slate-200 p-3">
-              <span className="w-7 h-7 rounded-full bg-gov-800 text-white text-xs font-bold flex items-center justify-center">{i + 1}</span>
-              <p className="font-bold text-sm mt-2">{s}</p>
-              <p className="text-xs text-slate-500">{STEP_NOTES[i]}</p>
+      <Section id="requirements" kicker="For the jury" title="Every requirement of PS 26036, working today" tint intro="Click any line to see it on the live system.">
+        <ul className="grid md:grid-cols-2 gap-2">
+          {ASKED.map(r => (
+            <li key={r.asked}>
+              <Link to={r.to} className="flex gap-3 rounded-xl bg-white border border-slate-200 p-3.5 hover:border-gov-400 h-full">
+                <Check className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+                <span className="text-sm"><strong className="block text-slate-900">{r.asked}</strong><span className="text-slate-600">{r.delivered}</span></span>
+              </Link>
             </li>
           ))}
-        </ol>
-        <p className="text-sm text-slate-600 mt-4">When the certificate nears expiry, the owner is reminded and re-verification starts again on the same Digital ID, so the full history stays in one place.</p>
+        </ul>
+        <p className="text-xs text-slate-500 mt-3">Simulated in the prototype: the fee payment (demo UPI reference) and SMS / email delivery until provider keys are added. <Link to="/status" className="underline">Built vs planned</Link>.</p>
       </Section>
 
-      <Section id="new" kicker="What is new" title="Five things that set TULA apart">
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {NEW.map(({ icon: Icon, title, text }) => (
-            <div key={title} className="rounded-xl border border-slate-200 p-5">
+      <Section id="inspector" kicker="Be the inspector" title="Pass or fail is calculated, not typed" intro="The legal limit depends on the weight on the scale. Move the sliders and see what the officer app decides.">
+        <InspectorSim />
+      </Section>
+
+      <Section id="fit" kicker="Fits government as it is" title="Designed around how Legal Metrology actually works" tint>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-3">
+          {FIT.map(({ icon: Icon, title, text }) => (
+            <div key={title} className="rounded-2xl bg-white border border-slate-200 p-4">
               <Icon className="w-6 h-6 text-gov-700" />
               <h3 className="font-bold mt-3">{title}</h3>
               <p className="text-sm text-slate-600 mt-1">{text}</p>
             </div>
           ))}
-          <Link to="/verify" className="rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white p-5 flex flex-col justify-between">
-            <QrCode className="w-6 h-6" />
-            <span className="font-bold mt-3">Try it: check a genuine certificate, then an edited copy</span>
-            <span className="text-sm mt-2 inline-flex items-center gap-1">Open the check page <ArrowRight className="w-4 h-4" /></span>
-          </Link>
         </div>
       </Section>
 
-      <Section id="compare" kicker="Compared" title="How it is done today, and what TULA changes" tint intro="State Legal Metrology online services differ from State to State. The middle column describes what is common, not any one portal.">
+      <Section id="compare" kicker="Compared" title="Paper, today's portals, and TULA" intro="State Legal Metrology online services differ. The middle column describes what is common, not any one portal.">
         <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
           <table className="w-full text-sm min-w-[640px]">
             <thead className="bg-slate-900 text-white text-xs">
-              <tr><th className="text-left px-4 py-2.5"> </th><th className="text-left px-4 py-2.5">Paper process</th><th className="text-left px-4 py-2.5">Typical State portal</th><th className="text-left px-4 py-2.5 bg-gov-800">TULA</th></tr>
+              <tr><th className="text-left px-4 py-2.5"><span className="sr-only">Aspect</span></th><th className="text-left px-4 py-2.5">Paper process</th><th className="text-left px-4 py-2.5">Typical State portal</th><th className="text-left px-4 py-2.5 bg-gov-800">TULA</th></tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {COMPARE.map(c => (
@@ -203,38 +213,19 @@ export const LandingPage: React.FC = () => {
             </tbody>
           </table>
         </div>
-        <p className="text-sm text-slate-600 mt-4"><strong>Works with what States already have:</strong> TULA can sit behind an existing State portal. The portal keeps its forms and payments, and TULA adds the officer app, the signed certificate and the public check through its API.</p>
       </Section>
 
-      <Section id="who" kicker="Who it helps" title="Four groups, each with a concrete gain">
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {WHO.map(({ icon: Icon, who, gets }) => (
-            <div key={who} className="rounded-xl border border-slate-200 p-5">
-              <Icon className="w-6 h-6 text-gov-700" />
-              <h3 className="font-bold mt-3">{who}</h3>
-              <ul className="mt-2 space-y-1.5 text-sm text-slate-600">
-                {gets.map(g => <li key={g} className="flex gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />{g}</li>)}
-              </ul>
-            </div>
-          ))}
-        </div>
-      </Section>
-
-      <Section id="scale" kicker="How it scales" title="From one district to every State" tint intro="Adoption is led by the government customer: DoCA and State Legal Metrology departments. Traders and buyers use it free.">
-        <ol className="grid md:grid-cols-4 gap-4">
+      <Section id="scale" kicker="How it scales" title="Tested with officers first, then State by State" tint intro="The buyer is the government: DoCA and the State Legal Metrology departments. Traders and citizens use it free.">
+        <ol className="grid md:grid-cols-4 gap-3">
           {SCALE.map((p, i) => (
-            <li key={p.phase} className="rounded-xl bg-white border border-slate-200 p-5">
+            <li key={p.phase} className="rounded-2xl bg-white border border-slate-200 p-4">
               <p className="text-xs font-bold text-gov-700">{i + 1} · {p.when}</p>
               <h3 className="font-bold mt-1">{p.phase}</h3>
               <p className="text-sm text-slate-600 mt-1">{p.what}</p>
             </li>
           ))}
         </ol>
-        <div className="grid md:grid-cols-3 gap-4 mt-4">
-          <div className="rounded-xl bg-white border border-slate-200 p-5 text-sm"><h3 className="font-bold">Why it scales technically</h3><p className="text-slate-600 mt-1">Each State's data is isolated by database rules, rules are data, and the servers are pay-per-use. Adding a State is configuration, not a new build.</p></div>
-          <div className="rounded-xl bg-white border border-slate-200 p-5 text-sm"><h3 className="font-bold">Cost model</h3><p className="text-slate-600 mt-1">Open-source code. A district pilot runs on free cloud tiers. At State scale: a yearly hosting and support contract, or self-hosting on the State's own cloud.</p></div>
-          <div className="rounded-xl bg-white border border-slate-200 p-5 text-sm"><h3 className="font-bold">How we will measure it</h3><p className="text-slate-600 mt-1">Pilot targets: 7 days or less from application to certificate, a QR check in under 3 seconds, and every due instrument reminded 30 days early, all measured against the district's paper register.</p></div>
-        </div>
+        <p className="text-sm text-slate-600 mt-4"><strong>Cost:</strong> open-source code. A district pilot runs on free cloud tiers; a State runs it on a hosting and support contract or on its own cloud. Adding a State is configuration, not a new build.</p>
       </Section>
 
       <footer className="bg-slate-900 text-slate-300">
@@ -245,7 +236,7 @@ export const LandingPage: React.FC = () => {
             <p className="text-xs text-slate-500 mt-3">Legal Metrology Act, 2009 · Legal Metrology (General) Rules, 2011 · GATC Rules, 2013 · OIML R 76 and R 117</p>
           </div>
           <div className="grid grid-cols-2 gap-2 text-sm">
-            <Link to="/demo" className="hover:text-white">Live demo</Link>
+            <Link to="/demo" className="hover:text-white">Guided demo</Link>
             <Link to="/verify" className="hover:text-white">Check a certificate</Link>
             <Link to="/status" className="hover:text-white">Built vs planned</Link>
             <Link to="/register" className="hover:text-white">Register a business</Link>

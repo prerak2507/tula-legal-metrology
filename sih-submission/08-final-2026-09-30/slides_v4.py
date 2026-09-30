@@ -201,15 +201,19 @@ for ri, row in enumerate(rows):
             paras=[[(row[ci], {"bold": hdr or ci == 0, "size": 9 if not hdr else 9.5, "color": col})]])
         x += cw_
 
-label(s, 0.4, 5.1, 7.6, "TESTING WITH REAL LEGAL METROLOGY OFFICERS (before final build)", color=ORANGE, size=11.5)
-trial = [("Who", "5 LMOs + 1 GATC, one district"), ("What", "10 real inspections each, on their phones"),
-         ("Measure", "minutes per inspection, errors, usability score (SUS)"), ("Pass mark", "SUS ≥ 70, no data-entry blockers")]
+label(s, 0.4, 5.08, 7.6, "HOW WE TEST WITH REAL OFFICERS, THEN SCALE", color=ORANGE, size=11.5)
+trial = [("1 · Field trial", "5 LMOs + 1 GATC, 10 real inspections each. Go ahead only if usability (SUS) ≥ 70"),
+         ("2 · District pilot", "All instruments of one district, measured against the paper register"),
+         ("3 · State rollout", "State loads fees and officers; NIC SMS, treasury, e-Pramaan"),
+         ("4 · Multi-State", "DoCA offers it to States as a shared platform or on State cloud")]
 tw = (7.6 - 3 * 0.12) / 4
 for i, (t, d) in enumerate(trial):
-    box(s, 0.4 + i * (tw + 0.12), 5.4, tw, 0.9, fill=LORANGE, align=PP_ALIGN.LEFT, anchor=MSO_ANCHOR.TOP, margin=0.09, radius=0.06,
-        paras=[[(t, {"bold": True, "size": 10.5, "color": ORANGE})], [(d, {"size": 9, "color": INK})]])
-text(s, 0.4, 6.38, 7.6, 0.4, [[("Feasible now: ", {"bold": True, "color": GREEN}),
-     ("open-source stack, free tiers cover a district pilot, mirrors today's LMO / GATC process, follows the LM Act 2009 and GATC Rules 2013.", {"color": INK})]], size=9.5)
+    box(s, 0.4 + i * (tw + 0.12), 5.37, tw, 1.0, fill=LORANGE, align=PP_ALIGN.LEFT, anchor=MSO_ANCHOR.TOP, margin=0.08, radius=0.06,
+        paras=[[(t, {"bold": True, "size": 10, "color": ORANGE})], [(d, {"size": 8.5, "color": INK})]])
+    if i < 3:
+        arrow(s, 0.4 + i * (tw + 0.12) + tw + 0.005, 5.87, 0.4 + (i + 1) * (tw + 0.12) - 0.005, 5.87, color=ORANGE)
+text(s, 0.4, 6.43, 7.6, 0.4, [[("Market and cost: ", {"bold": True, "color": GREEN}),
+     ("buyers are DoCA and the 36 State / UT Legal Metrology departments; traders and citizens use it free. Open-source; a district runs on free cloud tiers, a State on a hosting and support contract or its own cloud.", {"color": INK})]], size=9)
 
 RX, RW = 8.25, 4.68
 label(s, RX, 1.28, RW, "POTENTIAL CHALLENGES AND RISKS  →  STRATEGIES")
@@ -299,13 +303,12 @@ for i, (f, d) in enumerate(res):
     box(s, 4.72, y, 3.3, 0.86, fill=LGREEN, line=GREEN, align=PP_ALIGN.LEFT, margin=0.12, radius=0.06, paras=[[(d, {"bold": True, "size": 10.5, "color": GREEN})]])
 
 RX, RW = 8.3, 4.63
-box(s, RX, 1.58, RW, 3.65, fill=LIGHT, radius=0.06)
+box(s, RX, 1.58, RW, 2.05, fill=LIGHT, radius=0.06)
 text(s, RX + 0.15, 1.65, RW - 0.3, 0.33, [[("References & Links", {"bold": True, "size": 13.5, "color": BLUE})]])
-refs = [("The Legal Metrology Act, 2009", " · consumeraffairs.gov.in"), ("Legal Metrology (General) Rules, 2011", ""),
-        ("LM (Government Approved Test Centre) Rules, 2013", ""), ("State LM (Enforcement) Rules", ""),
-        ("OIML R 76-1 and R 117-1", " · oiml.org"), ("IT Act 2000, DPDP Act 2023", ""),
-        ("Supabase RLS, Vercel functions docs", ""), ("Google Gemini API docs", " · ai.google.dev")]
-tb = s.shapes.add_textbox(Inches(RX + 0.15), Inches(2.02), Inches(RW - 0.3), Inches(3.15))
+refs = [("LM Act 2009; LM (General) Rules 2011", " · consumeraffairs.gov.in"), ("LM (GATC) Rules 2013; State Enforcement Rules", ""),
+        ("OIML R 76-1 (scales), R 117-1 (dispensers)", " · oiml.org"), ("IT Act 2000, DPDP Act 2023", ""),
+        ("Supabase, Vercel and Gemini API docs", "")]
+tb = s.shapes.add_textbox(Inches(RX + 0.15), Inches(1.98), Inches(RW - 0.3), Inches(1.6))
 tf = tb.text_frame; tf.word_wrap = True
 for i, (a, b) in enumerate(refs):
     p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
@@ -313,6 +316,23 @@ for i, (a, b) in enumerate(refs):
     r = p.add_run(); r.text = f"{i + 1}.  "; _fmt_run(r, 10, True, BLUE)
     r = p.add_run(); r.text = a; _fmt_run(r, 10, True, NAVY)
     r = p.add_run(); r.text = b; _fmt_run(r, 10, False, INK)
+label(s, RX, 3.72, RW, "COMPARED WITH TODAY", size=11.5)
+cmp_rows = [("", "Paper", "Typical State portal", "TULA"),
+            ("Certificate", "copyable paper", "editable PDF", "signed QR"),
+            ("Buyer can check", "no", "rarely", "any phone, offline"),
+            ("Field record", "register", "typed later", "phone, offline"),
+            ("Pass / fail", "judgement", "typed", "computed vs MPE"),
+            ("Across States", "separate", "one per State", "one platform")]
+cws = [1.15, 0.95, 1.2, 1.33]
+for ri, row in enumerate(cmp_rows):
+    x = RX
+    for ci, w_ in enumerate(cws):
+        hdr = ri == 0
+        fill = NAVY if hdr else (LGREEN if ci == 3 else (LIGHT if ri % 2 else WHITE))
+        col = WHITE if hdr else (GREEN if ci == 3 else (INK if ci == 0 else GREY))
+        box(s, x, 3.98 + ri * 0.22, w_, 0.22, fill=fill, shape=MSO_SHAPE.RECTANGLE, align=PP_ALIGN.LEFT, margin=0.05,
+            paras=[[(row[ci], {"bold": hdr or ci in (0, 3), "size": 8, "color": col})]])
+        x += w_
 box(s, RX, 5.35, RW, 1.47, fill=LGREEN, radius=0.06)
 s.shapes.add_picture(io.BytesIO(qr_png(f"https://{LIVE}/verify/DL%2FLM%2F2026%2F08913")), Inches(RX + 0.1), Inches(5.43), Inches(1.3), Inches(1.3))
 text(s, RX + 1.5, 5.45, RW - 1.6, 1.3, [
