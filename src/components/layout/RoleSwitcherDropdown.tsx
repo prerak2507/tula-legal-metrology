@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { UserRole, UserProfile } from '../../types';
 import { storage } from '../../services/storage';
-import { UserCheck, ChevronDown, Sparkles, Sliders, Shield, QrCode, LogOut } from 'lucide-react';
+import { ChevronDown, Shield, QrCode, LogOut, User } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface RoleSwitcherDropdownProps {
@@ -95,50 +95,37 @@ export const RoleSwitcherDropdown: React.FC<RoleSwitcherDropdownProps> = ({
   const currentRoleConfig = roles.find((r) => r.role === currentUser.role) || roles[0];
 
   return (
-    <div className="flex items-center gap-2 relative" ref={dropdownRef}>
-      {/* Prototype Environment Notice */}
-      <span className="hidden xl:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-[10px] font-bold">
-        <Sparkles className="w-3 h-3 text-amber-600 animate-pulse" />
-        SIH 26036 Prototype • Team FriendlyFire
-      </span>
-
-      {/* Role Switcher Pill Trigger */}
+    <div className="relative" ref={dropdownRef}>
+      {/* User Profile Trigger — compact, clean */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-white border border-slate-200 hover:border-slate-300 shadow-xs hover:shadow-sm transition-all text-xs text-left group"
-        title="Switch user role / account persona"
+        className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-slate-100 transition-all text-left group"
+        title="Account & role settings"
       >
-        <div className="w-6 h-6 rounded-lg bg-gov-50 border border-gov-200 flex items-center justify-center text-xs">
-          <span>{currentRoleConfig.icon}</span>
+        {/* Avatar */}
+        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#1F497D] to-[#0070C0] text-white font-bold text-[11px] flex items-center justify-center shrink-0 shadow-xs">
+          {currentUser.fullName.charAt(0)}
         </div>
-        <div className="hidden sm:block leading-tight">
-          <p className="font-bold text-slate-900 group-hover:text-gov-800 transition-colors flex items-center gap-1">
-            {currentRoleConfig.name}
-            <ChevronDown className={`w-3 h-3 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-          </p>
-          <p className="text-[10px] text-gov-700 font-semibold">{currentRoleConfig.label}</p>
-        </div>
-        <ChevronDown className="w-3 h-3 text-slate-400 sm:hidden" />
-      </button>
 
-      {/* Demo Controls Modal Button */}
-      <button
-        onClick={onOpenDemoControl}
-        className="inline-flex items-center gap-1.5 bg-slate-900 hover:bg-slate-800 text-white font-semibold px-3 py-1.5 rounded-xl text-xs transition-colors shadow-xs"
-        title="Open prototype fast-forward simulation & data reset"
-      >
-        <Sliders className="w-3.5 h-3.5 text-amber-400" />
-        <span className="hidden md:inline">Demo Control</span>
+        {/* Name + Role — hidden on small screens */}
+        <div className="hidden sm:block leading-tight max-w-[140px]">
+          <p className="text-xs font-bold text-slate-800 truncate group-hover:text-gov-800 transition-colors">
+            {currentRoleConfig.name.split(' ').slice(0, 2).join(' ')}
+          </p>
+          <p className="text-[10px] text-slate-500 font-medium truncate">{currentRoleConfig.label}</p>
+        </div>
+
+        <ChevronDown className={`w-3 h-3 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
       {/* Role Switcher Dropdown Popover */}
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden z-50 divide-y divide-slate-100 animate-in fade-in slide-in-from-top-2 duration-150">
-          {/* Header */}
-          <div className="p-4 bg-gradient-to-r from-[#1F497D] to-[#0d223f] text-white space-y-1">
-            <div className="flex items-center justify-between">
+        <div className="absolute right-0 top-full mt-2 w-80 sm:w-[360px] bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden z-50 divide-y divide-slate-100 animate-in fade-in slide-in-from-top-2 duration-150">
+          {/* Header — Identity Card */}
+          <div className="p-4 bg-gradient-to-r from-[#1F497D] to-[#0d223f] text-white">
+            <div className="flex items-center justify-between mb-2">
               <span className="text-[10px] uppercase font-bold tracking-wider text-sky-300">
-                Active Session Identity
+                Active Session
               </span>
               <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-300 bg-emerald-950/60 border border-emerald-500/40 px-2 py-0.5 rounded-full">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
@@ -146,10 +133,10 @@ export const RoleSwitcherDropdown: React.FC<RoleSwitcherDropdownProps> = ({
               </span>
             </div>
             <h4 className="font-extrabold text-base text-white">{currentUser.fullName}</h4>
-            <p className="text-[11px] text-sky-200 font-medium">{currentUser.organization}</p>
+            <p className="text-[11px] text-sky-200 font-medium mt-0.5">{currentUser.organization}</p>
           </div>
 
-          {/* Session & Security Credentials Breakdown */}
+          {/* Session Credentials */}
           <div className="p-4 space-y-3 text-xs bg-slate-50/50">
             <div className="grid grid-cols-2 gap-2.5">
               <div className="p-2.5 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-0.5">
@@ -170,10 +157,10 @@ export const RoleSwitcherDropdown: React.FC<RoleSwitcherDropdownProps> = ({
             <div className="p-2.5 rounded-xl bg-blue-50/70 border border-blue-200/80 text-[11px] text-blue-900 space-y-1">
               <p className="font-bold flex items-center gap-1.5 text-[#1F497D]">
                 <Shield className="w-3.5 h-3.5 text-[#0070C0]" />
-                <span>Audit &amp; Security Compliance Notice</span>
+                <span>Audit &amp; Security Compliance</span>
               </p>
               <p className="text-[10px] text-slate-600 leading-relaxed">
-                Direct in-app role flipping is disabled to preserve statutory audit trails under Section 24. To switch stakeholder accounts, log out and authenticate via the official Gateway.
+                In-app role flipping is disabled to preserve statutory audit trails under Section 24. Switch accounts via the Gateway.
               </p>
             </div>
 

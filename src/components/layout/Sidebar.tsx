@@ -40,45 +40,47 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentUser, notifications, co
 
   const unread = notifications.filter(n => !n.read);
 
-  // Role-customized navigation labels
+  // Role-customized task-oriented navigation
   const navSections = [
     {
-      label: 'Main',
+      label: 'Overview',
       items: [
         { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-        { label: currentUser.role === 'BUSINESS' ? 'My Instruments' : 'Instruments', path: '/instruments', icon: Scale },
-        { label: currentUser.role === 'BUSINESS' ? 'My Applications' : 'Applications', path: '/applications', icon: FileText },
       ],
     },
     {
-      label: 'Operations',
+      label: currentUser.role === 'BUSINESS' ? 'My Workflow' : 'Operational Work',
       items: [
+        { label: currentUser.role === 'BUSINESS' ? 'Verification Requests' : 'Applications Queue', path: '/applications', icon: FileText },
         {
-          label: currentUser.role === 'BUSINESS' ? 'Premises Visits' : currentUser.role === 'GATC' ? 'Testing Hub' : 'Field Inspection',
+          label: currentUser.role === 'BUSINESS' ? 'Scheduled Premises Visits' : currentUser.role === 'GATC' ? 'Lab Testing Hub' : 'Field Inspection HUD',
           path: '/field',
           icon: currentUser.role === 'BUSINESS' ? Calendar : Smartphone,
           highlight: currentUser.role === 'LMO' || currentUser.role === 'GATC',
         },
-        {
-          label: currentUser.role === 'BUSINESS' ? 'My Certificates' : 'Certificates',
-          path: '/certificates',
-          icon: Award,
-        },
-        {
-          label: currentUser.role === 'BUSINESS' ? 'Compliance & Notices' : 'Enforcement',
-          path: '/enforcement',
-          icon: ShieldAlert,
-        },
       ],
     },
     {
-      label: 'Insights',
+      label: 'Instrument Lifecycle',
       items: [
-        { label: currentUser.role === 'BUSINESS' ? 'Fleet Reports' : 'Reports', path: '/reports', icon: FileBarChart2 },
-        { label: 'Audit Trail', path: '/audit', icon: History },
-        { label: 'Public QR Verify', path: '/verify', icon: QrCode },
+        { label: currentUser.role === 'BUSINESS' ? 'My Instrument Fleet' : 'Instrument Registry', path: '/instruments', icon: Scale },
+        { label: currentUser.role === 'BUSINESS' ? 'Verification Certificates' : 'Schedule IX Certificates', path: '/certificates', icon: Award },
+      ],
+    },
+    {
+      label: 'Trust & Compliance',
+      items: [
+        { label: 'Live QR Public Verification', path: '/verify', icon: QrCode },
+        { label: currentUser.role === 'BUSINESS' ? 'Notices & Compliance' : 'Enforcement & Grievances', path: '/enforcement', icon: ShieldAlert },
+      ],
+    },
+    {
+      label: 'Governance & Audit',
+      items: [
+        { label: currentUser.role === 'BUSINESS' ? 'Compliance Analytics' : 'Reports & Pendency', path: '/reports', icon: FileBarChart2 },
+        { label: 'Statutory Audit Trail', path: '/audit', icon: History },
         ...((currentUser.role === 'STATE_ADMIN' || currentUser.role === 'CENTRAL_ADMIN' || currentUser.role === 'CONTROLLER')
-          ? [{ label: 'Rules & Fees', path: '/admin/rules', icon: Settings }]
+          ? [{ label: 'Legal Metrology Rules Engine', path: '/admin/rules', icon: Settings }]
           : []),
       ],
     },
