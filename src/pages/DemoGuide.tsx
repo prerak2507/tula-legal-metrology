@@ -98,10 +98,10 @@ export const DemoGuide: React.FC = () => {
         </section>
 
         <button
-          onClick={() => { if (window.confirm('Reset all demo data in this browser? Your registered account and applications will be removed.')) { storage.resetDemoData(); navigate('/demo'); } }}
+          onClick={() => { storage.resetDemoData(); navigate('/demo'); }}
           className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 underline"
         >
-          <RotateCcw className="w-3.5 h-3.5" /> Reset demo data
+          <RotateCcw className="w-3.5 h-3.5" /> Refresh from the database
         </button>
       </main>
     </div>

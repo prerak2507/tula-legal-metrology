@@ -1,6 +1,6 @@
 {
   "updated": "2026-09-30T00:00:00Z",
-  "note": "Published list of revoked certificates. The verify page caches it for offline use. Pilot: served live from the database.",
+  "note": "Fallback list. The verify page reads revocations live from the database and caches them for offline checks.",
   "revoked": [
     { "id": "CERT-2025-09999", "n": "DL/LM/2025/09999", "reason": "Seal found cut during surprise inspection (Section 30 case ENF-2026-0019)", "at": "2026-05-12" }
   ]

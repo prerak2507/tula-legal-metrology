@@ -189,7 +189,7 @@ export const ReportsView: React.FC = () => {
           <p className="text-3xl font-extrabold text-emerald-700 mt-2">
             {instruments.length > 0 ? Math.round((instruments.filter(i => i.status === 'ACTIVE').length / instruments.length) * 100) : 0}%
           </p>
-          <p className="text-xs text-slate-500 mt-1">verification Compliant</p>
+          <p className="text-xs text-slate-500 mt-1">Within validity</p>
         </div>
 
         <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">

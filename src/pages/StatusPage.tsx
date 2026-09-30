@@ -6,18 +6,19 @@ import { CheckCircle2, CircleDashed, Clock, Home, PlayCircle, ShieldCheck, Map, 
 type State = 'LIVE' | 'PARTIAL' | 'PLANNED';
 
 const ROWS: { req: string; state: State; today: string; next: string }[] = [
-  { req: 'Registration and profiles', state: 'PARTIAL', today: 'Business self-registration with mobile check (demo code). Six demo officer roles.', next: 'Supabase Auth with phone OTP, e-Pramaan sign-in for officers' },
+  { req: 'Registration and profiles', state: 'LIVE', today: 'Business self-registration with a real account. Six evaluator accounts for officer roles', next: 'Phone OTP, GSTIN check, e-Pramaan for officers' },
   { req: 'Apply for verification / re-verification', state: 'LIVE', today: 'Four service types, own instruments only, document upload, fee from the State rule', next: 'Treasury payment gateway' },
   { req: 'Scheduling and allocation to LMO / GATC', state: 'LIVE', today: 'Workflow order enforced. Officer suggested by district and workload, GATC for heavy equipment', next: 'Officer calendars and route planning' },
   { req: 'Inspection results recorded digitally', state: 'LIVE', today: 'Checklist, readings checked against OIML R 76 / R 117 limits, camera photos, GPS distance to site', next: 'Photo upload to cloud storage' },
   { req: 'QR digital certificate', state: 'LIVE', today: 'ECDSA P-256 signed QR, checked on any phone, works offline, revocation list', next: 'Key held in a hardware security module, per-officer keys' },
-  { req: 'Validity tracking and expiry alerts', state: 'LIVE', today: 'Status derived from dates. Reminders at 30, 15, 7 and 1 days', next: 'Daily server job (pg_cron)' },
+  { req: 'Validity tracking and expiry alerts', state: 'LIVE', today: 'Status derived from dates. Reminders at 30, 15, 7 and 1 days, run when an account opens the app', next: 'Daily server job (pg_cron) so reminders go out even if nobody logs in' },
   { req: 'SMS / email notifications', state: 'PARTIAL', today: 'Every event writes an SMS and email. Sent through Resend / Twilio when keys are set, otherwise marked "gateway not set up"', next: 'NIC SMS gateway, government email relay' },
   { req: 'Dashboards: pendency, inspections, enforcement', state: 'LIVE', today: 'Pendency by stage, ageing, district, inspections due and overdue, measured turnaround', next: 'State-wide live view across devices' },
-  { req: 'Photos and documents', state: 'LIVE', today: 'Real camera capture and file upload, stored on the device', next: 'Supabase Storage with virus scan' },
+  { req: 'Photos and documents', state: 'LIVE', today: 'Real camera capture and file upload, compressed and saved with the record', next: 'Move files to Supabase Storage with virus scan' },
   { req: 'Export and print', state: 'LIVE', today: 'Certificate PDF with QR, print view, CSV reports', next: 'Bulk export for audits' },
   { req: 'Mobile app for field officers', state: 'LIVE', today: 'Installable web app, opens offline, drafts auto-saved, results sync when back online', next: 'Background sync, Android packaging' },
-  { req: 'Central database across devices', state: 'PLANNED', today: 'Records are kept in each browser. Signed QR checks already work across devices', next: 'Supabase Postgres with row-level security per State and district' },
+  { req: 'Central database across devices', state: 'LIVE', today: 'Supabase Postgres with row-level security by account, State and district. Changes appear on other devices instantly', next: 'State data centre / MeghRaj hosting, backups and audit export' },
+  { req: 'Sign-in and access control', state: 'LIVE', today: 'Real accounts (Supabase Auth). Database rules block cross-account reads and officer-only changes', next: 'e-Pramaan single sign-on for officers, phone OTP for traders' },
 ];
 
 const ICON: Record<State, React.ReactNode> = {

@@ -24,7 +24,7 @@ export const Footer: React.FC = () => {
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> SHA-256 Tamper Evident
               </span>
               <span className="inline-flex items-center gap-1">
-                <FileText className="w-3.5 h-3.5 text-sky-400" /> verification Compliant
+                <FileText className="w-3.5 h-3.5 text-sky-400" /> Within validity
               </span>
             </div>
           </div>

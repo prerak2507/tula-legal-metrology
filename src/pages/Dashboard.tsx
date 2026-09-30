@@ -137,7 +137,7 @@ export const Dashboard: React.FC = () => {
         {user.role === 'BUSINESS' ? (
           <>
             <StatCard title="My Instruments" value={myInstruments.length} subtitle="Registered Fleet" icon={Scale} variant="blue" />
-            <StatCard title="Active & Verified" value={myInstruments.filter(i => i.status === 'ACTIVE').length} subtitle="verification Compliant" icon={CheckCircle} variant="emerald" />
+            <StatCard title="Active & Verified" value={myInstruments.filter(i => i.status === 'ACTIVE').length} subtitle="Within validity" icon={CheckCircle} variant="emerald" />
             <StatCard title="Pending Apps" value={myApplications.filter(a => a.status !== 'COMPLETED' && a.status !== 'REJECTED').length} subtitle="In Progress" icon={FileText} variant="amber" />
             <StatCard title="My Certificates" value={myCertificates.length} subtitle="Issued to You" icon={Award} variant="blue" />
           </>

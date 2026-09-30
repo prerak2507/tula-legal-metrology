@@ -66,12 +66,12 @@ export const PendencyPanel: React.FC<{ user: UserProfile }> = ({ user }) => {
           <Link to="/demo" className="text-xs font-semibold text-gov-700 underline">Run the live demo to add a measurement</Link>
         </div>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <Tile icon={<Timer className="w-3.5 h-3.5" />} label="Application → certificate" value={formatDuration(m.liveRuns.medianMs)} note={m.liveRuns.completed ? `Median of ${m.liveRuns.completed} live run(s) in this browser` : 'No live run completed yet'} />
+          <Tile icon={<Timer className="w-3.5 h-3.5" />} label="Application → certificate" value={formatDuration(m.liveRuns.medianMs)} note={m.liveRuns.completed ? `Median of ${m.liveRuns.completed} live run(s) on the database` : 'No live run completed yet'} />
           <Tile icon={<FileCheck2 className="w-3.5 h-3.5" />} label="Paper used" value="0 forms" note={`${m.paperless.docsUploaded} document(s) uploaded, ${m.paperless.certificatesDigital} digital certificate(s)`} />
           <Tile icon={<ShieldCheck className="w-3.5 h-3.5" />} label="Certificates signed" value={`${m.certificates.signedPct}%`} note={`${m.certificates.signed} of ${m.certificates.total}`} />
           <Tile icon={<MapPin className="w-3.5 h-3.5" />} label="Inspections with GPS" value={m.totalInspections ? `${Math.round((m.gpsCaptured / m.totalInspections) * 100)}%` : '—'} note={`${m.offlineInspections} recorded offline`} />
         </div>
-        <p className="text-[11px] text-slate-500 flex gap-1.5"><WifiOff className="w-3.5 h-3.5 shrink-0" />Live runs are applications created in this browser, timed from their own records. Seeded demo records are excluded. Office visits avoided in live runs: {m.paperless.officeVisitsAvoided} (filing and collecting the certificate happen online).</p>
+        <p className="text-[11px] text-slate-500 flex gap-1.5"><WifiOff className="w-3.5 h-3.5 shrink-0" />Live runs are applications filed through TULA (not the seeded demo records), timed from their own records in the database. Seeded demo records are excluded. Office visits avoided in live runs: {m.paperless.officeVisitsAvoided} (filing and collecting the certificate happen online).</p>
       </section>
 
       {workload.length > 0 && (
