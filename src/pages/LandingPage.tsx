@@ -543,7 +543,7 @@ export const LandingPage: React.FC = () => {
 
             {/* Pillar 5 */}
             <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-3 hover:shadow-md transition-shadow">
-              <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-700 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-teal-500/10 text-teal-700 flex items-center justify-center">
                 <QrCode className="w-5 h-5" />
               </div>
               <h4 className="font-bold text-sm text-slate-900">Instant Public QR Verification</h4>

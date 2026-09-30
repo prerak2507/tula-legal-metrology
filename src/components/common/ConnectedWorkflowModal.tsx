@@ -91,8 +91,8 @@ export const ConnectedWorkflowModal: React.FC<ConnectedWorkflowModalProps> = ({ 
       name: 'Sunita Meena, IAS (Delhi State HQ)',
       role: 'CONTROLLER',
       icon: '⚖️',
-      color: 'border-purple-500 bg-purple-50/50',
-      badgeColor: 'bg-purple-100 text-purple-800',
+      color: 'border-indigo-500 bg-indigo-50/50',
+      badgeColor: 'bg-indigo-100 text-indigo-800',
       title: 'Regulatory Oversight & Compounding Settlement',
       description: 'State Controller monitors jurisdiction pendency, oversees quota compliance, and resolves Section 48 compounding settlements for expired instruments (ENF-2026-0044).',
       artifacts: ['State Pendency SLA Monitor', 'Section 48 Compounding Desk', 'Inspection Quota Audit']

@@ -43,6 +43,7 @@ export const PublicVerify: React.FC = () => {
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [reportSubmitted, setReportSubmitted] = useState(false);
+  const [submittedCaseId, setSubmittedCaseId] = useState('');
   const [reportData, setReportData] = useState({
     issueType: 'BROKEN_SEAL',
     location: '',
@@ -135,13 +136,29 @@ export const PublicVerify: React.FC = () => {
 
   const handleReportSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const newCase = storage.createEnforcementCase({
+      businessName: certificate?.organization || 'Retail Commercial Premises',
+      violatorName: certificate?.issuedToName || 'Commercial Occupier',
+      location: certificate?.address || reportData.location || 'Local Market Area',
+      state: certificate?.state || 'Delhi',
+      district: certificate?.district || 'South Delhi',
+      instrumentId: certificate?.instrumentId || 'UNVERIFIED-SCALE',
+      offenseCategory: reportData.issueType === 'BROKEN_SEAL' ? 'TAMPERED_SEAL' : reportData.issueType === 'EXPIRED_STAMP' ? 'UNVERIFIED_USE' : 'EXCEEDED_MPE_ERROR',
+      actSection: reportData.issueType === 'EXPIRED_STAMP' ? 'Section 24' : 'Section 30',
+      officerId: certificate?.issuingOfficerBadgeOrGATC || 'LMO-DL-CENTRAL',
+      officerName: certificate?.issuingOfficerName || 'Jurisdictional LMO',
+      actionTaken: 'Citizen Grievance Registered via Live QR Portal. Spot verification notice dispatched under Section 31.',
+      status: 'OPEN',
+      penaltyAmount: 5000,
+      evidenceNotes: `${reportData.issueType}: ${reportData.description}. Consumer Contact: ${reportData.contactPhone || 'Anonymous Citizen'}`
+    });
+    setSubmittedCaseId(newCase.id);
     setReportSubmitted(true);
-    // Add audit log
     storage.addAuditLog(
       'TAMPER_REPORT_FILED',
       'ENFORCEMENT',
-      certificate?.id || 'PUBLIC-COMPLAINT',
-      `Citizen grievance filed for ${certificate?.certificateNumber || searchInput}: ${reportData.issueType} - ${reportData.description}`
+      newCase.id,
+      `Citizen grievance ${newCase.id} filed for ${certificate?.certificateNumber || searchInput}: ${reportData.issueType}`
     );
   };
 
@@ -662,7 +679,7 @@ export const PublicVerify: React.FC = () => {
           </div>
 
           <div className="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-2xs space-y-2">
-            <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center text-sm font-bold">
+            <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center text-sm font-bold">
               3
             </div>
             <h4 className="font-bold text-xs text-slate-900">Zero-Friction Grievance Lodging</h4>
@@ -697,9 +714,10 @@ export const PublicVerify: React.FC = () => {
                 <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto">
                   <Check className="w-6 h-6" />
                 </div>
-                <h4 className="font-bold text-slate-900 text-sm">Grievance Registered Successfully</h4>
-                <p className="text-xs text-slate-600 max-w-sm mx-auto">
-                  Complaint tracking reference <strong>GRIEV-2026-0814</strong> has been forwarded to the jurisdictional Legal Metrology Officer under Section 30/31.
+                <h4 className="font-bold text-slate-900 text-sm">Grievance Registered in National Metrology Registry</h4>
+                <p className="text-xs text-slate-600 max-w-sm mx-auto leading-relaxed">
+                  Official Enforcement Case ID: <strong className="font-mono text-slate-900 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">{submittedCaseId || 'ENF-2026-0089'}</strong>.
+                  Notice has been generated and dispatched to the jurisdictional Controller &amp; LMO for site inspection under Section 30.
                 </p>
                 <button
                   onClick={() => { setIsReportModalOpen(false); setReportSubmitted(false); }}
