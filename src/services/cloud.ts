@@ -43,7 +43,8 @@ export interface CloudStatus {
 }
 
 const QUEUE_KEY = 'lm_cloud_queue_v1';
-interface Pending { table: string; id: string; row: Row }
+interface Pending { table: string; id: string; row: Row; v: number }
+let versionSeq = 0;
 
 const hasWindow = typeof window !== 'undefined' && typeof localStorage !== 'undefined';
 export const cloudEnabled = hasWindow && !!SUPABASE_URL && !!SUPABASE_ANON_KEY;
@@ -102,7 +103,7 @@ export const cloud = {
     for (const o of changed) {
       const id = m.key(o);
       const idx = q.findIndex(p => p.table === m.table && p.id === id);
-      const item = { table: m.table, id, row: m.row(o) };
+      const item = { table: m.table, id, row: m.row(o), v: Date.now() * 1000 + (versionSeq++ % 1000) };
       if (idx >= 0) q[idx] = item; else q.push(item);
     }
     writeQueue(q);
@@ -128,25 +129,48 @@ export const cloud = {
       for (const table of order) {
         const rows = q.filter(p => p.table === table);
         if (!rows.length) continue;
-        const { error } = await sb.from(table).upsert(rows.map(r => r.row), { onConflict: 'id' });
-        if (!error) { rows.forEach(r => done.add(`${r.table}:${r.id}`)); continue; }
-        if (table === 'audit_logs' && error.code === '23505') { rows.forEach(r => done.add(`${r.table}:${r.id}`)); continue; }
-        // Try one by one so one refused record does not block the rest.
-        for (const r of rows) {
-          const res = await sb.from(table).upsert(r.row, { onConflict: 'id' });
-          if (!res.error) { done.add(`${r.table}:${r.id}`); continue; }
-          const refused = ['42501', 'P0001', '23505', '23502', '23514', 'PGRST116'].includes(res.error.code || '') || /row-level security|violates|only an officer|can only be set/i.test(res.error.message);
+        // Update rows that exist and insert the new ones. (An upsert would also have to pass the
+        // insert rule, which rightly blocks officers from "inserting" a trader's application.)
+        const ids = rows.map(r => r.id);
+        const existing = new Set<string>();
+        if (table !== 'audit_logs') {
+          const { data, error } = await sb.from(table).select('id').in('id', ids);
+          if (error) { status.lastError = error.message; continue; }
+          (data || []).forEach((r: { id: string }) => existing.add(r.id));
+        }
+        const inserts = rows.filter(r => !existing.has(r.id));
+        const updates = rows.filter(r => existing.has(r.id));
+        const fail = (r: Pending, err: { code?: string; message: string }) => {
+          const refused = ['42501', 'P0001', '23502', '23514'].includes(err.code || '') || /row-level security|violates|only an officer|can only be set/i.test(err.message);
+          if (err.code === '23505') { done.add(`${r.table}:${r.id}:${r.v}`); return; } // already there
           if (refused) {
-            done.add(`${r.table}:${r.id}`);
-            status.lastError = `The server refused a change to ${table} ${r.id}: ${res.error.message}`;
+            done.add(`${r.table}:${r.id}:${r.v}`);
+            status.lastError = `The server refused a change to ${table} ${r.id}: ${err.message}`;
             needsPull = true;
           } else {
-            status.lastError = res.error.message;
+            status.lastError = err.message;
+          }
+        };
+        if (inserts.length) {
+          const { error } = await sb.from(table).insert(inserts.map(r => r.row));
+          if (!error) inserts.forEach(r => done.add(`${r.table}:${r.id}:${r.v}`));
+          else for (const r of inserts) {
+            const res = await sb.from(table).insert(r.row);
+            if (!res.error) done.add(`${r.table}:${r.id}:${r.v}`); else fail(r, res.error);
           }
         }
+        for (const r of updates) {
+          const { id, ...rest } = r.row as { id: string };
+          const res = await sb.from(table).update(rest).eq('id', id).select('id');
+          if (res.error) fail(r, res.error);
+          else if (!res.data || res.data.length === 0) fail(r, { code: '42501', message: 'not allowed to change this record' });
+          else done.add(`${r.table}:${r.id}:${r.v}`);
+        }
       }
-      writeQueue(readQueue().filter(p => !done.has(`${p.table}:${p.id}`)));
+      // Only remove the exact versions that were written; a newer edit made meanwhile stays queued.
+      writeQueue(readQueue().filter(p => !done.has(`${p.table}:${p.id}:${p.v}`)));
       if (done.size) status.lastSyncAt = new Date().toISOString();
+      if (readQueue().length) setTimeout(() => { void this.flush(); }, 300);
     } catch (e) {
       status.lastError = (e as Error).message;
     } finally {
@@ -161,14 +185,15 @@ export const cloud = {
   async pull(): Promise<void> {
     if (!sb || !session || !applier || !navigator.onLine) return;
     try {
+      const tables = Object.entries(MAPPINGS);
+      const results = await Promise.all(tables.map(([, m]) => sb!.from(m.table).select('data').limit(5000)));
+      // Decide what to keep after the fetch, so edits made while it was running are not overwritten.
       const pendingIds = new Map<string, Set<string>>();
       readQueue().forEach(p => {
         const k = TABLE_TO_KEY[p.table];
         if (!pendingIds.has(k)) pendingIds.set(k, new Set());
         pendingIds.get(k)!.add(p.id);
       });
-      const tables = Object.entries(MAPPINGS);
-      const results = await Promise.all(tables.map(([, m]) => sb!.from(m.table).select('data').limit(5000)));
       results.forEach((res, i) => {
         const [key] = tables[i];
         if (res.error) { status.lastError = res.error.message; return; }

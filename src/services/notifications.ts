@@ -4,6 +4,7 @@
 // happened: sent, not_configured (no provider keys on this deployment), failed, or queued_offline.
 
 import { NotificationTemplate, OutboxMessage, DeliveryStatus } from '../types';
+import { cloud } from './cloud';
 
 const KEY = 'lm_outbox_v2';
 
@@ -17,6 +18,7 @@ const read = (): OutboxMessage[] => {
 };
 const write = (list: OutboxMessage[]) => {
   const trimmed = list.slice(0, 300);
+  cloud.onLocalWrite(KEY, read(), trimmed); // save to the live database too
   memory = trimmed;
   try {
     if (typeof localStorage !== 'undefined') localStorage.setItem(KEY, JSON.stringify(trimmed));
