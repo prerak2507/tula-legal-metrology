@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { DEFAULT_FEE_RULES, DEFAULT_VALIDITY_RULES, isCategoryGatcEligible } from '../services/rulesEngine';
-import { FeeRule, ValidityRule, InstrumentCategory } from '../types';
-import { Settings, ShieldCheck, DollarSign, Clock, Layers, Plus } from 'lucide-react';
+import { DEFAULT_FEE_RULES, DEFAULT_VALIDITY_RULES } from '../services/rulesEngine';
+import { FeeRule, ValidityRule } from '../types';
+import { Settings, DollarSign, Clock, Layers } from 'lucide-react';
 
 export const AdminRules: React.FC = () => {
-  const [feeRules, setFeeRules] = useState<FeeRule[]>(DEFAULT_FEE_RULES);
-  const [validityRules, setValidityRules] = useState<ValidityRule[]>(DEFAULT_VALIDITY_RULES);
+  const [feeRules, _setFeeRules] = useState<FeeRule[]>(DEFAULT_FEE_RULES);
+  const [validityRules, _setValidityRules] = useState<ValidityRule[]>(DEFAULT_VALIDITY_RULES);
 
   return (
     <div className="space-y-6">

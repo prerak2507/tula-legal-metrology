@@ -5,20 +5,13 @@ import {
   ShieldCheck,
   Smartphone,
   QrCode,
-  FileText,
-  Award,
   ArrowRight,
   CheckCircle2,
   Lock,
-  Zap,
-  Users,
-  BarChart3,
   Clock,
-  MapPin,
   Menu,
   X,
   ExternalLink,
-  ChevronRight,
   Sparkles,
   Search,
   Check,
@@ -26,7 +19,6 @@ import {
   Building,
   Cpu,
   Layers,
-  Sliders,
   TrendingUp,
 } from 'lucide-react';
 import { TulaLogo } from '../components/common/TulaLogo';
@@ -34,7 +26,7 @@ import { storage } from '../services/storage';
 
 export const LandingPage: React.FC = () => {
   const [mobileNav, setMobileNav] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
+  const [_scrolled, setScrolled] = useState(false);
   const [activeTab, setActiveTab] = useState<'BUSINESS' | 'LMO' | 'GATC' | 'CONTROLLER'>('BUSINESS');
   const [demoCertInput, setDemoCertInput] = useState('DL/LM/2026/08912');
   const [demoVerificationResult, setDemoVerificationResult] = useState<any>(null);

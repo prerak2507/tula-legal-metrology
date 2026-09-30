@@ -1,17 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { UserRole, UserProfile } from '../../types';
-import { storage } from '../../services/storage';
-import { ChevronDown, Shield, QrCode, LogOut, User } from 'lucide-react';
+import { ChevronDown, Shield, QrCode, LogOut } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface RoleSwitcherDropdownProps {
   currentUser: UserProfile;
-  onOpenDemoControl: () => void;
+  onOpenDemoControl?: () => void;
 }
 
 export const RoleSwitcherDropdown: React.FC<RoleSwitcherDropdownProps> = ({
   currentUser,
-  onOpenDemoControl,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);

@@ -18,11 +18,8 @@ import {
   ExternalLink,
   ChevronLeft,
   ChevronRight,
-  LogOut,
-  HelpCircle,
   PlusCircle,
   Calendar,
-  Globe,
 } from 'lucide-react';
 
 import { TulaLogo } from '../common/TulaLogo';

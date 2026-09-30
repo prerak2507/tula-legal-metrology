@@ -3,20 +3,14 @@ import { storage } from '../services/storage';
 import { Instrument, Application, VerificationCertificate, EnforcementCase } from '../types';
 import { 
   FileBarChart2, 
-  Download, 
-  Filter, 
-  Calendar, 
-  Scale, 
-  Award, 
-  AlertTriangle, 
-  UserCheck 
+  Download
 } from 'lucide-react';
 
 export const ReportsView: React.FC = () => {
   const [allInstruments, setAllInstruments] = useState<Instrument[]>(storage.getInstruments());
   const [allApplications, setAllApplications] = useState<Application[]>(storage.getApplications());
   const [allCertificates, setAllCertificates] = useState<VerificationCertificate[]>(storage.getCertificates());
-  const [allEnforcements, setAllEnforcements] = useState<EnforcementCase[]>(storage.getEnforcementCases());
+  const [_allEnforcements, setAllEnforcements] = useState<EnforcementCase[]>(storage.getEnforcementCases());
   const [user, setUser] = useState(storage.getCurrentUser());
 
   useEffect(() => {
@@ -106,7 +100,7 @@ export const ReportsView: React.FC = () => {
 
   const rh = getReportHeader();
 
-  // Export functions to CSV
+  // Export functions
   const exportInstrumentsCSV = () => {
     const headers = ['UID', 'Category', 'Manufacturer', 'Model', 'Serial', 'Capacity', 'State', 'District', 'Status', 'ExpiryDueDate'];
     const rows = instruments.map(i => [
@@ -153,6 +147,16 @@ export const ReportsView: React.FC = () => {
     document.body.removeChild(link);
   };
 
+  const exportCertificatesJSON = () => {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(certificates, null, 2));
+    const link = document.createElement('a');
+    link.setAttribute('href', dataStr);
+    link.setAttribute('download', `Legal_Metrology_Certificates_${new Date().toISOString().split('T')[0]}.json`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -172,20 +176,30 @@ export const ReportsView: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={exportInstrumentsCSV}
-            className="inline-flex items-center gap-1.5 bg-gov-700 hover:bg-gov-800 text-white font-semibold px-4 py-2 rounded-lg text-xs transition-colors shadow-xs"
+            aria-label="Export Instruments as CSV"
+            className="inline-flex items-center gap-1.5 bg-gov-700 hover:bg-gov-800 text-white font-semibold px-3.5 py-2 rounded-lg text-xs transition-colors shadow-xs"
           >
-            <Download className="w-4 h-4" />
-            {user.role === 'BUSINESS' ? 'Export My Fleet CSV' : 'Export Instruments CSV'}
+            <Download className="w-3.5 h-3.5" />
+            {user.role === 'BUSINESS' ? 'Export Fleet CSV' : 'Instruments CSV'}
           </button>
           <button
             onClick={exportApplicationsCSV}
-            className="inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-900 text-white font-semibold px-4 py-2 rounded-lg text-xs transition-colors shadow-xs"
+            aria-label="Export Applications as CSV"
+            className="inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-900 text-white font-semibold px-3.5 py-2 rounded-lg text-xs transition-colors shadow-xs"
           >
-            <Download className="w-4 h-4" />
-            {user.role === 'BUSINESS' ? 'Export My Applications CSV' : 'Export Applications CSV'}
+            <Download className="w-3.5 h-3.5" />
+            {user.role === 'BUSINESS' ? 'Export Apps CSV' : 'Applications CSV'}
+          </button>
+          <button
+            onClick={exportCertificatesJSON}
+            aria-label="Export Certificates as JSON"
+            className="inline-flex items-center gap-1.5 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold px-3.5 py-2 rounded-lg text-xs transition-colors shadow-xs"
+          >
+            <Download className="w-3.5 h-3.5" />
+            Certificates JSON
           </button>
         </div>
       </div>

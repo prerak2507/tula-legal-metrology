@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { storage } from '../services/storage';
 import { AuditLogEntry } from '../types';
-import { History, Search, ShieldCheck, Filter } from 'lucide-react';
+import { History, Search } from 'lucide-react';
 
 export const AuditLogView: React.FC = () => {
   const [allLogs, setAllLogs] = useState<AuditLogEntry[]>(storage.getAuditLogs());

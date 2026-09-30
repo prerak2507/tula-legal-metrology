@@ -4,7 +4,6 @@ import { storage } from '../services/storage';
 import { syncQueue } from '../services/syncQueue';
 import { 
   Application, 
-  Instrument, 
   InspectionChecklistItem, 
   TestReadingRow,
   UserProfile 
@@ -18,14 +17,9 @@ import {
   Camera, 
   MapPin, 
   CheckCircle2, 
-  XCircle, 
   AlertTriangle, 
   Scale, 
-  FileCheck, 
   ShieldCheck, 
-  ChevronRight,
-  ArrowLeft,
-  PenTool,
   Calendar,
   Clock
 } from 'lucide-react';
@@ -44,7 +38,7 @@ export const FieldInspection: React.FC = () => {
   const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
   const [pendingSyncCount, setPendingSyncCount] = useState<number>(syncQueue.getPendingCount());
   const [gpsLocation, setGpsLocation] = useState<string>('Detecting GPS coordinates...');
-  const [gpsCoordinates, setGpsCoordinates] = useState<{ lat?: number; lng?: number }>({});
+  const [_gpsCoordinates, setGpsCoordinates] = useState<{ lat?: number; lng?: number }>({});
 
   // Inspection form state
   const [checklist, setChecklist] = useState<InspectionChecklistItem[]>([]);
@@ -91,7 +85,9 @@ export const FieldInspection: React.FC = () => {
         { timeout: 5000 }
       );
     } else {
-      setGpsLocation('28.52920° N, 77.27130° E (Zonal Reference)');
+      setTimeout(() => {
+        setGpsLocation('28.52920° N, 77.27130° E (Zonal Reference)');
+      }, 0);
     }
   }, []);
 
@@ -99,7 +95,6 @@ export const FieldInspection: React.FC = () => {
   useEffect(() => {
     const allApps = storage.getApplications();
     const user = storage.getCurrentUser();
-    setCurrentUser(user);
 
     const relevantApps = user.role === 'BUSINESS'
       ? allApps.filter(a => a.applicantId === user.id)
@@ -111,7 +106,6 @@ export const FieldInspection: React.FC = () => {
 
     setApplications(relevantApps);
     if (!selectedAppId && relevantApps.length > 0) {
-      // Pick first non-completed application
       const activeApp = relevantApps.find(a => a.status === 'SCHEDULED' || a.status === 'ASSIGNED' || a.status === 'INSPECTION_IN_PROGRESS') || relevantApps[0];
       setSelectedAppId(activeApp.id);
     }
