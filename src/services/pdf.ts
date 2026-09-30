@@ -1,7 +1,10 @@
 import { jsPDF } from 'jspdf';
+import QRCode from 'qrcode';
 import { VerificationCertificate } from '../types';
+import { quarterMark } from './rulesEngine';
 
-export function generateCertificatePdf(cert: VerificationCertificate): void {
+export async function generateCertificatePdf(cert: VerificationCertificate): Promise<void> {
+  const qrDataUrl = await QRCode.toDataURL(cert.qrPayloadUrl, { errorCorrectionLevel: 'M', margin: 1, width: 600 });
   const doc = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
@@ -39,7 +42,7 @@ export function generateCertificatePdf(cert: VerificationCertificate): void {
   doc.setFontSize(9);
   doc.setFont('times', 'normal');
   doc.setTextColor(80, 80, 80);
-  doc.text('[Under Section 24 of The Legal Metrology Act, 2009 & Rule 27, Schedule IX of The Legal Metrology (General) Rules, 2011]', 105, 51, { align: 'center' });
+  doc.text('[Under Section 24 of The Legal Metrology Act, 2009 and the rules made under it]', 105, 51, { align: 'center' });
 
   doc.setLineWidth(0.3);
   doc.setDrawColor(180, 180, 180);
@@ -56,7 +59,7 @@ export function generateCertificatePdf(cert: VerificationCertificate): void {
   doc.setFontSize(9);
   doc.setTextColor(40, 40, 40);
   doc.text(`Verification Date: ${cert.verificationDate}`, 16, 68);
-  doc.text(`Valid Until: ${cert.validUntil} (12 Months)`, 130, 68);
+  doc.text(`Valid Until: ${cert.validUntil} (${cert.validityMonths} months)`, 130, 68);
   doc.text(`Issuing Authority: ${cert.issuingAuthority}`, 16, 74);
 
   doc.line(15, 78, 195, 78);
@@ -107,7 +110,7 @@ export function generateCertificatePdf(cert: VerificationCertificate): void {
   doc.text('Maximum Permissible Error (MPE) was observed to be within lawful tolerance limits.', 20, 178);
 
   doc.text(`Official Stamp / Seal ID:  ${cert.stampId}`, 20, 186);
-  doc.text(`Quarter & Year Mark:       A-26 (Quarter 1, 2026)`, 120, 186);
+  doc.text(`Quarter mark:  ${quarterMark(new Date(cert.verificationDate))}`, 120, 186);
   doc.text(`Inspection Record Ref:    ${cert.inspectionId}`, 20, 192);
 
   // Integrity & Public QR Verification
@@ -120,16 +123,19 @@ export function generateCertificatePdf(cert: VerificationCertificate): void {
   doc.setFont('courier', 'normal');
   doc.setFontSize(7.5);
   doc.setTextColor(60, 60, 60);
-  doc.text(`SHA-256 Digest: ${cert.sha256Hash}`, 20, 214);
-  doc.text(`Public Verification URL: ${cert.qrPayloadUrl}`, 20, 219);
+  doc.text(`SHA-256 record hash: ${cert.sha256Hash.slice(0, 32)}`, 20, 214);
+  doc.text(`                     ${cert.sha256Hash.slice(32)}`, 20, 218);
+  doc.text(cert.signatureStatus === 'SIGNED' ? `Signed: ECDSA P-256, key ${cert.signingKid}, ${cert.signedAt?.slice(0, 10)}` : 'Digital signature: pending', 20, 224);
+  doc.text('Scan the QR to check this certificate. Works offline.', 20, 230);
+  doc.addImage(qrDataUrl, 'PNG', 155, 203, 38, 38);
 
   // Signatures
   doc.line(15, 245, 195, 245);
   doc.setFont('times', 'normal');
   doc.setFontSize(8);
   doc.setTextColor(80, 80, 80);
-  doc.text('This is a digitally issued Schedule IX verification certificate generated via the TULA National Legal Metrology Portal.', 16, 252);
-  doc.text('Mandatory Display Requirement: Under Rule 24, this certificate must be displayed conspicuously at place of business.', 16, 256);
+  doc.text('Digitally issued verification certificate (TULA prototype, SIH 26036).', 16, 252);
+  doc.text('Display this certificate where the instrument is used for trade.', 16, 256);
 
   doc.setFont('times', 'bold');
   doc.setFontSize(10);

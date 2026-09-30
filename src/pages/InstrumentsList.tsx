@@ -1,4 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import { LIVE_STATES, CATEGORY_LABELS, ACCURACY_CLASSES } from '../config/geo';
+import { WorkflowError } from '../services/storage';
+import { AccuracyClass } from '../types';
 import { Link } from 'react-router-dom';
 import { storage } from '../services/storage';
 import { Instrument, InstrumentCategory, InstrumentStatus } from '../types';
@@ -22,7 +26,13 @@ export const InstrumentsList: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [categoryFilter, setCategoryFilter] = useState<string>('ALL');
-  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(searchParams.get('register') === '1');
+  const [newClass, setNewClass] = useState<AccuracyClass>('CLASS_III');
+  const [regError, setRegError] = useState<string | null>(null);
+  const [siteGps, setSiteGps] = useState<{ lat: number; lng: number } | null>(null);
+  const [gpsNote, setGpsNote] = useState('');
 
   // Registration Form State
   const [newCategory, setNewCategory] = useState<InstrumentCategory>('NON_AUTOMATIC_WEIGHING');
@@ -33,8 +43,8 @@ export const InstrumentsList: React.FC = () => {
   const [newCapacity, setNewCapacity] = useState('');
   const [newScaleInterval, setNewScaleInterval] = useState('');
   const [newAddress, setNewAddress] = useState('');
-  const [newState, setNewState] = useState('Delhi');
-  const [newDistrict, setNewDistrict] = useState('Central Delhi');
+  const [newState, setNewState] = useState(storage.getCurrentUser().state in LIVE_STATES ? storage.getCurrentUser().state : 'Delhi');
+  const [newDistrict, setNewDistrict] = useState(LIVE_STATES[storage.getCurrentUser().state]?.includes(storage.getCurrentUser().district) ? storage.getCurrentUser().district : LIVE_STATES.Delhi[0]);
 
   useEffect(() => {
     const unsub = storage.subscribe(() => {
@@ -45,11 +55,8 @@ export const InstrumentsList: React.FC = () => {
   }, []);
 
   // Role-based data filtering
-  const instruments = user.role === 'BUSINESS'
-    ? allInstruments.filter(i => i.ownerId === user.id)
-    : (user.role === 'LMO' || user.role === 'GATC' || user.role === 'CONTROLLER' || user.role === 'STATE_ADMIN')
-    ? allInstruments.filter(i => i.state === user.state)
-    : allInstruments; // CENTRAL_ADMIN sees all
+  const instruments = storage.getInstrumentsForUser(user);
+  void allInstruments;
 
   const filteredInstruments = instruments.filter(inst => {
     const matchesSearch = 
@@ -66,43 +73,54 @@ export const InstrumentsList: React.FC = () => {
     return matchesSearch && matchesStatus && matchesCategory;
   });
 
-  const handleRegisterSubmit = (e: React.FormEvent) => {
+  const captureSite = () => {
+    if (!('geolocation' in navigator)) { setGpsNote('Location not available on this device.'); return; }
+    setGpsNote('Getting location…');
+    navigator.geolocation.getCurrentPosition(
+      p => { setSiteGps({ lat: p.coords.latitude, lng: p.coords.longitude }); setGpsNote(`Saved: ${p.coords.latitude.toFixed(5)}, ${p.coords.longitude.toFixed(5)}`); },
+      () => setGpsNote('Location permission denied. You can register without it.'),
+      { enableHighAccuracy: true, timeout: 15000 },
+    );
+  };
+
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newManufacturer || !newModel || !newSerial || !newCapacity) {
-      alert('Please fill all mandatory technical specifications');
+    setRegError(null);
+    if (!newManufacturer.trim() || !newModel.trim() || !newSerial.trim() || !newCapacity.trim() || !newModelApproval.trim() || !newAddress.trim()) {
+      setRegError('Fill every field marked *.');
       return;
     }
-
     const user = storage.getCurrentUser();
-    storage.registerInstrument({
-      category: newCategory,
-      categoryName: `${newCategory.replace(/_/g, ' ')} (${newModel})`,
-      accuracyClass: 'CLASS_III',
-      manufacturer: newManufacturer,
-      model: newModel,
-      modelApprovalNumber: newModelApproval || 'IND/09/2026/PROV',
-      serialNumber: newSerial,
-      capacity: newCapacity,
-      scaleInterval: newScaleInterval || 'e = 10g',
-      purchaseDate: new Date().toISOString().split('T')[0],
-      installationDate: new Date().toISOString().split('T')[0],
-      ownerId: user.id,
-      ownerName: user.fullName,
-      organization: user.organization,
-      installationAddress: newAddress || `${user.address}, ${newDistrict}, ${newState}`,
-      state: newState,
-      district: newDistrict,
-      nextVerificationDueDate: new Date(Date.now() + 365*24*60*60*1000).toISOString().split('T')[0],
-      photos: ['https://images.unsplash.com/photo-1584727638096-042c45049ebe?auto=format&fit=crop&w=600&q=80'],
-    });
-
-    setIsRegisterModalOpen(false);
-    // Reset inputs
-    setNewManufacturer('');
-    setNewModel('');
-    setNewSerial('');
-    setNewCapacity('');
-    setNewScaleInterval('');
+    try {
+      const inst = await storage.registerInstrument({
+        category: newCategory,
+        categoryName: `${CATEGORY_LABELS[newCategory] || newCategory.replace(/_/g, ' ').toLowerCase()} ${newCapacity.trim()}`,
+        accuracyClass: newClass,
+        manufacturer: newManufacturer.trim(),
+        model: newModel.trim(),
+        modelApprovalNumber: newModelApproval.trim().toUpperCase(),
+        serialNumber: newSerial.trim(),
+        capacity: newCapacity.trim(),
+        scaleInterval: newScaleInterval.trim() || 'not stated',
+        purchaseDate: new Date().toISOString().slice(0, 10),
+        installationDate: new Date().toISOString().slice(0, 10),
+        ownerId: user.id,
+        ownerName: user.fullName,
+        organization: user.organization,
+        installationAddress: newAddress.trim(),
+        state: newState,
+        district: newDistrict,
+        latitude: siteGps?.lat,
+        longitude: siteGps?.lng,
+        nextVerificationDueDate: '',
+        photos: [],
+      });
+      setIsRegisterModalOpen(false);
+      setNewManufacturer(''); setNewModel(''); setNewSerial(''); setNewCapacity(''); setNewScaleInterval(''); setNewModelApproval(''); setNewAddress(''); setSiteGps(null); setGpsNote('');
+      navigate(`/applications/new?instrumentId=${inst.id}`);
+    } catch (err) {
+      setRegError(err instanceof WorkflowError || err instanceof Error ? err.message : String(err));
+    }
   };
 
   return (
@@ -124,13 +142,15 @@ export const InstrumentsList: React.FC = () => {
           </p>
         </div>
 
-        <button
-          onClick={() => setIsRegisterModalOpen(true)}
-          className="inline-flex items-center gap-2 bg-gov-700 hover:bg-gov-800 text-white font-semibold px-4 py-2 rounded-lg text-xs transition-colors shadow-xs shrink-0"
-        >
-          <Plus className="w-4 h-4" />
-          Register New Instrument
-        </button>
+        {user.role === 'BUSINESS' && (
+          <button
+            onClick={() => setIsRegisterModalOpen(true)}
+            className="inline-flex items-center justify-center gap-2 bg-gov-700 hover:bg-gov-800 text-white font-semibold px-4 py-2.5 rounded-lg text-sm transition-colors shadow-xs shrink-0 min-h-[44px]"
+          >
+            <Plus className="w-4 h-4" />
+            Register an instrument
+          </button>
+        )}
       </div>
 
       {/* Search and Filters Bar */}
@@ -321,13 +341,14 @@ export const InstrumentsList: React.FC = () => {
                     onChange={e => setNewCategory(e.target.value as InstrumentCategory)}
                     className="w-full bg-slate-50 border border-slate-300 rounded p-2 text-xs focus:ring-2 focus:ring-gov-600"
                   >
-                    <option value="NON_AUTOMATIC_WEIGHING">Non-Automatic Weighing Instrument</option>
-                    <option value="COUNTER_MACHINE">Counter Machine (Class III)</option>
-                    <option value="PLATFORM_SCALE">Platform Scale</option>
-                    <option value="WEIGHBRIDGE">Road Pitless Weighbridge</option>
-                    <option value="FUEL_DISPENSER_PETROL_DIESEL">Fuel Dispenser (Petrol/Diesel)</option>
-                    <option value="FUEL_DISPENSER_CNG">CNG Dispenser</option>
-                    <option value="WATER_METER">Bulk / Residential Water Meter</option>
+                    {Object.entries(CATEGORY_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Accuracy class *</label>
+                  <select value={newClass} onChange={e => setNewClass(e.target.value as AccuracyClass)} className="w-full bg-slate-50 border border-slate-300 rounded p-2 text-xs">
+                    {ACCURACY_CLASSES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
                   </select>
                 </div>
 
@@ -391,7 +412,7 @@ export const InstrumentsList: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Model Approval Certificate No.</label>
+                  <label className="block font-semibold text-slate-700 mb-1">Model approval number *</label>
                   <input
                     type="text"
                     placeholder="e.g. IND/09/2023/184"
@@ -405,13 +426,18 @@ export const InstrumentsList: React.FC = () => {
                   <label className="block font-semibold text-slate-700 mb-1">State Jurisdiction *</label>
                   <select
                     value={newState}
-                    onChange={e => setNewState(e.target.value)}
+                    onChange={e => { setNewState(e.target.value); setNewDistrict(LIVE_STATES[e.target.value][0]); }}
                     className="w-full bg-slate-50 border border-slate-300 rounded p-2 text-xs"
                   >
-                    <option value="Delhi">Delhi (NCT)</option>
-                    <option value="Gujarat">Gujarat</option>
-                    <option value="Maharashtra">Maharashtra</option>
-                    <option value="Karnataka">Karnataka</option>
+                    {Object.keys(LIVE_STATES).map(st => <option key={st} value={st}>{st}</option>)}
+                  </select>
+                  <p className="text-[10px] text-slate-500 mt-1">States with officers set up in the prototype</p>
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">District *</label>
+                  <select value={newDistrict} onChange={e => setNewDistrict(e.target.value)} className="w-full bg-slate-50 border border-slate-300 rounded p-2 text-xs">
+                    {LIVE_STATES[newState].map(d => <option key={d} value={d}>{d}</option>)}
                   </select>
                 </div>
               </div>
@@ -428,6 +454,12 @@ export const InstrumentsList: React.FC = () => {
                 />
               </div>
 
+              <div className="flex flex-wrap items-center gap-2">
+                <button type="button" onClick={captureSite} className="px-3 py-2 rounded-lg border border-slate-300 bg-white font-semibold min-h-[40px]">Use my current location as the site</button>
+                <span className="text-[11px] text-slate-500">{gpsNote || 'Optional. Lets the inspector app confirm the officer is on site.'}</span>
+              </div>
+              {regError && <p role="alert" className="text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded p-2">{regError}</p>}
+
               <div className="pt-4 border-t border-slate-200 flex justify-end gap-2">
                 <button
                   type="button"
@@ -440,7 +472,7 @@ export const InstrumentsList: React.FC = () => {
                   type="submit"
                   className="px-5 py-2 rounded bg-gov-700 hover:bg-gov-800 text-white font-bold shadow-xs"
                 >
-                  Register &amp; Assign Digital UID
+                  Register and get Digital ID
                 </button>
               </div>
             </form>

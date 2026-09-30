@@ -50,7 +50,7 @@ export const RoleSwitcherDropdown: React.FC<RoleSwitcherDropdownProps> = ({
       name: 'Dr. Hardik Patel',
       org: 'Gujarat Metrology Calibration & Testing Lab',
       state: 'Gujarat',
-      description: 'Rule 2026 mandate: CNG/LPG, weighbridges, and flow meter laboratory testing',
+      description: 'GATC Rules, 2013 mandate: CNG/LPG, weighbridges, and flow meter laboratory testing',
     },
     {
       role: 'CONTROLLER',

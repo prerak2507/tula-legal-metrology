@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Outlet, Link, useLocation } from 'react-router-dom';
-import { Globe, GitBranch, Search, Sparkles, Sliders } from 'lucide-react';
+import { Outlet, Link, useLocation, Navigate } from 'react-router-dom';
+import { cloud, cloudEnabled, CloudStatus } from '../../services/cloud';
+import { Globe, GitBranch, Search, Sparkles, Sliders, Menu, WifiOff, RefreshCw, CheckCircle2 } from 'lucide-react';
 import { Sidebar } from './Sidebar';
 import { RoleSwitcherDropdown } from './RoleSwitcherDropdown';
 import { DemoControlModal } from '../demo/DemoControlModal';
@@ -15,13 +16,44 @@ export const AppShell: React.FC = () => {
   const [instruments, setInstruments] = useState<Instrument[]>(storage.getInstruments());
   const [applications, setApplications] = useState<Application[]>(storage.getApplications());
   const [certificates, setCertificates] = useState<VerificationCertificate[]>(storage.getCertificates());
-  const [notifications, setNotifications] = useState<NotificationItem[]>(storage.getNotifications());
+  const [notifications, setNotifications] = useState<NotificationItem[]>(storage.getNotificationsForUser());
   const [isDemoModalOpen, setIsDemoModalOpen] = useState(false);
   const [isWorkflowModalOpen, setIsWorkflowModalOpen] = useState(false);
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [online, setOnline] = useState(typeof navigator === 'undefined' ? true : navigator.onLine);
+  const [syncMessage, setSyncMessage] = useState<string | null>(null);
   const location = useLocation();
+  const [cs, setCs] = useState<CloudStatus>(cloud.status());
+  useEffect(() => { const off = cloud.subscribe(() => setCs(cloud.status())); return () => { off(); }; }, []);
+
+  const pendingSync = storage.getOfflineQueue().length + certificates.filter(c => c.signatureStatus === 'PENDING_SIGNATURE').length;
+
+  // Close the phone drawer after navigating.
+  useEffect(() => setMobileNavOpen(false), [location.pathname]);
+
+  // Connectivity: when the device comes back online, issue and sign anything recorded offline.
+  useEffect(() => {
+    const runSync = async () => {
+      const r = await storage.syncPending();
+      if (r.issued || r.signed) {
+        setSyncMessage(`Back online: ${r.issued} certificate(s) issued, ${r.signed} signed.`);
+        setTimeout(() => setSyncMessage(null), 6000);
+      }
+    };
+    const goOnline = () => { setOnline(true); void runSync(); };
+    const goOffline = () => setOnline(false);
+    window.addEventListener('online', goOnline);
+    window.addEventListener('offline', goOffline);
+    storage.runExpiryReminderJob();
+    void runSync();
+    return () => {
+      window.removeEventListener('online', goOnline);
+      window.removeEventListener('offline', goOffline);
+    };
+  }, []);
 
 
   useEffect(() => {
@@ -30,7 +62,7 @@ export const AppShell: React.FC = () => {
       setInstruments(storage.getInstruments());
       setApplications(storage.getApplications());
       setCertificates(storage.getCertificates());
-      setNotifications(storage.getNotifications());
+      setNotifications(storage.getNotificationsForUser());
     });
     return unsubscribe;
   }, []);
@@ -49,8 +81,17 @@ export const AppShell: React.FC = () => {
     if (path.startsWith('/audit')) return 'Audit Trail';
     if (path.startsWith('/admin/rules')) return 'Rules & Fees';
     if (path.startsWith('/verify')) return 'Public Verification';
+    if (path.startsWith('/notifications')) return 'SMS / Email Updates';
     return 'TULA';
   };
+
+  // Portal pages need a signed-in account when the live database is on.
+  if (cloudEnabled && !cs.ready) {
+    return <div className="min-h-screen flex items-center justify-center text-sm text-slate-500" aria-busy="true">Checking your sign-in…</div>;
+  }
+  if (cloudEnabled && !cs.signedIn) {
+    return <Navigate to={`/login?next=${encodeURIComponent(location.pathname + location.search)}`} replace />;
+  }
 
   return (
     <div className="min-h-screen bg-slate-50/80">
@@ -60,12 +101,14 @@ export const AppShell: React.FC = () => {
         notifications={notifications}
         collapsed={sidebarCollapsed}
         setCollapsed={setSidebarCollapsed}
+        mobileOpen={mobileNavOpen}
+        onMobileClose={() => setMobileNavOpen(false)}
       />
 
       {/* Main Content Area — offset by sidebar width */}
       <div
-        className={`transition-all duration-300 ease-in-out ${
-          sidebarCollapsed ? 'ml-[72px]' : 'ml-[260px]'
+        className={`transition-all duration-300 ease-in-out min-w-0 ${
+          sidebarCollapsed ? 'lg:ml-[72px]' : 'lg:ml-[260px]'
         }`}
       >
         {/* ── Slim Top Accent Strip ── */}
@@ -73,20 +116,45 @@ export const AppShell: React.FC = () => {
 
         {/* ── Clean Main Header ── */}
         <header className="sticky top-[3px] z-30 bg-white/95 backdrop-blur-xl border-b border-slate-200/80">
-          <div className="flex items-center justify-between h-14 px-5">
+          <div className="flex items-center justify-between h-14 px-3 sm:px-5 gap-2">
 
             {/* Left: Page context */}
-            <div className="flex items-center gap-3 min-w-0">
+            <div className="flex items-center gap-2 min-w-0">
+              <button
+                onClick={() => setMobileNavOpen(true)}
+                className="lg:hidden p-2.5 -ml-1 rounded-lg text-slate-700 hover:bg-slate-100"
+                aria-label="Open menu"
+              >
+                <Menu className="w-5 h-5" />
+              </button>
               <div>
-                <h2 className="text-sm font-bold text-slate-900 leading-tight">{getPageTitle()}</h2>
-                <p className="text-[10px] text-slate-400 font-medium leading-tight hidden sm:block">
+                <h2 className="text-sm font-bold text-slate-900 leading-tight truncate">{getPageTitle()}</h2>
+                <p className="text-[10px] text-slate-400 font-medium leading-tight hidden xl:block">
                   Dept. of Consumer Affairs • Ministry of Consumer Affairs, Food &amp; Public Distribution
                 </p>
               </div>
             </div>
 
             {/* Right: Action buttons — clean, spaced */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+              {/* Connectivity */}
+              {!online ? (
+                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-[11px] font-bold" title="No network. Work is saved on this device.">
+                  <WifiOff className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Offline</span>
+                </span>
+              ) : cs.pending > 0 ? (
+                <button onClick={() => cloud.flush()} className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-[11px] font-bold" title={cs.lastError || 'Changes waiting to be saved to the database'}>
+                  <RefreshCw className="w-3.5 h-3.5" /> {cs.pending}<span className="hidden sm:inline"> saving</span>
+                </button>
+              ) : pendingSync > 0 ? (
+                <button onClick={() => storage.syncPending()} className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-[11px] font-bold" title="Items waiting to sync. Tap to retry.">
+                  <RefreshCw className="w-3.5 h-3.5" /> {pendingSync}<span className="hidden sm:inline"> to sync</span>
+                </button>
+              ) : cloudEnabled ? (
+                <span className="hidden md:inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-bold" title={cs.realtime ? 'Connected to the live database. Changes from other devices appear instantly.' : 'Saved to the live database.'}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${cs.realtime ? 'bg-emerald-500 animate-pulse' : 'bg-emerald-400'}`} /> Live
+                </span>
+              ) : null}
               {/* Search */}
               <button
                 onClick={() => setIsSearchModalOpen(true)}
@@ -111,14 +179,12 @@ export const AppShell: React.FC = () => {
               {/* TULA Gemini AI Advisor */}
               <button
                 onClick={() => setIsAiModalOpen(true)}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-purple-50 via-indigo-50 to-purple-50 hover:from-purple-100 hover:to-indigo-100 border border-purple-200/80 text-xs font-bold text-purple-900 transition-all shadow-2xs group"
-                title="Ask TULA AI Metrology Assistant (Google Gemini Live)"
+                className="inline-flex items-center gap-1.5 p-2 sm:px-2.5 sm:py-1.5 rounded-lg bg-purple-50 hover:bg-purple-100 border border-purple-200/80 text-xs font-bold text-purple-900 transition-all"
+                title="Ask the TULA help assistant (Google Gemini)"
+                aria-label="Open help assistant"
               >
-                <Sparkles className="w-3.5 h-3.5 text-purple-600 group-hover:scale-110 transition-transform" />
-                <span className="hidden sm:inline">AI Advisor</span>
-                <span className="inline-flex items-center px-1.5 py-0.2 rounded-full bg-purple-200/80 text-purple-800 text-[9px] font-mono font-bold">
-                  Gemini
-                </span>
+                <Sparkles className="w-3.5 h-3.5 text-purple-600" />
+                <span className="hidden sm:inline">Help</span>
               </button>
 
               {/* Connected Workflow */}
@@ -134,8 +200,9 @@ export const AppShell: React.FC = () => {
               {/* Landing Page */}
               <Link
                 to="/"
-                className="p-2 rounded-lg text-slate-400 hover:text-[#0070C0] hover:bg-blue-50 transition-colors"
+                className="hidden sm:inline-flex p-2 rounded-lg text-slate-400 hover:text-[#0070C0] hover:bg-blue-50 transition-colors"
                 title="Return to Public Landing Page"
+                aria-label="Public home page"
               >
                 <Globe className="w-4 h-4" />
               </Link>
@@ -160,9 +227,9 @@ export const AppShell: React.FC = () => {
               Demo
             </span>
             <span className="text-[11px] text-amber-800 truncate hidden sm:inline">
-              SIH 26036 prototype — seeded statutory records for evaluation
+              Prototype on a live database. Demo payments and gateways are marked. <Link to="/status" className="underline font-semibold">What is live and what is planned</Link>
             </span>
-            <span className="text-[11px] text-amber-800 sm:hidden">SIH 26036 Demo</span>
+            <Link to="/status" className="text-[11px] text-amber-800 underline sm:hidden">Prototype status</Link>
           </div>
           <div className="flex items-center gap-3 shrink-0">
             <button
@@ -179,29 +246,34 @@ export const AppShell: React.FC = () => {
           </div>
         </div>
 
+        {syncMessage && (
+          <div role="status" className="bg-emerald-50 border-b border-emerald-200 px-5 py-2 text-xs font-semibold text-emerald-800 flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4" /> {syncMessage}
+          </div>
+        )}
+
         {/* Page Content */}
-        <main className="p-4 sm:p-6 lg:p-8 max-w-[1400px] mx-auto">
+        <main className="p-3 sm:p-6 lg:p-8 max-w-[1400px] mx-auto">
           <Outlet />
         </main>
 
         {/* Floating AI Metrology Assistant Trigger */}
         <button
           onClick={() => setIsAiModalOpen(true)}
-          className="fixed bottom-5 right-5 z-40 flex items-center gap-2 px-3.5 py-2.5 rounded-full bg-gradient-to-r from-indigo-700 via-purple-700 to-indigo-800 text-white font-semibold text-xs shadow-xl hover:shadow-2xl hover:scale-105 active:scale-95 transition-all border border-purple-400/40 cursor-pointer group"
-          title="Open TULA AI Metrology Assistant (Gemini)"
+          className="fixed bottom-5 right-5 z-30 hidden md:flex items-center gap-2 px-3.5 py-2.5 rounded-full bg-gradient-to-r from-indigo-700 via-purple-700 to-indigo-800 text-white font-semibold text-xs shadow-xl hover:shadow-2xl hover:scale-105 active:scale-95 transition-all border border-purple-400/40 cursor-pointer group"
+          title="Open the TULA help assistant (Gemini)"
         >
-          <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
           <Sparkles className="w-3.5 h-3.5 text-purple-200 group-hover:rotate-12 transition-transform" />
-          <span className="tracking-tight">TULA AI</span>
+          <span className="tracking-tight">Help</span>
         </button>
 
         {/* Honest Prototype Footer */}
         <footer className="border-t border-slate-200/80 bg-white px-6 py-4 text-center text-[11px] text-slate-500">
           <p className="font-semibold text-slate-700">
-            TULA — Working Prototype for Smart India Hackathon (SIH Problem Statement 26036) • Developed by Team FriendlyFire
+            TULA prototype for Smart India Hackathon, problem statement 26036 • Team FriendlyFire
           </p>
           <p className="text-[10px] text-slate-400 mt-0.5">
-            Legal Metrology Act, 2009 • Legal Metrology (General) Rules, 2011 • GATC Rules 2013/2026 • Department of Consumer Affairs, Govt. of India
+            Legal Metrology Act, 2009 • Legal Metrology (General) Rules, 2011 • Legal Metrology (Government Approved Test Centre) Rules, 2013
           </p>
         </footer>
       </div>

@@ -48,19 +48,7 @@ export const LandingPage: React.FC = () => {
   const handleSimulateVerify = (certNum: string) => {
     setDemoCertInput(certNum);
     const cert = storage.getCertificateById(certNum);
-    if (cert) {
-      setDemoVerificationResult(cert);
-    } else {
-      setDemoVerificationResult({
-        certificateNumber: certNum,
-        status: 'VALID',
-        instrumentType: 'Electronic Platform Scale (Class III)',
-        organization: 'Apex Agro Logistics & Retail Pvt Ltd',
-        validUntil: '2027-01-17',
-        issuingAuthority: 'Office of the Controller of Legal Metrology, Delhi',
-        sha256Hash: 'a8b1c4e78921df0489ba7145e691230cdba82103f491c1048e9182390fba1029',
-      });
-    }
+    setDemoVerificationResult(cert ?? { notFound: true, certificateNumber: certNum });
   };
 
   const personaPreviews = {
@@ -73,7 +61,7 @@ export const LandingPage: React.FC = () => {
         'Register weighing instruments and track statutory certificate expiration dates',
         'Submit digital re-verification applications with automated fee calculations',
         'Review scheduled premises inspection dates and visiting officer badge credentials',
-        'Instant download of cryptographically signed Schedule IX Verification Certificates',
+        'Instant download of cryptographically signed verification Verification Certificates',
         'Section 48 compounding resolution desk for statutory compliance notices',
       ],
       previewStats: {
@@ -106,14 +94,14 @@ export const LandingPage: React.FC = () => {
       color: 'from-emerald-700 to-teal-950',
       badge: 'GATC Testing Hub',
       features: [
-        'Statutory mandate under Legal Metrology (GATC) Rules, 2013 and 2026 Amendments',
+        'Statutory mandate under Legal Metrology (GATC) Rules, 2013 and amendeds',
         'Specialized testing workflows for CNG, LPG, LNG dispensers, flow meters & 100T weighbridges',
         'Laboratory calibration data capture, observed error curves, and certificate issuance',
         'Direct synchronization with Central Metrology Database under Section 24',
         'Traceability audit trails for primary reference mass and volume working standards',
       ],
       previewStats: {
-        stat1: { label: 'Accreditation', val: 'Rule 2026' },
+        stat1: { label: 'Accreditation', val: 'GATC Rules, 2013' },
         stat2: { label: 'Scope', val: 'CNG/LPG/Mass' },
         stat3: { label: 'Status', val: 'DoCA Certified' },
       },
@@ -126,7 +114,7 @@ export const LandingPage: React.FC = () => {
       features: [
         'Statewide metrology compliance surveillance across all districts and zones',
         'Inspector workload and pendency tracking with automated SLA breach escalations',
-        'Enforcement oversight: monitoring seizures under Section 27 and compounding under Section 48',
+        'Enforcement oversight: seizures, notices and compounding under Section 48',
         'Statewide statutory fee realization and treasury deposit reconciliation',
         'Customizable fee schedules and validity terms under State Metrology Enforcement Rules',
       ],
@@ -186,7 +174,7 @@ export const LandingPage: React.FC = () => {
                 Legal Metrology Rules
               </a>
               <a href="#scalability-gtm" className="hover:text-[#0070C0] transition-colors py-1">
-                Scalability &amp; GTM
+                Pilot plan
               </a>
             </div>
 
@@ -272,7 +260,7 @@ export const LandingPage: React.FC = () => {
               </h1>
 
               <p className="text-sm sm:text-base text-slate-600 leading-relaxed max-w-2xl font-normal">
-                <strong>TULA</strong> is an autonomous, working prototype developed for the Department of Consumer Affairs,
+                <strong>TULA</strong> is a working prototype built for the Department of Consumer Affairs problem statement,
                 modernizing Section 24 statutory verification, field inspection workflows, tamper-evident cryptographic QR certification,
                 and GATC private accredited testing centres under The Legal Metrology Act, 2009.
               </p>
@@ -301,11 +289,10 @@ export const LandingPage: React.FC = () => {
               <div className="bg-white/80 backdrop-blur-xs border border-slate-200 p-4 rounded-xl text-xs space-y-1">
                 <div className="flex items-center gap-2 text-slate-800 font-bold">
                   <ShieldCheck className="w-4 h-4 text-[#1B7F5A]" />
-                  <span>Built for Hackathon Evaluation • Fully Functional Offline &amp; Client-Side</span>
+                  <span>Prototype • field inspection works offline • certificates are digitally signed</span>
                 </div>
                 <p className="text-slate-500 text-[11px] leading-relaxed">
-                  No mock buttons or placeholder text. Experience 6 distinct role perspectives, live MPE error tolerance calculations,
-                  dynamic PDF generation with SHA-256 signatures, and offline-sync field inspection.
+                  Six role views, readings checked against computed MPE limits, signed QR certificates you can check on any phone, and field inspection that keeps working offline. Payment, SMS gateway and single sign-on are simulated or planned: see <Link to="/status" className="underline font-semibold">built vs planned</Link>.
                 </p>
               </div>
 
@@ -321,11 +308,11 @@ export const LandingPage: React.FC = () => {
                 </div>
                 <div className="p-2.5 rounded-lg bg-white border border-slate-200 shadow-2xs">
                   <span className="text-[10px] font-bold uppercase text-slate-400 block">Tolerance Check</span>
-                  <span className="font-extrabold text-xs text-[#1B7F5A]">Schedule IX MPE</span>
+                  <span className="font-extrabold text-xs text-[#1B7F5A]">OIML MPE limits</span>
                 </div>
                 <div className="p-2.5 rounded-lg bg-white border border-slate-200 shadow-2xs">
                   <span className="text-[10px] font-bold uppercase text-slate-400 block">Accreditation</span>
-                  <span className="font-extrabold text-xs text-amber-700">GATC Rules 2026</span>
+                  <span className="font-extrabold text-xs text-amber-700">GATC Rules, 2013</span>
                 </div>
               </div>
             </div>
@@ -344,7 +331,7 @@ export const LandingPage: React.FC = () => {
                     </div>
                     <div>
                       <span className="text-[10px] uppercase font-bold tracking-wider text-amber-300 block">
-                        Schedule IX Statutory Certificate
+                        Statutory Certificate
                       </span>
                       <h4 className="font-mono font-bold text-sm text-white">DL/LM/2026/08912</h4>
                     </div>
@@ -404,7 +391,7 @@ export const LandingPage: React.FC = () => {
                 {/* Cryptographic SHA-256 seal stamp */}
                 <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[10px] text-white/60 relative z-10">
                   <span className="font-mono truncate max-w-[220px]">
-                    SHA256: a8b1c4e...1029
+                    Signed QR • ECDSA P-256
                   </span>
                   <Link
                     to="/verify/CERT-2026-08912"
@@ -458,7 +445,7 @@ export const LandingPage: React.FC = () => {
               <h3 className="font-bold text-sm text-slate-900">2. Fragmented Scheduling &amp; Pendency</h3>
               <p className="text-xs text-slate-600 leading-relaxed">
                 Manual application queues across municipal zones lead to unpredictable turnaround times, inspection delays,
-                and lack of unified statutory fee reconciliation into the Consolidated Fund.
+                and no single view of pendency across districts.
               </p>
             </div>
 
@@ -469,7 +456,7 @@ export const LandingPage: React.FC = () => {
               </div>
               <h3 className="font-bold text-sm text-slate-900">3. GATC Private Lab Integration</h3>
               <p className="text-xs text-slate-600 leading-relaxed">
-                Under the GATC Rules 2013 and 2026 expansion for 23 specialized categories (CNG, LPG, flow meters),
+                Under the GATC Rules, 2013 (as amended), approved private test centres also verify instruments,
                 state controllerates require unified digital protocols to oversee private accredited test facilities.
               </p>
             </div>
@@ -513,7 +500,7 @@ export const LandingPage: React.FC = () => {
               <h4 className="font-bold text-sm text-slate-900">Dual-Track Routing Engine</h4>
               <p className="text-xs text-slate-600 leading-relaxed">
                 Routes routine instruments to jurisdictional LMOs based on municipal district, while delegating high-capacity
-                petroleum, CNG, LPG, and flow meters to accredited GATC test centres under Rule 2026.
+                petroleum, CNG, LPG, and flow meters to accredited GATC test centres under the GATC Rules, 2013.
               </p>
             </div>
 
@@ -560,7 +547,7 @@ export const LandingPage: React.FC = () => {
               </div>
               <h4 className="font-bold text-sm text-slate-900">Section 48 Compounding Desk</h4>
               <p className="text-xs text-slate-600 leading-relaxed">
-                Tracks violations (unverified use under Section 24, tampered seals under Section 30),
+                Tracks violations such as unverified use and tampered seals,
                 enabling lawful compounding settlements and automated compliance recalibration records.
               </p>
             </div>
@@ -616,67 +603,45 @@ export const LandingPage: React.FC = () => {
                 onClick={() => handleSimulateVerify('GJ/LM/2026/01994')}
                 className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:border-slate-300 text-slate-700 font-mono text-[11px]"
               >
-                GJ/LM/2026/01994 (Adani CNG Dispenser)
+                GJ/LM/2026/01994 (Sabarmati CNG Dispenser)
               </button>
               <button
                 onClick={() => handleSimulateVerify('GJ/LM/2026/06421')}
                 className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:border-slate-300 text-slate-700 font-mono text-[11px]"
               >
-                GJ/LM/2026/06421 (BPCL LPG Dispenser)
+                GJ/LM/2026/06421 (Narmada Fuels LPG Dispenser)
               </button>
             </div>
 
             {/* Simulated Result Card */}
             {demoVerificationResult && (
-              <div className="bg-white p-5 rounded-2xl border-2 border-emerald-500 shadow-sm space-y-4 animate-in fade-in duration-200">
-                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+              demoVerificationResult.notFound ? (
+                <div className="bg-white rounded-2xl border border-rose-200 p-5 text-sm text-rose-800">
+                  No certificate matches <span className="font-mono">{demoVerificationResult.certificateNumber}</span>. Try one of the samples above.
+                </div>
+              ) : (
+                <div className={`bg-white rounded-2xl border p-5 space-y-3 ${demoVerificationResult.status === 'VALID' ? 'border-emerald-200' : 'border-amber-300'}`}>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
-                      <span className="font-bold text-xs text-slate-900">
-                        Official Legal Metrology Certificate Verified
-                      </span>
-                      <p className="text-[10px] text-slate-500 font-mono">
-                        No: {demoVerificationResult.certificateNumber}
-                      </p>
+                      <p className="font-bold text-sm text-slate-900">{demoVerificationResult.instrumentType}</p>
+                      <p className="text-[11px] text-slate-500 font-mono">{demoVerificationResult.certificateNumber}</p>
                     </div>
+                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${demoVerificationResult.status === 'VALID' ? 'bg-emerald-100 text-emerald-800' : demoVerificationResult.status === 'REVOKED' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800'}`}>
+                      {demoVerificationResult.status}
+                    </span>
                   </div>
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
-                    ACTIVE &amp; VALID
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                  <div>
-                    <span className="text-slate-500 text-[11px] block">Instrument &amp; Category:</span>
-                    <strong className="text-slate-900">{demoVerificationResult.instrumentType}</strong>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                    <div><span className="text-slate-500 text-[11px] block">Owner</span><strong className="text-slate-900">{demoVerificationResult.organization}</strong></div>
+                    <div><span className="text-slate-500 text-[11px] block">Valid until</span><strong className="text-slate-900">{demoVerificationResult.validUntil}</strong></div>
                   </div>
-                  <div>
-                    <span className="text-slate-500 text-[11px] block">Issued Occupier:</span>
-                    <strong className="text-slate-900">{demoVerificationResult.organization}</strong>
-                  </div>
-                  <div>
-                    <span className="text-slate-500 text-[11px] block">Valid Until:</span>
-                    <strong className="text-emerald-700">{demoVerificationResult.validUntil}</strong>
-                  </div>
-                  <div>
-                    <span className="text-slate-500 text-[11px] block">Issuing Authority:</span>
-                    <strong className="text-slate-800">{demoVerificationResult.issuingAuthority}</strong>
+                  <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-[11px]">
+                    <span className="text-slate-500">{demoVerificationResult.signatureStatus === 'SIGNED' ? 'Digitally signed. Open the check page to verify the signature.' : 'Signature pending.'}</span>
+                    <Link to={(demoVerificationResult.qrPayloadUrl || '').replace(/^https?:\/\/[^/]+/, '') || `/verify/${encodeURIComponent(demoVerificationResult.certificateNumber)}`} className="text-[#0070C0] hover:underline font-bold">
+                      Verify signature &rarr;
+                    </Link>
                   </div>
                 </div>
-
-                <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px]">
-                  <span className="font-mono text-slate-400 truncate max-w-[260px]">
-                    SHA256: {demoVerificationResult.sha256Hash || 'a8b1c4e78921df0489ba...'}
-                  </span>
-                  <Link
-                    to={`/verify/${demoVerificationResult.certificateNumber}`}
-                    className="text-[#0070C0] hover:underline font-bold"
-                  >
-                    Open Full Public Verification Page &rarr;
-                  </Link>
-                </div>
-              </div>
+              )
             )}
 
             {/* Why Public Scanner is Free for All & Kept in Front */}
@@ -690,7 +655,7 @@ export const LandingPage: React.FC = () => {
                     Why is the Public QR Scanner Free for All Citizens &amp; Placed on the Front Page?
                   </h4>
                   <p className="text-xs text-slate-600 leading-relaxed">
-                    Under <strong>Section 24 of The Legal Metrology Act, 2009</strong> and the <strong>Consumer Protection Act, 2019</strong>, weighing and measuring verification certificates are matters of statutory public disclosure. Placing the scanner right on the front page of TULA delivers three decisive advantages:
+                    Every instrument used for trade must be verified under <strong>Section 24 of the Legal Metrology Act, 2009</strong>, and buyers have a right to fair measure. Putting the check on the front page means:
                   </p>
                 </div>
               </div>
@@ -711,7 +676,7 @@ export const LandingPage: React.FC = () => {
                 <div className="p-3 rounded-xl bg-white border border-slate-200/90 shadow-2xs space-y-1">
                   <span className="font-bold text-slate-900 block text-[11px] text-[#1B7F5A]">3. Instant Grievances</span>
                   <p className="text-[11px] text-slate-500 leading-relaxed">
-                    Flagged errors or expired seals can be reported with 1 click directly to the jurisdictional LMO officer under Section 15.
+                    Flagged errors or expired seals can be reported with 1 click to the district Legal Metrology office.
                   </p>
                 </div>
               </div>
@@ -793,9 +758,13 @@ export const LandingPage: React.FC = () => {
               </div>
 
               <button
-                onClick={() => {
-                  storage.switchDemoRole(activeTab);
-                  window.location.href = '/dashboard';
+                onClick={async () => {
+                  try {
+                    await storage.switchDemoRole(activeTab);
+                    window.location.href = '/dashboard';
+                  } catch (e) {
+                    window.alert((e as Error).message);
+                  }
                 }}
                 className="inline-flex items-center gap-1.5 bg-[#1F497D] hover:bg-[#163863] text-white text-xs font-bold px-4 py-2 rounded-xl shadow-xs transition-colors shrink-0"
               >
@@ -858,7 +827,7 @@ export const LandingPage: React.FC = () => {
               <span className="text-[10px] font-bold uppercase text-gov-700 font-mono">Act No. 1 of 2010</span>
               <h4 className="font-bold text-xs text-slate-900">The Legal Metrology Act, 2009</h4>
               <p className="text-[11px] text-slate-600 leading-relaxed">
-                Section 24 (Mandatory Verification), Section 22 (Central Model Approval), Section 27 (Inspection &amp; Seizure), Section 48 (Compounding).
+                Section 22 (model approval), Section 24 (verification and stamping), Section 48 (compounding of offences).
               </p>
             </div>
 
@@ -866,7 +835,7 @@ export const LandingPage: React.FC = () => {
               <span className="text-[10px] font-bold uppercase text-gov-700 font-mono">G.S.R. 71(E)</span>
               <h4 className="font-bold text-xs text-slate-900">General Rules, 2011</h4>
               <p className="text-[11px] text-slate-600 leading-relaxed">
-                First Schedule statutory verification fee rates, Schedule IX digital certificate templates, and non-automatic weighing instrument tolerances.
+                First Schedule statutory verification fee rates, verification digital certificate templates, and non-automatic weighing instrument tolerances.
               </p>
             </div>
 
@@ -895,39 +864,32 @@ export const LandingPage: React.FC = () => {
           <div className="text-center max-w-3xl mx-auto space-y-3">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-100 text-[#1F497D] text-[11px] font-bold uppercase tracking-wider">
               <TrendingUp className="w-3.5 h-3.5" />
-              <span>National Rollout &amp; Market Adoption</span>
+              <span>Pilot plan and targets</span>
             </div>
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 tracking-tight">
-              Scaling TULA Across India: Go-To-Market Roadmap
+              How TULA rolls out, and how we will measure it
             </h2>
             <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-              Designed from day one to scale across 36 States/UTs, 800+ District Legal Metrology Offices, and an estimated fleet of 75 Million+ commercial weighing and measuring instruments.
+              Built so any State or UT can join by loading its own fee schedule and officer list. No code change per State.
             </p>
           </div>
 
-          {/* Market Stats Grid */}
+          {/* Pilot targets: labelled as targets, measured during the pilot */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-1">
-              <span className="text-[10px] font-bold text-slate-400 uppercase">National Market Scope</span>
-              <p className="text-2xl font-black text-[#1F497D]">75M+</p>
-              <p className="text-[11px] text-slate-600">Active commercial instruments across retail, logistics &amp; industry</p>
-            </div>
-            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-1">
-              <span className="text-[10px] font-bold text-slate-400 uppercase">Revenue Recovery Uplift</span>
-              <p className="text-2xl font-black text-[#1B7F5A]">+35%</p>
-              <p className="text-[11px] text-slate-600">Through automated expiry reminders &amp; compounding penalty desk</p>
-            </div>
-            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-1">
-              <span className="text-[10px] font-bold text-slate-400 uppercase">Counterfeiting Reduction</span>
-              <p className="text-2xl font-black text-[#0070C0]">99.4%</p>
-              <p className="text-[11px] text-slate-600">Elimination of fraudulent stamping via public SHA-256 QR scans</p>
-            </div>
-            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-1">
-              <span className="text-[10px] font-bold text-slate-400 uppercase">Turnaround Acceleration</span>
-              <p className="text-2xl font-black text-amber-600">&lt; 48 Hrs</p>
-              <p className="text-[11px] text-slate-600">Reduction from traditional 21-day manual paper stamping cycle</p>
-            </div>
+            {[
+              ['≤ 7 days', 'Application to certificate (median)', 'text-[#1F497D]'],
+              ['< 3 sec', 'Certificate check by QR scan', 'text-[#1B7F5A]'],
+              ['100%', 'Due instruments reminded 30 days early', 'text-[#0070C0]'],
+              ['0', 'Paper certificates in the pilot district', 'text-amber-600'],
+            ].map(([n, d, c]) => (
+              <div key={d} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-1">
+                <span className="text-[10px] font-bold text-slate-400 uppercase">Pilot target</span>
+                <p className={`text-2xl font-black ${c}`}>{n}</p>
+                <p className="text-[11px] text-slate-600">{d}</p>
+              </div>
+            ))}
           </div>
+          <p className="text-center text-[11px] text-slate-500">Targets, not results. Baselines come from the pilot district's current register. <Link to="/reports" className="underline">See what the prototype measures today</Link>.</p>
 
           {/* 4-Phase GTM Roadmap */}
           <div className="space-y-4">
@@ -940,7 +902,7 @@ export const LandingPage: React.FC = () => {
                 </span>
                 <h4 className="font-bold text-sm text-slate-900">Dual-State Regulatory Pilot</h4>
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  Pilot deployment across Delhi (retail/commercial focus) and Gujarat (industrial weighbridges &amp; petroleum GATC labs). Onboarding 5,000 instruments and 50 LMOs.
+                  One district first, tested with working Legal Metrology Officers, then Delhi and Gujarat. Numbers onboarded depend on the partner department.
                 </p>
               </div>
 
@@ -951,7 +913,7 @@ export const LandingPage: React.FC = () => {
                 </span>
                 <h4 className="font-bold text-sm text-slate-900">GATC Decentralized Network</h4>
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  Accreditation of 150+ private test centres under Legal Metrology (GATC) Rules 2026. Offloading 40% of inspection burden for weighbridges, CNG, LPG, and flow meters.
+                  Bring the approved test centres of the pilot States onto TULA, so heavy and specialised instruments are routed to them automatically.
                 </p>
               </div>
 
@@ -962,7 +924,7 @@ export const LandingPage: React.FC = () => {
                 </span>
                 <h4 className="font-bold text-sm text-slate-900">National Metrology Grid</h4>
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  Integration with BharatKosh treasury gateway, DigiLocker Schedule IX digital certificate push, and real-time cross-validation with GSTN and National e-Way Bill system.
+                  Treasury payment gateway, DigiLocker push of certificates, and GSTIN checks at registration (planned integrations).
                 </p>
               </div>
 

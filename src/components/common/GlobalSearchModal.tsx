@@ -20,9 +20,9 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, on
 
   useEffect(() => {
     if (isOpen) {
-      setInstruments(storage.getInstruments());
-      setApplications(storage.getApplications());
-      setCertificates(storage.getCertificates());
+      setInstruments(storage.getInstrumentsForUser());
+      setApplications(storage.getApplicationsForUser());
+      setCertificates(storage.getCertificatesForUser());
       setTimeout(() => inputRef.current?.focus(), 50);
     } else {
       setQuery('');

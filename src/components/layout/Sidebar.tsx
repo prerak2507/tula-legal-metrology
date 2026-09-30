@@ -23,6 +23,9 @@ import {
   PlusCircle,
   Calendar,
   Globe,
+  X,
+  PlayCircle,
+  ListChecks,
 } from 'lucide-react';
 
 import { TulaLogo } from '../common/TulaLogo';
@@ -32,10 +35,14 @@ interface SidebarProps {
   notifications: NotificationItem[];
   collapsed: boolean;
   setCollapsed: (c: boolean) => void;
+  mobileOpen: boolean;
+  onMobileClose: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ currentUser, notifications, collapsed, setCollapsed }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ currentUser, notifications, collapsed: collapsedProp, setCollapsed, mobileOpen, onMobileClose }) => {
   const location = useLocation();
+  // The drawer on phones is always full width; collapse only applies on large screens.
+  const collapsed = collapsedProp && !mobileOpen;
   const [notifOpen, setNotifOpen] = useState(false);
 
   const unread = notifications.filter(n => !n.read);
@@ -64,7 +71,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentUser, notifications, co
       label: 'Instrument Lifecycle',
       items: [
         { label: currentUser.role === 'BUSINESS' ? 'My Instrument Fleet' : 'Instrument Registry', path: '/instruments', icon: Scale },
-        { label: currentUser.role === 'BUSINESS' ? 'Verification Certificates' : 'Schedule IX Certificates', path: '/certificates', icon: Award },
+        { label: currentUser.role === 'BUSINESS' ? 'Verification Certificates' : 'Verification Certificates', path: '/certificates', icon: Award },
       ],
     },
     {
@@ -77,11 +84,19 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentUser, notifications, co
     {
       label: 'Governance & Audit',
       items: [
-        { label: currentUser.role === 'BUSINESS' ? 'Compliance Analytics' : 'Reports & Pendency', path: '/reports', icon: FileBarChart2 },
+        { label: currentUser.role === 'BUSINESS' ? 'Compliance Analytics' : 'Pendency & Impact', path: '/reports', icon: FileBarChart2 },
+        { label: 'SMS / Email Updates', path: '/notifications', icon: Bell },
         { label: 'Statutory Audit Trail', path: '/audit', icon: History },
         ...((currentUser.role === 'STATE_ADMIN' || currentUser.role === 'CENTRAL_ADMIN' || currentUser.role === 'CONTROLLER')
           ? [{ label: 'Legal Metrology Rules Engine', path: '/admin/rules', icon: Settings }]
           : []),
+      ],
+    },
+    {
+      label: 'Prototype',
+      items: [
+        { label: 'Live Demo Guide', path: '/demo', icon: PlayCircle },
+        { label: 'Built vs Planned', path: '/status', icon: ListChecks },
       ],
     },
   ];
@@ -110,16 +125,24 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentUser, notifications, co
   };
 
   return (
+    <>
+    {mobileOpen && (
+      <div className="fixed inset-0 z-40 bg-slate-900/40 lg:hidden" onClick={onMobileClose} aria-hidden="true" />
+    )}
     <aside
-      className={`fixed top-0 left-0 h-screen z-40 flex flex-col bg-white border-r border-slate-200/80 transition-all duration-300 ease-in-out ${
-        collapsed ? 'w-[72px]' : 'w-[260px]'
-      }`}
+      aria-label="Main navigation"
+      className={`fixed top-0 left-0 h-[100dvh] z-50 flex flex-col bg-white border-r border-slate-200/80 transition-all duration-300 ease-in-out w-[280px] max-w-[85vw] ${
+        mobileOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'
+      } lg:translate-x-0 lg:shadow-none ${collapsed ? 'lg:w-[72px]' : 'lg:w-[260px]'}`}
     >
       {/* ── Top: Official TULA Logo Area ── */}
       <div className={`flex items-center h-16 border-b border-slate-100 shrink-0 ${collapsed ? 'justify-center px-2' : 'px-4'}`}>
         <Link to="/dashboard" className="flex items-center group">
           <TulaLogo size="sm" variant={collapsed ? 'mark' : 'full'} showSubtitle={!collapsed} />
         </Link>
+        <button onClick={onMobileClose} className="ml-auto p-2 rounded-lg text-slate-500 hover:bg-slate-100 lg:hidden" aria-label="Close menu">
+          <X className="w-5 h-5" />
+        </button>
       </div>
 
       {/* ── Quick Action ── */}
@@ -221,7 +244,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentUser, notifications, co
 
           {/* Notification dropdown */}
           {notifOpen && (
-            <div className={`absolute ${collapsed ? 'left-16' : 'left-4 right-4'} bottom-full mb-2 bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden z-50 w-80`}>
+            <div className={`absolute ${collapsed ? 'left-16' : 'left-4 right-4'} bottom-full mb-2 bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden z-50 w-[min(20rem,80vw)]`}>
               <div className="px-4 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
                 <span className="font-bold text-xs text-slate-900 uppercase tracking-wider">Alerts</span>
                 {unread.length > 0 && (
@@ -260,7 +283,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentUser, notifications, co
           {collapsed ? (
             <div
               className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#1F497D] to-[#0070C0] text-white font-bold text-xs flex items-center justify-center cursor-default shadow-xs"
-              title={`${currentUser.fullName} (${currentUser.role}) • e-Pramaan SSO Authenticated`}
+              title={`${currentUser.fullName} (${currentUser.role})`}
             >
               {currentUser.fullName.charAt(0)}
             </div>
@@ -276,26 +299,26 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentUser, notifications, co
                 </div>
               </div>
               <div className="pt-1.5 border-t border-slate-200/70 flex items-center justify-between text-[10px]">
-                <span className="inline-flex items-center gap-1 font-semibold text-emerald-700">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  e-Pramaan SSO
+                <span className="inline-flex items-center gap-1 font-semibold text-slate-600">
+                  <span className={`w-1.5 h-1.5 rounded-full ${currentUser.accountType === 'SELF' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                  {currentUser.accountType === 'SELF' ? 'Registered account' : 'Demo account'}
                 </span>
                 <div className="flex items-center gap-1.5 text-[10px]">
                   <Link to="/" className="text-slate-500 hover:text-[#0070C0] font-semibold" title="Return to public landing page">
                     Home
                   </Link>
                   <span className="text-slate-300">•</span>
-                  <Link to="/login" className="text-slate-500 hover:text-[#1F497D] font-semibold" title="Switch account at National Gateway">
-                    Gateway
-                  </Link>
+                  <button onClick={async () => { await storage.signOut(); window.location.assign('/login'); }} className="text-slate-500 hover:text-rose-700 font-semibold" title="Sign out">
+                    Sign out
+                  </button>
                 </div>
               </div>
             </div>
           )}
         </div>
 
-        {/* Collapse Toggle */}
-        <div className="px-3 pb-3">
+        {/* Collapse Toggle (large screens only) */}
+        <div className="px-3 pb-3 hidden lg:block">
           <button
             onClick={() => setCollapsed(!collapsed)}
             className={`
@@ -314,5 +337,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentUser, notifications, co
         </div>
       </div>
     </aside>
+    </>
   );
 };

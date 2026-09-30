@@ -31,45 +31,11 @@ export const Dashboard: React.FC = () => {
   }, []);
 
   // ── Role-filtered data ──
-  const myInstruments = user.role === 'BUSINESS' 
-    ? instruments.filter(i => i.ownerId === user.id)
-    : (user.role === 'LMO' || user.role === 'CONTROLLER')
-    ? instruments.filter(i => i.state === user.state)
-    : (user.role === 'GATC')
-    ? instruments.filter(i => i.state === user.state && (i.category.includes('FUEL') || i.category.includes('GAS') || i.category.includes('WEIGHBRIDGE') || i.category.includes('FLOW')))
-    : (user.role === 'STATE_ADMIN')
-    ? instruments.filter(i => i.state === user.state)
-    : instruments; // CENTRAL_ADMIN sees all
-    
-  const myApplications = user.role === 'BUSINESS'
-    ? applications.filter(a => a.applicantId === user.id)
-    : (user.role === 'LMO')
-    ? applications.filter(a => a.assignedToId === user.id || a.state === user.state)
-    : (user.role === 'GATC')
-    ? applications.filter(a => a.assignedToId === user.id || (a.state === user.state && a.assignedToType === 'GATC'))
-    : (user.role === 'CONTROLLER' || user.role === 'STATE_ADMIN')
-    ? applications.filter(a => a.state === user.state)
-    : applications;
-
-  const myCertificates = user.role === 'BUSINESS'
-    ? certificates.filter(c => c.issuedToName === user.fullName || c.organization === user.organization || c.organization.toLowerCase().includes('apex agro'))
-    : (user.role === 'LMO')
-    ? certificates.filter(c => c.issuingOfficerName === user.fullName || c.state === user.state)
-    : (user.role === 'GATC')
-    ? certificates.filter(c => c.issuingOfficerName === user.fullName || c.issuingAuthority.includes('GATC') || (c.state === user.state && (c.category.includes('FUEL') || c.category.includes('GAS'))))
-    : (user.role === 'CONTROLLER' || user.role === 'STATE_ADMIN')
-    ? certificates.filter(c => c.state === user.state)
-    : certificates;
-
-  const myEnforcements = user.role === 'BUSINESS'
-    ? enforcements.filter(e => e.businessName.toLowerCase().includes(user.organization.toLowerCase()) || e.violatorName.toLowerCase().includes(user.fullName.toLowerCase()) || e.businessName.toLowerCase().includes('apex agro'))
-    : (user.role === 'LMO')
-    ? enforcements.filter(e => e.officerId === user.id || e.state === user.state)
-    : (user.role === 'GATC')
-    ? enforcements.filter(e => e.officerId === user.id || (e.state === user.state && e.businessName.toLowerCase().includes('gujarat gas')))
-    : (user.role === 'CONTROLLER' || user.role === 'STATE_ADMIN')
-    ? enforcements.filter(e => e.state === user.state)
-    : enforcements;
+  const myInstruments = storage.getInstrumentsForUser(user);
+  const myApplications = storage.getApplicationsForUser(user);
+  const myCertificates = storage.getCertificatesForUser(user);
+  const myEnforcements = storage.getEnforcementsForUser(user);
+  void instruments; void applications; void certificates; void enforcements;
 
   const jurisdictionInstruments = myInstruments;
 
@@ -171,7 +137,7 @@ export const Dashboard: React.FC = () => {
         {user.role === 'BUSINESS' ? (
           <>
             <StatCard title="My Instruments" value={myInstruments.length} subtitle="Registered Fleet" icon={Scale} variant="blue" />
-            <StatCard title="Active & Verified" value={myInstruments.filter(i => i.status === 'ACTIVE').length} subtitle="Schedule IX Compliant" icon={CheckCircle} variant="emerald" />
+            <StatCard title="Active & Verified" value={myInstruments.filter(i => i.status === 'ACTIVE').length} subtitle="verification Compliant" icon={CheckCircle} variant="emerald" />
             <StatCard title="Pending Apps" value={myApplications.filter(a => a.status !== 'COMPLETED' && a.status !== 'REJECTED').length} subtitle="In Progress" icon={FileText} variant="amber" />
             <StatCard title="My Certificates" value={myCertificates.length} subtitle="Issued to You" icon={Award} variant="blue" />
           </>

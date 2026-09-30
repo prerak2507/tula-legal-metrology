@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { storage } from '../services/storage';
+import { PendencyPanel } from '../components/analytics/PendencyPanel';
 import { Instrument, Application, VerificationCertificate, EnforcementCase } from '../types';
 import { 
   FileBarChart2, 
@@ -31,35 +32,10 @@ export const ReportsView: React.FC = () => {
   }, []);
 
   // Filter datasets strictly according to user role
-  const instruments = user.role === 'BUSINESS'
-    ? allInstruments.filter(i => i.ownerId === user.id)
-    : (user.role === 'LMO' || user.role === 'CONTROLLER')
-    ? allInstruments.filter(i => i.state === user.state)
-    : (user.role === 'GATC')
-    ? allInstruments.filter(i => i.state === user.state && (i.category.includes('FUEL') || i.category.includes('GAS') || i.category.includes('WEIGHBRIDGE') || i.category.includes('FLOW')))
-    : (user.role === 'STATE_ADMIN')
-    ? allInstruments.filter(i => i.state === user.state)
-    : allInstruments;
-
-  const applications = user.role === 'BUSINESS'
-    ? allApplications.filter(a => a.applicantId === user.id)
-    : (user.role === 'LMO')
-    ? allApplications.filter(a => a.assignedToId === user.id || a.state === user.state)
-    : (user.role === 'GATC')
-    ? allApplications.filter(a => a.assignedToId === user.id || (a.state === user.state && a.assignedToType === 'GATC'))
-    : (user.role === 'CONTROLLER' || user.role === 'STATE_ADMIN')
-    ? allApplications.filter(a => a.state === user.state)
-    : allApplications;
-
-  const certificates = user.role === 'BUSINESS'
-    ? allCertificates.filter(c => c.organization === user.organization || c.issuedToName === user.fullName || c.organization.toLowerCase().includes('apex agro'))
-    : (user.role === 'LMO')
-    ? allCertificates.filter(c => c.state === user.state || c.issuingOfficerName === user.fullName)
-    : (user.role === 'GATC')
-    ? allCertificates.filter(c => c.issuingOfficerName === user.fullName || c.issuingAuthority.includes('GATC'))
-    : (user.role === 'CONTROLLER' || user.role === 'STATE_ADMIN')
-    ? allCertificates.filter(c => c.state === user.state)
-    : allCertificates;
+  const instruments = storage.getInstrumentsForUser(user);
+  const applications = storage.getApplicationsForUser(user);
+  const certificates = storage.getCertificatesForUser(user);
+  void allInstruments; void allApplications; void allCertificates;
 
   const getReportHeader = () => {
     if (user.role === 'BUSINESS') {
@@ -202,6 +178,8 @@ export const ReportsView: React.FC = () => {
         </span>
       </div>
 
+      <PendencyPanel user={user} />
+
       {/* Summary Matrix Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
@@ -211,7 +189,7 @@ export const ReportsView: React.FC = () => {
           <p className="text-3xl font-extrabold text-emerald-700 mt-2">
             {instruments.length > 0 ? Math.round((instruments.filter(i => i.status === 'ACTIVE').length / instruments.length) * 100) : 0}%
           </p>
-          <p className="text-xs text-slate-500 mt-1">Schedule IX Compliant</p>
+          <p className="text-xs text-slate-500 mt-1">verification Compliant</p>
         </div>
 
         <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
@@ -291,14 +269,14 @@ export const ReportsView: React.FC = () => {
               <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg flex items-start gap-2">
                 <span className="text-gov-700 font-bold">§</span>
                 <div>
-                  <strong className="text-slate-900 block">Rule 24 Certificate Display:</strong>
+                  <strong className="text-slate-900 block">Certificate display:</strong>
                   <span>Digital certificate or QR label must be exhibited conspicuously at commercial premises.</span>
                 </div>
               </div>
               <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg flex items-start gap-2">
                 <span className="text-gov-700 font-bold">§</span>
                 <div>
-                  <strong className="text-slate-900 block">Section 30 Anti-Tampering:</strong>
+                  <strong className="text-slate-900 block">Keep seals intact:</strong>
                   <span>Official Lead-Wire or Barcode seals must remain unbroken. Report accidental damage immediately.</span>
                 </div>
               </div>
@@ -340,35 +318,6 @@ export const ReportsView: React.FC = () => {
                   })}
                 </tbody>
               </table>
-            </div>
-          </div>
-
-          <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-xs space-y-4">
-            <h3 className="font-bold text-sm text-slate-900 uppercase tracking-wider">
-              Officer &amp; GATC Workload Allocation
-            </h3>
-            <div className="space-y-3">
-              <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 flex items-center justify-between text-xs">
-                <div>
-                  <span className="font-bold text-slate-900">Inspector Amit K. Sharma (LMO)</span>
-                  <span className="block text-[11px] text-slate-500">Zonal Laboratory Central Delhi</span>
-                </div>
-                <div className="text-right">
-                  <span className="font-bold text-gov-800 text-sm">3 Active Jobs</span>
-                  <span className="block text-[10px] text-emerald-700 font-semibold">100% On-Time SLA</span>
-                </div>
-              </div>
-
-              <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 flex items-center justify-between text-xs">
-                <div>
-                  <span className="font-bold text-slate-900">Gujarat Metrology Centre (GATC)</span>
-                  <span className="block text-[11px] text-slate-500">Accredited GATC under Rule 2026</span>
-                </div>
-                <div className="text-right">
-                  <span className="font-bold text-gov-800 text-sm">2 Calibration Batches</span>
-                  <span className="block text-[10px] text-emerald-700 font-semibold">CNG/LPG Certified</span>
-                </div>
-              </div>
             </div>
           </div>
         </div>

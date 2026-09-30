@@ -212,7 +212,7 @@ export const InstrumentDetail: React.FC = () => {
               <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 space-y-1">
                 <span className="text-slate-500 font-medium">Next Verification Due Date</span>
                 <p className={`font-bold text-sm ${instrument.status === 'EXPIRED' ? 'text-rose-700' : 'text-slate-900'}`}>
-                  {instrument.nextVerificationDueDate}
+                  {instrument.nextVerificationDueDate || 'Not verified yet'}
                 </p>
               </div>
             </div>
@@ -272,7 +272,7 @@ export const InstrumentDetail: React.FC = () => {
               <div>
                 <div className="flex items-start justify-between gap-2 border-b border-slate-200 pb-3 mb-3">
                   <div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-gov-700">Schedule IX Certificate</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-gov-700">Verification Certificate</span>
                     <h4 className="font-mono font-bold text-slate-900 text-sm">{currentCert.certificateNumber}</h4>
                   </div>
                   <StatusBadge status={currentCert.status} size="sm" />
@@ -290,7 +290,7 @@ export const InstrumentDetail: React.FC = () => {
                     Scan to authenticate certificate on public verification portal
                   </p>
                   <Link
-                    to={`/verify/${currentCert.id}`}
+                    to={currentCert.qrPayloadUrl ? currentCert.qrPayloadUrl.replace(/^https?:\/\/[^/]+/, '') : `/verify/${encodeURIComponent(currentCert.certificateNumber)}`}
                     className="inline-flex items-center gap-1 text-xs font-bold text-gov-700 hover:text-gov-900 mt-1 hover:underline"
                   >
                     <span>Open Public Verification Page</span>

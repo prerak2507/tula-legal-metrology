@@ -108,7 +108,7 @@ export const NotFound: React.FC = () => {
             </button>
           </form>
           <p className="text-[11px] text-slate-400 mt-2 text-left px-2">
-            Tip: Enter an official Schedule IX Certificate Number to jump directly to live public verification.
+            Tip: Enter an official Verification Certificate Number to jump directly to live public verification.
           </p>
         </div>
 

@@ -43,15 +43,8 @@ export const EnforcementList: React.FC = () => {
   }, []);
 
   // Filter cases according to persona role
-  const cases = user.role === 'BUSINESS'
-    ? allCases.filter(c => c.businessName.toLowerCase().includes(user.organization.toLowerCase()) || c.violatorName.toLowerCase().includes(user.fullName.toLowerCase()) || c.businessName.toLowerCase().includes('apex agro'))
-    : (user.role === 'LMO')
-    ? allCases.filter(c => c.officerId === user.id || c.state === user.state)
-    : (user.role === 'GATC')
-    ? allCases.filter(c => c.officerId === user.id || (c.state === user.state && c.businessName.toLowerCase().includes('gujarat gas')))
-    : (user.role === 'CONTROLLER' || user.role === 'STATE_ADMIN')
-    ? allCases.filter(c => c.state === user.state)
-    : allCases;
+  const cases = storage.getEnforcementsForUser(user);
+  void allCases;
 
   const getScopeLabel = () => {
     if (user.role === 'BUSINESS') return `Statutory Notices for ${user.organization}`;
@@ -71,12 +64,12 @@ export const EnforcementList: React.FC = () => {
     );
   });
 
-  const handleCreateCase = (e: React.FormEvent) => {
+  const handleCreateCase = async (e: React.FormEvent) => {
     e.preventDefault();
     const user = storage.getCurrentUser();
     const inst = instruments.find(i => i.id === selectedInstId);
 
-    storage.createEnforcementCase({
+    await storage.createEnforcementCase({
       instrumentId: selectedInstId,
       businessName: businessName || inst?.organization || 'Commercial Occupier',
       violatorName: violatorName || inst?.ownerName || 'Authorized Signatory',
@@ -303,7 +296,7 @@ export const EnforcementList: React.FC = () => {
                     <option value="TAMPERED_SEAL">Tampered Official Stamp / Seal (Sec 30)</option>
                     <option value="EXCEEDED_MPE_ERROR">Indication Exceeds MPE Error Limits (Sec 30)</option>
                     <option value="UNAPPROVED_MODEL">Use of Non-Approved Model (Sec 22)</option>
-                    <option value="NON_DISPLAY_OF_CERTIFICATE">Non-Display of Certificate (Rule 24)</option>
+                    <option value="NON_DISPLAY_OF_CERTIFICATE">Certificate not displayed</option>
                   </select>
                 </div>
 
