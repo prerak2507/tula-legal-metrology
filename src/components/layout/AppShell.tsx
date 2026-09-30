@@ -6,6 +6,7 @@ import { RoleSwitcherDropdown } from './RoleSwitcherDropdown';
 import { DemoControlModal } from '../demo/DemoControlModal';
 import { ConnectedWorkflowModal } from '../common/ConnectedWorkflowModal';
 import { GlobalSearchModal } from '../common/GlobalSearchModal';
+import { AiAssistantModal } from '../ai/AiAssistantModal';
 import { storage } from '../../services/storage';
 import { UserProfile, Instrument, Application, VerificationCertificate, NotificationItem } from '../../types';
 
@@ -18,8 +19,10 @@ export const AppShell: React.FC = () => {
   const [isDemoModalOpen, setIsDemoModalOpen] = useState(false);
   const [isWorkflowModalOpen, setIsWorkflowModalOpen] = useState(false);
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
+  const [isAiModalOpen, setIsAiModalOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const location = useLocation();
+
 
   useEffect(() => {
     const unsubscribe = storage.subscribe(() => {
@@ -105,6 +108,19 @@ export const AppShell: React.FC = () => {
               {/* Divider */}
               <div className="hidden lg:block w-px h-6 bg-slate-200" />
 
+              {/* TULA Gemini AI Advisor */}
+              <button
+                onClick={() => setIsAiModalOpen(true)}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-purple-50 via-indigo-50 to-purple-50 hover:from-purple-100 hover:to-indigo-100 border border-purple-200/80 text-xs font-bold text-purple-900 transition-all shadow-2xs group"
+                title="Ask TULA AI Metrology Assistant (Google Gemini Live)"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-purple-600 group-hover:scale-110 transition-transform" />
+                <span className="hidden sm:inline">AI Advisor</span>
+                <span className="inline-flex items-center px-1.5 py-0.2 rounded-full bg-purple-200/80 text-purple-800 text-[9px] font-mono font-bold">
+                  Gemini
+                </span>
+              </button>
+
               {/* Connected Workflow */}
               <button
                 onClick={() => setIsWorkflowModalOpen(true)}
@@ -168,6 +184,17 @@ export const AppShell: React.FC = () => {
           <Outlet />
         </main>
 
+        {/* Floating AI Metrology Assistant Trigger */}
+        <button
+          onClick={() => setIsAiModalOpen(true)}
+          className="fixed bottom-5 right-5 z-40 flex items-center gap-2 px-3.5 py-2.5 rounded-full bg-gradient-to-r from-indigo-700 via-purple-700 to-indigo-800 text-white font-semibold text-xs shadow-xl hover:shadow-2xl hover:scale-105 active:scale-95 transition-all border border-purple-400/40 cursor-pointer group"
+          title="Open TULA AI Metrology Assistant (Gemini)"
+        >
+          <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          <Sparkles className="w-3.5 h-3.5 text-purple-200 group-hover:rotate-12 transition-transform" />
+          <span className="tracking-tight">TULA AI</span>
+        </button>
+
         {/* Honest Prototype Footer */}
         <footer className="border-t border-slate-200/80 bg-white px-6 py-4 text-center text-[11px] text-slate-500">
           <p className="font-semibold text-slate-700">
@@ -197,6 +224,12 @@ export const AppShell: React.FC = () => {
       <GlobalSearchModal
         isOpen={isSearchModalOpen}
         onClose={() => setIsSearchModalOpen(false)}
+      />
+
+      {/* TULA AI Metrology Assistant Modal */}
+      <AiAssistantModal
+        isOpen={isAiModalOpen}
+        onClose={() => setIsAiModalOpen(false)}
       />
     </div>
   );

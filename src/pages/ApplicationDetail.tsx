@@ -24,8 +24,13 @@ import {
   AlertTriangle, 
   FileCheck,
   Building,
-  Check
+  Check,
+  Sparkles,
+  Bot,
+  Loader2,
+  CheckCheck
 } from 'lucide-react';
+import { analyzeApplicationScrutiny } from '../services/gemini';
 
 export const ApplicationDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -36,6 +41,14 @@ export const ApplicationDetail: React.FC = () => {
   const [scheduledDate, setScheduledDate] = useState('');
   const [scheduledSlot, setScheduledSlot] = useState('11:00 AM - 01:00 PM');
   const [paymentRef, setPaymentRef] = useState('');
+  const [isAiScrutinyLoading, setIsAiScrutinyLoading] = useState(false);
+  const [aiScrutinyResult, setAiScrutinyResult] = useState<{
+    recommendation: 'APPROVE' | 'FLAG_FOR_AUDIT' | 'REQUEST_CORRECTION';
+    confidenceScore: number;
+    scrutinySummary: string;
+    findings: string[];
+    suggestedChecklistNotes: { itemId: string; passed: boolean; note: string }[];
+  } | null>(null);
 
   useEffect(() => {
     const load = () => {
@@ -68,6 +81,39 @@ export const ApplicationDetail: React.FC = () => {
   // Scrutiny actions
   const handleScrutinyItemToggle = (itemId: string, pass: boolean) => {
     storage.updateScrutinyItem(app.id, itemId, pass);
+  };
+
+  const handleRunAiScrutiny = async () => {
+    if (!app || !instrument) return;
+    setIsAiScrutinyLoading(true);
+    try {
+      const res = await analyzeApplicationScrutiny({
+        id: app.id,
+        instrumentId: app.instrumentId,
+        category: instrument.category,
+        accuracyClass: instrument.accuracyClass,
+        capacity: instrument.capacity,
+        scaleInterval: instrument.scaleInterval,
+        manufacturer: instrument.manufacturer,
+        modelApprovalNumber: instrument.modelApprovalNumber,
+        serviceType: app.serviceType,
+        state: app.state,
+        district: app.district,
+        feeAmount: app.feeAmount,
+      });
+      setAiScrutinyResult(res);
+    } catch (err) {
+      console.error('AI scrutiny failed', err);
+    } finally {
+      setIsAiScrutinyLoading(false);
+    }
+  };
+
+  const handleApplyAiScrutiny = () => {
+    if (!aiScrutinyResult || !app) return;
+    aiScrutinyResult.suggestedChecklistNotes.forEach(item => {
+      storage.updateScrutinyItem(app.id, item.itemId, item.passed, item.note);
+    });
   };
 
   const handleRequestCorrection = () => {
@@ -193,10 +239,83 @@ export const ApplicationDetail: React.FC = () => {
                 </h3>
                 <p className="text-[11px] text-slate-500">Examine statutory conformity prior to inspection assignment</p>
               </div>
-              <span className="text-xs font-semibold text-gov-800 bg-gov-50 px-2 py-0.5 rounded border border-gov-200">
-                Rule 24 Scrutiny
-              </span>
+              <div className="flex items-center gap-2">
+                {currentUser.role !== 'BUSINESS' && (
+                  <button
+                    type="button"
+                    onClick={handleRunAiScrutiny}
+                    disabled={isAiScrutinyLoading}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-purple-50 via-indigo-50 to-purple-50 hover:from-purple-100 hover:to-indigo-100 border border-purple-200 text-xs font-bold text-purple-900 transition-all shadow-2xs disabled:opacity-50 cursor-pointer"
+                    title="Run Gemini AI Scrutiny against National Metrology Standards"
+                  >
+                    {isAiScrutinyLoading ? (
+                      <Loader2 className="w-3.5 h-3.5 text-purple-600 animate-spin" />
+                    ) : (
+                      <Sparkles className="w-3.5 h-3.5 text-purple-600" />
+                    )}
+                    <span>{isAiScrutinyLoading ? 'Analyzing...' : 'Gemini AI Scrutiny'}</span>
+                  </button>
+                )}
+                <span className="text-xs font-semibold text-gov-800 bg-gov-50 px-2 py-0.5 rounded border border-gov-200">
+                  Rule 24 Scrutiny
+                </span>
+              </div>
             </div>
+
+            {/* AI Scrutiny Copilot Result Card */}
+            {aiScrutinyResult && (
+              <div className="p-4 rounded-xl bg-gradient-to-br from-purple-50/70 via-indigo-50/50 to-white border border-purple-200 space-y-3 animate-in fade-in duration-200">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-lg bg-purple-600 text-white flex items-center justify-center">
+                      <Bot className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-purple-950 flex items-center gap-2">
+                        Gemini Statutory Scrutiny Assessment
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          aiScrutinyResult.recommendation === 'APPROVE'
+                            ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                            : 'bg-amber-100 text-amber-800 border border-amber-200'
+                        }`}>
+                          {aiScrutinyResult.recommendation} ({aiScrutinyResult.confidenceScore}% Confidence)
+                        </span>
+                      </h4>
+                      <p className="text-[10px] text-purple-800">
+                        Evaluated against Legal Metrology Act 2009 &amp; General Rules 2011 Schedule VII
+                      </p>
+                    </div>
+                  </div>
+
+                  {currentUser.role !== 'BUSINESS' && (
+                    <button
+                      type="button"
+                      onClick={handleApplyAiScrutiny}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-700 hover:bg-purple-800 text-white text-xs font-bold shadow-xs transition-colors cursor-pointer"
+                    >
+                      <CheckCheck className="w-3.5 h-3.5" />
+                      <span>Apply AI Findings to Checklist</span>
+                    </button>
+                  )}
+                </div>
+
+                <p className="text-xs text-slate-700 leading-relaxed font-medium bg-white/80 p-2.5 rounded-lg border border-purple-100">
+                  {aiScrutinyResult.scrutinySummary}
+                </p>
+
+                <div className="space-y-1">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-purple-900">Statutory Scrutiny Checks:</p>
+                  <ul className="text-xs text-slate-600 space-y-1">
+                    {aiScrutinyResult.findings.map((f, i) => (
+                      <li key={i} className="flex items-start gap-1.5">
+                        <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                        <span>{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
 
             <div className="space-y-3">
               {app.scrutinyItems.map(item => (
