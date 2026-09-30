@@ -916,8 +916,8 @@ export const LandingPage: React.FC = () => {
             </div>
             <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-1">
               <span className="text-[10px] font-bold text-slate-400 uppercase">Turnaround Acceleration</span>
-              <p className="text-2xl font-black text-amber-600">&lt; 48 Hrs</p>
-              <p className="text-[11px] text-slate-600">Reduction from traditional 21-day manual paper stamping cycle</p>
+              <p className="text-xs font-black text-amber-600">Pilot KPI</p>
+              <p className="text-[11px] text-slate-600">Pilot KPI: measure turnaround time against the current baseline.</p>
             </div>
           </div>
 

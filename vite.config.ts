@@ -17,7 +17,7 @@ export default defineConfig({
               return 'vendor-pdf';
             }
             if (id.includes('lucide-react')) {
-              return 'vendor-[#1F497D]';
+              return 'vendor-icons';
             }
             if (id.includes('qrcode')) {
               return 'vendor-qrcode';

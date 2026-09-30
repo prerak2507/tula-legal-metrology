@@ -235,7 +235,7 @@ export const ReportsView: React.FC = () => {
           <p className="text-3xl font-extrabold text-gov-800 mt-2">
             {applications.length > 0 ? Math.round((applications.filter(a => a.status === 'COMPLETED').length / applications.length) * 100) : 0}%
           </p>
-          <p className="text-xs text-slate-500 mt-1">Turnaround: 4.2 days statutory standard</p>
+          <p className="text-xs text-slate-500 mt-1">Pilot KPI: measure turnaround time against the current baseline.</p>
         </div>
 
         <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
