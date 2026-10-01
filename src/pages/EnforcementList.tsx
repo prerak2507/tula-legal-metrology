@@ -186,12 +186,12 @@ export const EnforcementList: React.FC = () => {
                 <span className="text-slate-500">Statutory Section:</span>
                 <span className="font-semibold text-slate-800">{c.actSection}</span>
               </div>
-              {c.penaltyAmount && (
-                <div className="flex justify-between">
-                  <span className="text-slate-500">Statutory Penalty:</span>
-                  <span className="font-extrabold text-slate-900">₹{c.penaltyAmount.toLocaleString()}</span>
-                </div>
-              )}
+              <div className="flex justify-between gap-3">
+                <span className="text-slate-500">Compounding fee (Schedule XI):</span>
+                {c.penaltyAmount !== undefined && c.penaltyAmount !== null
+                  ? <span className="font-extrabold text-slate-900">₹{c.penaltyAmount.toLocaleString('en-IN')}</span>
+                  : <span className="font-semibold text-slate-600 text-right">To be fixed by the Controller ({c.state} Schedule XI not loaded)</span>}
+              </div>
             </div>
 
             <div className="text-xs text-slate-600 space-y-1">
@@ -206,13 +206,13 @@ export const EnforcementList: React.FC = () => {
                 <span className="ml-2">• {new Date(c.createdAt).toLocaleDateString()}</span>
               </div>
 
-              {c.status === 'OPEN' && user.role === 'BUSINESS' && (
+              {c.status === 'OPEN' && user.role === 'BUSINESS' && c.penaltyAmount !== undefined && c.penaltyAmount !== null && (
                 <button
                   type="button"
-                  onClick={() => storage.updateEnforcementCaseStatus(c.id, 'COMPOUNDED', `Compounding fee of ₹${c.penaltyAmount?.toLocaleString() || '10,000'} paid via online payment portal by ${user.fullName}. Section 48 compounding certificate issued.`)}
+                  onClick={() => storage.updateEnforcementCaseStatus(c.id, 'COMPOUNDED', `Compounding fee of ₹${c.penaltyAmount?.toLocaleString('en-IN')} paid (demo payment) by ${user.fullName}. Compounded under section 48.`)}
                   className="px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white shadow-xs transition-colors"
                 >
-                  Pay Compounding Fine (₹{c.penaltyAmount?.toLocaleString()})
+                  Pay compounding fee ₹{c.penaltyAmount?.toLocaleString('en-IN')} (demo)
                 </button>
               )}
 

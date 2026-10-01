@@ -29,7 +29,7 @@ export const HelpPage: React.FC = () => (
     <section>
       <h2>I bought something and the weight looks wrong</h2>
       <p>Scan the QR on the scale's certificate or seal with <Link to="/verify">Check a certificate</Link>. No login is needed. If the check says the certificate is fake, expired or revoked, tap "Report a problem" so the district office can inspect.</p>
-      <p className="mt-2">For a consumer complaint, call the National Consumer Helpline on <strong>1915</strong> or contact your State Legal Metrology department. TULA is a prototype and does not receive real complaints.</p>
+      <p className="mt-2">For a consumer complaint, call the <a href={SOURCES.NCH.url} target="_blank" rel="noreferrer">National Consumer Helpline</a> on <strong>1915</strong> or contact your State Legal Metrology department. TULA is a prototype and does not receive real complaints.</p>
     </section>
     <section>
       <h2>I own a shop with a scale or fuel pump</h2>

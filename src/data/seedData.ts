@@ -999,7 +999,7 @@ export const INITIAL_ENFORCEMENT_CASES: EnforcementCase[] = [
     officerId: 'usr-lmo-1',
     officerName: 'Inspector Amit K. Sharma',
     status: 'COMPOUNDED',
-    actionTaken: 'Compounding fee ₹15,000 collected; Instrument recalibrated and re-verified.',
+    actionTaken: 'Compounding fee ₹5,000 collected (Delhi Schedule XI, item 11); instrument recalibrated and re-verified.',
     penaltyAmount: 5000,
     evidenceNotes: 'Spot check revealed fuel dispenser under-dispensing by 48mL per litre, exceeding MPE of ±25mL/L.',
     createdAt: '2026-07-20T10:00:00Z',
@@ -1055,7 +1055,7 @@ export const INITIAL_AUDIT_LOGS: AuditLogEntry[] = [
   {
     id: 'aud-09', timestamp: '2026-08-05T14:00:00Z', actorId: 'usr-lmo-1', actorName: 'Inspector Amit K. Sharma', actorRole: 'LMO',
     action: 'ENFORCEMENT_RESOLVED', entityType: 'ENFORCEMENT', entityId: 'ENF-2026-0015',
-    details: 'Compounding completed for Quick Petrol, ₹15,000 collected.', ipAddress: '103.24.120.45',
+    details: 'Compounding completed for Quick Petrol, ₹5,000 collected under Delhi Schedule XI, item 11.', ipAddress: '103.24.120.45',
   },
   {
     id: 'aud-10', timestamp: '2026-09-27T10:15:00Z', actorId: 'usr-gatc-1', actorName: 'Dr. Hardik Patel', actorRole: 'GATC',
@@ -1079,7 +1079,7 @@ export const INITIAL_NOTIFICATIONS: NotificationItem[] = [
   {
     id: 'notif-2', recipientId: 'usr-bus-1', recipientRole: 'BUSINESS',
     title: '🚨 Violation Notice: Fuel Dispenser Expired',
-    message: 'Enforcement case ENF-2026-0031 opened. Fuel Dispenser [LM-MH-2026-003819] expired on Sep 14. Compounding penalty ₹10,000.',
+    message: 'Enforcement case ENF-2026-0031 opened. Fuel Dispenser [LM-MH-2026-003819] expired on Sep 14. Compounding fee to be fixed under the Maharashtra Schedule XI.',
     type: 'WARNING', link: '/enforcement', read: false, createdAt: '2026-09-25T14:05:00Z', channel: 'IN_APP',
   },
   {

@@ -174,7 +174,7 @@ export const ApplicationNew: React.FC = () => {
 
         {fee && inst && (
           <section className="bg-white p-5 rounded-xl border border-slate-200 space-y-2">
-            <h2 className="font-bold text-sm text-slate-900 flex items-center gap-2"><IndianRupee className="w-4 h-4 text-gov-700" /> Fee ({inst.state} rules)</h2>
+            <h2 className="font-bold text-sm text-slate-900 flex items-center gap-2"><IndianRupee className="w-4 h-4 text-gov-700" /> Fee</h2>
             <div className="text-sm space-y-1">
               <div className="flex justify-between gap-3"><span className="text-slate-600">Verification fee, Schedule IX{fee.tierLabel ? ` (${fee.tierLabel})` : ''}</span><span className="font-semibold">₹{fee.statutory.toLocaleString('en-IN')}</span></div>
               {fee.inSitu ? (
