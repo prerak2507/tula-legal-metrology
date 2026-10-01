@@ -1,8 +1,8 @@
-// Reader preferences from the accessibility bar: text size and high contrast.
+// Reader preference from the accessibility bar: text size.
 // Stored on the device only. Everything works if storage is blocked.
 
 export type TextSize = 'sm' | 'md' | 'lg';
-export interface A11yPrefs { size: TextSize; contrast: boolean }
+export interface A11yPrefs { size: TextSize }
 
 const KEY = 'tula-a11y';
 const SIZES: Record<TextSize, string> = { sm: '93.75%', md: '100%', lg: '112.5%' };
@@ -11,16 +11,15 @@ const listeners = new Set<(p: A11yPrefs) => void>();
 export function getA11yPrefs(): A11yPrefs {
   try {
     const p = JSON.parse(localStorage.getItem(KEY) || '{}');
-    return { size: p.size in SIZES ? p.size : 'md', contrast: p.contrast === true };
+    return { size: p.size in SIZES ? p.size : 'md' };
   } catch {
-    return { size: 'md', contrast: false };
+    return { size: 'md' };
   }
 }
 
 export function applyA11yPrefs(p: A11yPrefs = getA11yPrefs()) {
   const html = document.documentElement;
   html.style.fontSize = SIZES[p.size];
-  html.classList.toggle('hc', p.contrast);
 }
 
 export function setA11yPrefs(patch: Partial<A11yPrefs>) {

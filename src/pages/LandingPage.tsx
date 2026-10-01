@@ -140,7 +140,7 @@ export const LandingPage: React.FC = () => {
       {/* Hero: the forgery challenge */}
       <section id="main" className="relative bg-ink text-paper overflow-hidden">
         <GuillocheBand className="absolute inset-x-0 top-10 w-full h-[70%] text-brass/20" lines={22} />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(226,194,127,0.12),transparent_55%)]" aria-hidden="true" data-decor="" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(226,194,127,0.12),transparent_55%)]" aria-hidden="true" />
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6 pt-12 pb-14 sm:pt-20 sm:pb-20 grid lg:grid-cols-[1.05fr_1fr] gap-12 lg:gap-14 items-center">
           <div>
             <p className="font-readout text-[11px] sm:text-xs tracking-[0.18em] uppercase text-brass-300">SIH 2026 · PS 26036 · Dept. of Consumer Affairs</p>

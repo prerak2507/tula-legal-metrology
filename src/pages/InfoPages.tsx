@@ -60,7 +60,7 @@ export const AccessibilityPage: React.FC = () => (
       <h2>What works today</h2>
       <ul>
         <li>Every page can be used with a keyboard, with a visible focus outline and a "Skip to main content" link.</li>
-        <li>The bar at the top of each page sets text size (A−, A, A+) and high contrast. Your choice is remembered on your device.</li>
+        <li>The bar at the top of each page sets text size (A−, A, A+). Your choice is remembered on your device.</li>
         <li>The public certificate check works in English and Hindi.</li>
         <li>Pages fit a 360-pixel phone screen, and buttons are at least 44 pixels tall for touch.</li>
         <li>Buttons, form fields and status messages carry labels for screen readers.</li>

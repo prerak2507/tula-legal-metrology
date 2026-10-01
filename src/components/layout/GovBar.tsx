@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Contrast } from 'lucide-react';
 import { A11yPrefs, TextSize, getA11yPrefs, onA11yChange, setA11yPrefs } from '../../services/a11y';
 
 /**
  * The thin strip above every page, as on government websites: who the site is for,
- * skip to content, text size and contrast. Says plainly that this is a student prototype.
+ * skip to content and text size. Says plainly that this is a student prototype.
  */
 export const GovBar: React.FC<{ mainId?: string }> = ({ mainId = 'main' }) => {
   const [prefs, setPrefs] = useState<A11yPrefs>(getA11yPrefs());
@@ -31,11 +30,6 @@ export const GovBar: React.FC<{ mainId?: string }> = ({ mainId = 'main' }) => {
           {sizeBtn('sm', 'A−', 'Smaller text')}
           {sizeBtn('md', 'A', 'Normal text')}
           {sizeBtn('lg', 'A+', 'Larger text')}
-          <span className="w-px h-4 bg-paper/20 mx-1" aria-hidden="true" />
-          <button type="button" onClick={() => setA11yPrefs({ contrast: !prefs.contrast })} aria-pressed={prefs.contrast}
-            className={`h-7 px-2 rounded inline-flex items-center gap-1 font-semibold ${prefs.contrast ? 'bg-paper text-ink' : 'text-paper/80 hover:bg-paper/10'}`}>
-            <Contrast className="w-3.5 h-3.5" /> <span className="hidden sm:inline">High contrast</span>
-          </button>
         </div>
       </div>
     </div>

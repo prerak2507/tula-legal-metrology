@@ -25,7 +25,7 @@ export const GuillocheBand: React.FC<{ className?: string; lines?: number; width
     return out;
   }, [lines, width, height]);
   return (
-    <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" className={className} aria-hidden="true" focusable="false" data-decor="">
+    <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" className={className} aria-hidden="true" focusable="false">
       {paths.map((d, i) => <path key={i} d={d} fill="none" stroke="currentColor" strokeWidth="0.8" vectorEffect="non-scaling-stroke" />)}
     </svg>
   );
@@ -48,7 +48,7 @@ export const Rosette: React.FC<{ className?: string; rings?: number; petals?: nu
     return out;
   }, [rings, petals]);
   return (
-    <svg viewBox="0 0 200 200" className={className} aria-hidden="true" focusable="false" data-decor="">
+    <svg viewBox="0 0 200 200" className={className} aria-hidden="true" focusable="false">
       {paths.map((d, i) => <path key={i} d={d} fill="none" stroke="currentColor" strokeWidth="0.5" />)}
     </svg>
   );
