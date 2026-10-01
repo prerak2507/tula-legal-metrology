@@ -41,6 +41,11 @@ export const SOURCES: Record<string, Source> = {
     url: 'https://indiankanoon.org/doc/67045693/', official: false,
     usedFor: 'Re-verification periods: 24 months for weights, measures, beam scales and counter machines; 12 months for other instruments',
   },
+  GR_SPECS: {
+    id: 'GR_SPECS', title: 'Legal Metrology (General) Rules, 2011: instrument specifications', publisher: 'Department of Consumer Affairs',
+    url: 'https://consumeraffairs.gov.in/pages/legal-metrology-overview', official: true,
+    usedFor: 'Error limits for pass / fail: the Seventh Schedule (weighing) and Eighth Schedule (measuring, including fuel dispensers) set them, based on OIML R 76 and R 117',
+  },
   MODEL_APPROVAL: {
     id: 'MODEL_APPROVAL', title: 'Model Approval certificates register', publisher: 'Legal Metrology Division, Department of Consumer Affairs',
     url: 'https://lm.doca.gov.in/modelapproval/Certificates.aspx', official: true,

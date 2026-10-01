@@ -1,6 +1,6 @@
 # SIH portal fields (PS 26036, Team FriendlyFire)
 
-Deck to upload: TULA_SIH2026_FriendlyFire_v12.pdf (new buyer-verdict screenshot; text sized to fit each box; v4 to v11 kept for reference; every link in it is clickable; section headings follow the SIH template exactly). Team ID: 182718.
+Deck to upload: TULA_SIH2026_FriendlyFire_v13.pdf (review fixes: tamper-proof QR wording, offline vs revocation, error limits cite the LM (General) Rules 2011, no password on the slide, darker orange; v4 to v12 kept for reference; every link is clickable). Team ID: 182718.
 
 ## Idea Title (98 of 100 characters)
 
