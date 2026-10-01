@@ -72,6 +72,7 @@ export interface Instrument {
   manufacturer: string;
   model: string;
   modelApprovalNumber: string;    // Central Government Model Approval No.
+  remindersSent?: string[];      // "<due date>:<milestone>" reminders already sent, shared across devices
   serialNumber: string;
   capacity: string;               // e.g., "50 kg", "50,000 kg", "60 L/min"
   scaleInterval: string;          // e = 1g, d = 0.5g

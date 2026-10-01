@@ -746,7 +746,8 @@ class MetrologyStorageService {
 
     cert = (await this.signCertificate(cert.id)) || cert;
     this.createNotification({ recipientId: inst.ownerId, recipientRole: 'BUSINESS', title: 'Certificate issued', message: `${certNum} for ${inst.categoryName}. Valid until ${validUntil}.`, type: 'SUCCESS', link: `/certificates/${cert.id}`, channel: 'IN_APP' });
-    this.message('CERTIFICATE_ISSUED', inst.ownerId, { certNo: certNum, instrumentId: inst.id, validUntil, link: cert.qrPayloadUrl });
+    // Short check link only: the signed payload belongs in the QR, not in an SMS.
+    this.message('CERTIFICATE_ISSUED', inst.ownerId, { certNo: certNum, instrumentId: inst.id, validUntil, link: buildVerifyUrl(origin(), certNum) });
     this.notify();
     return cert;
   }
@@ -919,9 +920,12 @@ class MetrologyStorageService {
       const days = Math.ceil((Date.parse(inst.nextVerificationDueDate) - Date.parse(todayStr())) / 86_400_000);
       const milestone = days < 0 ? 'expired' : [1, 7, 15, 30].find(m => days <= m);
       if (milestone === undefined) continue;
-      const key = `${inst.id}:${inst.nextVerificationDueDate}:${milestone}`;
-      if (sent[key] && !force) continue;
+      // Recorded on the instrument itself, so every device and account sees that it was sent.
+      const mark = `${inst.nextVerificationDueDate}:${milestone}`;
+      const key = `${inst.id}:${mark}`;
+      if ((sent[key] || inst.remindersSent?.includes(mark)) && !force) continue;
       sent[key] = true;
+      if (!inst.remindersSent?.includes(mark)) this.updateInstrument(inst.id, { remindersSent: [...(inst.remindersSent || []), mark].slice(-12) });
       count++;
       this.createNotification({
         recipientId: inst.ownerId, recipientRole: 'BUSINESS',
@@ -929,7 +933,7 @@ class MetrologyStorageService {
         message: `${inst.categoryName} (${inst.id}) ${days < 0 ? 'expired on' : 'is due on'} ${inst.nextVerificationDueDate}. Using it for trade after expiry is an offence.`,
         type: days < 0 ? 'WARNING' : 'EXPIRY', link: `/applications/new?instrumentId=${inst.id}`, channel: 'IN_APP',
       });
-      this.message('EXPIRY_REMINDER', inst.ownerId, { instrumentId: inst.id, dueDate: inst.nextVerificationDueDate, days: String(Math.max(days, 0)), link: `${origin()}/applications/new?instrumentId=${inst.id}` });
+      this.message('EXPIRY_REMINDER', inst.ownerId, { instrumentId: inst.id, dueDate: inst.nextVerificationDueDate, days: String(Math.max(days, 0)), expired: days < 0 ? '1' : '0', link: `${origin()}/applications/new?instrumentId=${inst.id}` });
     }
     save(K.REMINDER_LOG, sent);
     if (count) this.addAuditLog('EXPIRY_REMINDER_JOB', 'INSTRUMENT', 'job', `${count} reminder(s) generated`);

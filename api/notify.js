@@ -4,37 +4,9 @@
 // Channels without credentials report "not_configured" instead of pretending to send.
 
 import { guard, readJson, send } from './_lib/common.js';
+import { TEMPLATES } from './_lib/templates.js';
 
-const TEMPLATES = {
-  APPLICATION_SUBMITTED: p => ({
-    subject: `Application ${p.appId} received`,
-    text: `TULA: Your verification application ${p.appId} for instrument ${p.instrumentId} is received. Track it at ${p.link}`,
-  }),
-  FEE_RECEIVED: p => ({
-    subject: `Fee received for ${p.appId}`,
-    text: `TULA: Fee of Rs ${p.amount} received for application ${p.appId}. Ref ${p.ref}.`,
-  }),
-  CORRECTION_REQUIRED: p => ({
-    subject: `Correction needed on ${p.appId}`,
-    text: `TULA: Application ${p.appId} needs a correction: ${p.note}. Open ${p.link}`,
-  }),
-  INSPECTION_SCHEDULED: p => ({
-    subject: `Inspection scheduled for ${p.appId}`,
-    text: `TULA: Inspection for ${p.instrumentId} is on ${p.date}, ${p.slot}. Officer: ${p.officer}.`,
-  }),
-  CERTIFICATE_ISSUED: p => ({
-    subject: `Certificate ${p.certNo} issued`,
-    text: `TULA: Certificate ${p.certNo} issued for ${p.instrumentId}, valid till ${p.validUntil}. Verify: ${p.link}`,
-  }),
-  INSPECTION_FAILED: p => ({
-    subject: `Inspection result for ${p.appId}`,
-    text: `TULA: Instrument ${p.instrumentId} did not pass verification (${p.result}). Open ${p.link}`,
-  }),
-  EXPIRY_REMINDER: p => ({
-    subject: `Re-verification due for ${p.instrumentId}`,
-    text: `TULA: Verification of ${p.instrumentId} expires on ${p.dueDate} (${p.days} days). Apply at ${p.link}`,
-  }),
-};
+// Templates live in ./_lib/templates.js, shared with the app.
 
 const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,190}\.[a-z]{2,}$/i;
 const PHONE_RE = /^\+91[6-9]\d{9}$/;

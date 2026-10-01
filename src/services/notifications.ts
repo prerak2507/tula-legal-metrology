@@ -5,6 +5,7 @@
 
 import { NotificationTemplate, OutboxMessage, DeliveryStatus } from '../types';
 import { cloud } from './cloud';
+import { TEMPLATES } from '../../api/_lib/templates.js';
 
 const KEY = 'lm_outbox_v2';
 
@@ -28,17 +29,10 @@ const write = (list: OutboxMessage[]) => {
 const listeners = new Set<() => void>();
 const emit = () => listeners.forEach(fn => fn());
 
-/** Local copy of the server templates, so the outbox shows the text even when offline. */
+/** Same templates the server sends (api/_lib/templates.js), so the outbox shows the exact text. */
 export function renderTemplate(template: NotificationTemplate, p: Record<string, string>): { subject: string; text: string } {
-  switch (template) {
-    case 'APPLICATION_SUBMITTED': return { subject: `Application ${p.appId} received`, text: `TULA: Your verification application ${p.appId} for instrument ${p.instrumentId} is received. Track it at ${p.link}` };
-    case 'FEE_RECEIVED': return { subject: `Fee received for ${p.appId}`, text: `TULA: Fee of Rs ${p.amount} received for application ${p.appId}. Ref ${p.ref}.` };
-    case 'CORRECTION_REQUIRED': return { subject: `Correction needed on ${p.appId}`, text: `TULA: Application ${p.appId} needs a correction: ${p.note}. Open ${p.link}` };
-    case 'INSPECTION_SCHEDULED': return { subject: `Inspection scheduled for ${p.appId}`, text: `TULA: Inspection for ${p.instrumentId} is on ${p.date}, ${p.slot}. Officer: ${p.officer}.` };
-    case 'CERTIFICATE_ISSUED': return { subject: `Certificate ${p.certNo} issued`, text: `TULA: Certificate ${p.certNo} issued for ${p.instrumentId}, valid till ${p.validUntil}. Verify: ${p.link}` };
-    case 'INSPECTION_FAILED': return { subject: `Inspection result for ${p.appId}`, text: `TULA: Instrument ${p.instrumentId} did not pass verification (${p.result}). Open ${p.link}` };
-    case 'EXPIRY_REMINDER': return { subject: `Re-verification due for ${p.instrumentId}`, text: `TULA: Verification of ${p.instrumentId} expires on ${p.dueDate} (${p.days} days). Apply at ${p.link}` };
-  }
+  const build = TEMPLATES[template];
+  return build ? build(p) : { subject: template, text: '' };
 }
 
 interface QueueInput {
