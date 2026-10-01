@@ -1,6 +1,6 @@
 ﻿# Fits body text to the space each box has. Boxes of the same size on a slide form one group and get one scale,
 # so rows and table columns stay even. Titles, section headings, the team badge and the footer are left alone.
-param([string]$In, [string]$Out)
+param([string]$In, [string]$Out, [double]$Max = 1.15)
 $pp = New-Object -ComObject PowerPoint.Application
 $pres = $pp.Presentations.Open($In, $true, $false, $false)
 
@@ -20,6 +20,7 @@ function Skip($sh) {
 }
 
 function Fits($sh) {
+  if ($sh.TextFrame.AutoSize -eq 1) { return $true }               # box grows with its text; overflow is checked on the render
   $tr = $sh.TextFrame.TextRange
   $m = $sh.TextFrame.MarginTop + $sh.TextFrame.MarginBottom
   return ($tr.BoundHeight -le ($sh.Height - [math]::Max(2, $m * 0.5))) -and ($tr.BoundWidth -le ($sh.Width + 0.5))
@@ -40,7 +41,7 @@ foreach ($s in $pres.Slides) {
   foreach ($key in $groups.Keys) {
     $items = $groups[$key]
     $chosen = $null
-    foreach ($f in @(1.15, 1.1, 1.05, 1.0, 0.95, 0.9)) {
+    foreach ($f in (@(1.15, 1.1, 1.05, 1.0, 0.95, 0.9, 0.85) | Where-Object { $_ -le $Max })) {
       foreach ($it in $items) {
         $tr2 = $it.Shape.TextFrame.TextRange; $nr = $tr2.Runs().Count
         for ($i = 1; $i -le $nr; $i++) {

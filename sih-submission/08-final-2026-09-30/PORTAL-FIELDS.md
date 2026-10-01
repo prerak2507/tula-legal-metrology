@@ -1,6 +1,6 @@
 # SIH portal fields (PS 26036, Team FriendlyFire)
 
-Deck to upload: TULA_SIH2026_FriendlyFire_v14.pdf (v13 review fixes plus the Delhi Schedule XI 2026 amendment linked; v4 to v13 kept for reference; every link is clickable). Team ID: 182718.
+Deck to upload: TULA_SIH2026_FriendlyFire_v15.pdf (same content as v14, calmer text sizes; v4 to v14 kept for reference; every link is clickable). Team ID: 182718.
 
 ## Idea Title (98 of 100 characters)
 
