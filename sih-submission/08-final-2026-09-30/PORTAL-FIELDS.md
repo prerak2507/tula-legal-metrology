@@ -1,6 +1,6 @@
 # SIH portal fields (PS 26036, Team FriendlyFire)
 
-Deck to upload: TULA_SIH2026_FriendlyFire_v11.pdf (larger text; v4 to v10 kept for reference; every link in it is clickable; section headings follow the SIH template exactly). Team ID: 182718.
+Deck to upload: TULA_SIH2026_FriendlyFire_v12.pdf (new buyer-verdict screenshot; text sized to fit each box; v4 to v11 kept for reference; every link in it is clickable; section headings follow the SIH template exactly). Team ID: 182718.
 
 ## Idea Title (98 of 100 characters)
 
