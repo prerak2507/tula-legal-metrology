@@ -21,11 +21,13 @@ export function certificateFacts(cert: VerificationCertificate) {
   const quarter = 'ABCD'.indexOf(mark[0]) + 1;
   const rules = RULES_SOURCE[cert.state] || { title: `${cert.state} Legal Metrology (Enforcement) Rules, 2011`, url: SOURCES.DL_ENF.url };
   const validity = DEFAULT_VALIDITY_RULES.find(v => v.category === cert.category);
+  // A Government Approved Test Centre verifies under the GATC Rules, 2013, not the State's Schedule VIII.
+  const gatc = /^GATC/i.test(cert.issuingOfficerBadgeOrGATC || '') || /test centre|GATC/i.test(cert.issuingAuthority || '');
   return {
-    government: GOVERNMENTS[cert.state] || `Government of ${cert.state}`,
-    office: cert.issuingOfficerBadgeOrGATC?.startsWith('GATC') ? cert.issuingAuthority : `Office of the Controller, Legal Metrology, ${cert.state}`,
-    form: `Schedule VIII [see rule 15(3)], ${rules.title}`,
-    formUrl: rules.url,
+    government: gatc ? 'Government Approved Test Centre' : GOVERNMENTS[cert.state] || `Government of ${cert.state}`,
+    office: gatc ? cert.issuingAuthority : `Office of the Controller, Legal Metrology, ${cert.state}`,
+    form: gatc ? 'Legal Metrology (Government Approved Test Centre) Rules, 2013' : `Schedule VIII [see rule 15(3)], ${rules.title}`,
+    formUrl: gatc ? SOURCES.DOCA_LM.url : rules.url,
     quarterMark: mark,
     quarterText: quarter > 0 ? `${mark}: quarter ${quarter} (${['Jan to Mar', 'Apr to Jun', 'Jul to Sep', 'Oct to Dec'][quarter - 1]}) of 20${mark.slice(-2)}` : mark,
     stampNumber: (cert.issuingOfficerBadgeOrGATC || '').replace(/^Badge\s*#\s*/i, ''),   // rule 15(1): stamp shows the number allotted to the officer
