@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" shape-rendering="crispEdges">
+  <!-- 16 px TULA badge on a pixel grid: every edge sits on a whole pixel, so the tab icon stays sharp. -->
+  <rect width="16" height="16" rx="3" fill="#20497D" shape-rendering="geometricPrecision"/>
+  <rect x="7" y="2" width="2" height="2" fill="#2FB57E"/>
+  <rect x="2" y="4" width="12" height="1" fill="#FFFFFF"/>
+  <rect x="7" y="5" width="2" height="7" fill="#FFFFFF"/>
+  <rect x="5" y="12" width="6" height="1" fill="#FFFFFF"/>
+  <rect x="3" y="6" width="1" height="1" fill="#9CC4EC"/>
+  <rect x="2" y="7" width="3" height="1" fill="#9CC4EC"/>
+  <rect x="1" y="8" width="5" height="2" fill="#9CC4EC"/>
+  <rect x="10" y="6" width="4" height="4" fill="#FFFFFF"/>
+  <rect x="11" y="7" width="1" height="1" fill="#20497D"/>
+  <rect x="12" y="8" width="1" height="1" fill="#20497D"/>
+</svg>

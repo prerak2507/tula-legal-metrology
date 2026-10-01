@@ -4,8 +4,8 @@
 // - Static assets: cache first.
 // - /api calls are never cached. The app queues work while offline and syncs later.
 
-const VERSION = 'tula-shell-v3';
-const SHELL = ['/', '/index.html', '/manifest.webmanifest', '/logo/tula-logo-badge.png', '/favicon.svg'];
+const VERSION = 'tula-shell-v4';
+const SHELL = ['/', '/index.html', '/manifest.webmanifest', '/logo/tula-logo-badge.png', '/favicon.ico', '/icons/favicon-32.png', '/icons/icon-192.png'];
 
 self.addEventListener('install', event => {
   event.waitUntil((async () => {

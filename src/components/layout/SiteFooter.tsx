@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { LEGAL_LINKS } from '../../config/sources';
 
 const LINKS: [string, string][] = [
   ['/help', 'Help'],
@@ -33,7 +34,11 @@ export const SiteFooter: React.FC = () => (
     </div>
     <div className="border-t border-paper/10">
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-2.5 flex flex-wrap justify-between gap-2 text-[11px] text-paper/50">
-        <span>Legal Metrology Act, 2009 · General Rules, 2011 · GATC Rules, 2013 · OIML R 76 and R 117</span>
+        <span className="flex flex-wrap gap-x-3 gap-y-1">
+          {LEGAL_LINKS.map(l => (
+            <a key={l.label} href={l.url} target="_blank" rel="noreferrer" className="hover:text-paper underline underline-offset-2 decoration-paper/30" title={l.note}>{l.label}</a>
+          ))}
+        </span>
         {updated && <span>Last updated {updated}</span>}
       </div>
     </div>

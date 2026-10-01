@@ -69,3 +69,12 @@ export const SOURCES: Record<string, Source> = {
 };
 
 export const source = (id: keyof typeof SOURCES) => SOURCES[id];
+
+export const LEGAL_LINKS: { label: string; url: string; note?: string }[] = [
+  { label: 'Legal Metrology Act, 2009', url: SOURCES.LM_ACT.url },
+  { label: 'General Rules, 2011 (rule 27)', url: SOURCES.GR_2011.url, note: 'secondary copy' },
+  { label: 'Delhi Enforcement Rules, 2011', url: SOURCES.DL_ENF.url },
+  { label: 'GATC Rules, 2013 (DoCA)', url: SOURCES.DOCA_LM.url },
+  { label: 'OIML R 76', url: SOURCES.OIML_R76.url },
+  { label: 'OIML R 117', url: SOURCES.OIML_R117.url },
+];

@@ -9,6 +9,7 @@ import { ForgeChallenge } from '../components/landing/ForgeChallenge';
 import { InspectorSim } from '../components/landing/InspectorSim';
 import { GuillocheBand } from '../components/landing/Guilloche';
 import { GovBar } from '../components/layout/GovBar';
+import { LEGAL_LINKS } from '../config/sources';
 import { storage } from '../services/storage';
 import { UserRole } from '../types';
 import { cloud } from '../services/cloud';
@@ -139,7 +140,7 @@ export const LandingPage: React.FC = () => {
       {/* Hero: the forgery challenge */}
       <section id="main" className="relative bg-ink text-paper overflow-hidden">
         <GuillocheBand className="absolute inset-x-0 top-10 w-full h-[70%] text-brass/20" lines={22} />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(226,194,127,0.12),transparent_55%)]" aria-hidden="true" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(226,194,127,0.12),transparent_55%)]" aria-hidden="true" data-decor="" />
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6 pt-12 pb-14 sm:pt-20 sm:pb-20 grid lg:grid-cols-[1.05fr_1fr] gap-12 lg:gap-14 items-center">
           <div>
             <p className="font-readout text-[11px] sm:text-xs tracking-[0.18em] uppercase text-brass-300">SIH 2026 · PS 26036 · Dept. of Consumer Affairs</p>
@@ -331,11 +332,16 @@ export const LandingPage: React.FC = () => {
               </div>
               <div className="col-span-2 sm:col-span-1">
                 <p className="font-readout text-[11px] uppercase tracking-[0.18em] text-brass-300">Legal basis</p>
-                <ul className="mt-4 space-y-2.5 text-paper/60">
-                  <li>Legal Metrology Act, 2009</li>
-                  <li>General Rules, 2011</li>
-                  <li>GATC Rules, 2013</li>
-                  <li>OIML R 76 and R 117</li>
+                <ul className="mt-4 space-y-2.5">
+                  {LEGAL_LINKS.map(l => (
+                    <li key={l.label}>
+                      <a href={l.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 hover:text-paper underline-offset-2 hover:underline">
+                        {l.label} <ArrowUpRight className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                      </a>
+                      {l.note && <span className="block text-[11px] text-paper/40">{l.note}</span>}
+                    </li>
+                  ))}
+                  <li><Link to="/sources" className="font-semibold text-brass-300 hover:underline">All sources</Link></li>
                 </ul>
               </div>
             </div>

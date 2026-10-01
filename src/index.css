@@ -247,10 +247,18 @@
 
 /* ━━━━━━━━━━━ ACCESSIBILITY ━━━━━━━━━━━ */
 :focus-visible { outline: 2px solid #B07D2B; outline-offset: 2px; }
-/* High contrast: darken muted text on light surfaces, underline links, strengthen borders. */
-html.hc :is(.text-slate-300, .text-slate-400, .text-slate-500, .text-slate-600, .text-ink-600, .text-gray-400, .text-gray-500):not(:is(.bg-slate-900, .bg-slate-800, .bg-ink, .bg-ink-900, .bg-ink-800, .bg-gov-800, .bg-gov-900, .bg-gov-950) *) {
+/* High contrast (accessibility bar): full-strength text on every surface, no decoration, clear borders and links. */
+html.hc :is(.text-slate-300, .text-slate-400, .text-slate-500, .text-slate-600, .text-slate-700, .text-ink-600, .text-ink-700, .text-gray-400, .text-gray-500, .text-brass-700):not(:is(.bg-slate-900, .bg-slate-800, .bg-ink, .bg-ink-900, .bg-ink-800, .bg-gov-800, .bg-gov-900, .bg-gov-950, .bg-seal, .bg-verify) *) {
   color: #0B1220 !important;
 }
-html.hc :is(.border-slate-100, .border-slate-200, .border-paper-200, .border-paper-300) { border-color: #3A4D68 !important; }
-html.hc main a:not([class*="bg-"]) { text-decoration: underline; text-underline-offset: 2px; }
-html.hc :focus-visible { outline-width: 3px; }
+html.hc :is(.bg-ink, .bg-ink-900, .bg-ink-800, .bg-gov-800, .bg-gov-900, .bg-gov-950, .bg-slate-900, .bg-slate-800) :is([class*="text-paper/"], .text-slate-300, .text-slate-400, .text-ink-600) {
+  color: #FFFFFF !important;
+}
+html.hc :is(.bg-ink, .bg-ink-900) { background-color: #000000 !important; }
+html.hc :is(.bg-ink, .bg-ink-900, .bg-ink-800, .bg-gov-900, .bg-slate-900)[class*="text-paper/"], html.hc :is(.bg-ink, .bg-ink-900, .bg-ink-800, .bg-gov-900, .bg-slate-900)[class*="text-paper/"] :is(a, p, span, li, dt, dd) { color: #FFFFFF !important; }
+html.hc :is(.bg-paper, .bg-paper-50, .bg-paper-100, .paper-grain) { background-color: #FFFFFF !important; background-image: none !important; }
+html.hc [data-decor] { display: none !important; }
+html.hc :is(.border-slate-100, .border-slate-200, .border-paper-200, .border-paper-300) { border-color: #0B1220 !important; }
+html.hc :is(main, footer) a:not([class*="bg-"]) { text-decoration: underline; text-underline-offset: 3px; }
+html.hc :is(.text-brass-300, .text-brass) { color: #FFD27A !important; }
+html.hc :focus-visible { outline: 3px solid #FFB000 !important; outline-offset: 2px; }
