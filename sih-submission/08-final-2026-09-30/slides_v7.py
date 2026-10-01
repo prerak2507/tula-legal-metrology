@@ -184,7 +184,7 @@ team_oval(s); footer(s); remove(s, "TextBox 8")
 label(s, 0.4, 1.28, 7.6, "ANALYSIS OF THE FEASIBILITY OF THE IDEA: what is built vs planned")
 rows = [("PS requirement", "Live today", "Next"),
         ("Registration, profiles, secure login", "✔ real accounts, 6 roles", "e-Pramaan, phone OTP"),
-        ("Apply for (re-)verification", "✔ own instruments, docs, fee", "treasury payment"),
+        ("Apply for (re-)verification", "✔ docs, fee, approval mark vs DoCA register", "treasury payment"),
         ("Scheduling, allocation LMO / GATC", "✔ district + workload", "officer calendars"),
         ("Inspection results recorded", "✔ MPE computed, photos, GPS", "cloud photo storage"),
         ("QR certificate + authentication", "✔ signed QR, revocation", "HSM-held key"),

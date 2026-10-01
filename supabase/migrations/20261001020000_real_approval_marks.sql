@@ -183,3 +183,8 @@ update public.instruments set data = data || '{"manufacturer": "Avery India Ltd"
 update public.applications set data = replace(data::text, 'Model Approval IND/09/2023/184 valid till 2033', 'IND/09/25/235 is in the DoCA register (Avery India Ltd, PT-III)')::jsonb where data::text like '%valid till 2033%';
 update public.applications set data = replace(data::text, 'Model IND/09/2024/115 valid', 'IND/09/25/266 is in the DoCA register (Kritsnam Technologies, water meter)')::jsonb where data::text like '%Model IND/09/2024/115 valid%';
 commit;
+-- City Fresh's scale (APP-2026-00201) carries an approval number that is not in the register. Its model
+-- approval scrutiny item is left for the Controller to decide, instead of a pre-filled "confirmed".
+update public.applications set data = jsonb_set(data, '{scrutinyItems}', (
+  select jsonb_agg(case when i->>'id' = 'scr-2' then (i - 'remarks' - 'verifiedAt' - 'verifiedBy') || '{"passed": null}'::jsonb else i end)
+  from jsonb_array_elements(data->'scrutinyItems') i)) where id = 'APP-2026-00201';

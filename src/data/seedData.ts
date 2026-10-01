@@ -581,7 +581,7 @@ export const INITIAL_APPLICATIONS: Application[] = [
     ],
     scrutinyItems: [
       { id: 'scr-1', title: 'Applicant Identity & Business Registration', description: 'Verify GSTIN and trade license', passed: null },
-      { id: 'scr-2', title: 'Instrument Model Approval', description: 'Verify model number in DoCA register', passed: true, remarks: 'Model confirmed', verifiedAt: '2026-09-26T10:00:00Z', verifiedBy: 'Inspector Amit K. Sharma' },
+      { id: 'scr-2', title: 'Instrument Model Approval', description: 'Verify model number in DoCA register', passed: null },
       { id: 'scr-3', title: 'Calibration Test Weight Availability', description: 'Verify 500 kg standard weights available', passed: null },
     ],
     createdAt: '2026-09-24T13:00:00Z',
