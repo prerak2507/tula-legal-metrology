@@ -40,9 +40,9 @@ export const StatusPage: React.FC = () => {
   const [rules, setRules] = useState<FeeRule[]>(storage.getFeeRules());
   useEffect(() => { void cloud.publicFeeRules().then(r => { if (r && r.length) setRules(r as FeeRule[]); }); }, []);
   const inr = (n: number) => `₹${n.toLocaleString('en-IN')}`;
-  const wbDefault = calculateStatutoryFee('WEIGHBRIDGE', undefined, rules).total;
-  const wbGujarat = calculateStatutoryFee('WEIGHBRIDGE', 'Gujarat', rules).total;
-  const wbDelhi = calculateStatutoryFee('WEIGHBRIDGE', 'Delhi', rules).total;
+  const wbGujarat = calculateStatutoryFee('WEIGHBRIDGE', 'Gujarat', rules, { capacity: '60 t' }).statutory;
+  const wbDelhi = calculateStatutoryFee('WEIGHBRIDGE', 'Delhi', rules, { capacity: '60 t' }).statutory;
+  const scaleDelhi = calculateStatutoryFee('NON_AUTOMATIC_WEIGHING', 'Delhi', rules, { capacity: '30 kg' });
   useEffect(() => {
     fetch('/api/health')
       .then(r => (r.ok ? r.json() : Promise.reject()))
@@ -114,11 +114,11 @@ export const StatusPage: React.FC = () => {
           </section>
           <section className="bg-white rounded-xl border border-slate-200 p-4 space-y-2 text-sm">
             <h2 className="font-bold text-slate-900 flex items-center gap-2"><Map className="w-5 h-5 text-gov-700" /> Different States</h2>
-            <p className="text-slate-600">Fees and validity periods are data, stored per State. A State joins by loading its schedule and officer list, with no code change. Officers only see their own State's work. Certificate numbers carry the State code (DL, GJ). Right now, from the live fee rules: a weighbridge costs {inr(wbDelhi)} in Delhi and {inr(wbGujarat)} in Gujarat (default schedule {inr(wbDefault)}).</p>
+            <p className="text-slate-600">Fees and validity periods are data, stored per State. A State joins by loading its schedule and officer list, with no code change. Officers only see their own State's work. Certificate numbers carry the State code (DL, GJ). Fees come from each State's gazetted Schedule IX: a 60 t weighbridge is {inr(wbDelhi)} in Delhi and {inr(wbGujarat)} in Gujarat, and a 30 kg shop scale verified at the shop is {inr(scaleDelhi.statutory)} plus {inr(scaleDelhi.onSite + scaleDelhi.visitMinimum)} for the visit (rule 16(2)).</p>
           </section>
         </div>
 
-        <p className="text-xs text-slate-500">Fee amounts and validity periods in the prototype are demo values. Each State replaces them with its gazetted schedule in the Rules screen.</p>
+        <p className="text-xs text-slate-500">Fees are the gazetted Schedule IX of Delhi and Gujarat, and validity periods follow rule 27 of the General Rules, 2011. Every source is listed on the <Link to="/sources" className="underline">Sources</Link> page.</p>
       </main>
       <SiteFooter />
     </div>

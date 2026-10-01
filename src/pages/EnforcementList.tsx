@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { compoundingFee, OFFENCE_LABELS } from '../config/compounding';
+import { SOURCES } from '../config/sources';
 import { Link } from 'react-router-dom';
 import { storage } from '../services/storage';
 import { EnforcementCase, Instrument } from '../types';
@@ -30,7 +32,7 @@ export const EnforcementList: React.FC = () => {
   const [offenseCategory, setOffenseCategory] = useState<EnforcementCase['offenseCategory']>('UNVERIFIED_USE');
   const [actSection, setActSection] = useState('Section 24 read with Section 33, Legal Metrology Act, 2009');
   const [actionTaken, setActionTaken] = useState('');
-  const [penaltyAmount, setPenaltyAmount] = useState<number>(10000);
+  const [penaltyAmount, setPenaltyAmount] = useState<string>('');
   const [evidenceNotes, setEvidenceNotes] = useState('');
 
   useEffect(() => {
@@ -64,6 +66,13 @@ export const EnforcementList: React.FC = () => {
     );
   });
 
+  const selectedInst = instruments.find(i => i.id === selectedInstId);
+  const scheduleFee = compoundingFee(selectedInst?.state || 'Delhi', offenseCategory);
+  // Pre-fill the amount from the State's Schedule XI when it is loaded; the officer can still change it.
+  useEffect(() => {
+    if (scheduleFee) { setPenaltyAmount(String(scheduleFee.amount)); setActSection(`${scheduleFee.section}, Legal Metrology Act, 2009`); }
+  }, [scheduleFee?.amount, scheduleFee?.section]);
+
   const handleCreateCase = async (e: React.FormEvent) => {
     e.preventDefault();
     const user = storage.getCurrentUser();
@@ -82,7 +91,7 @@ export const EnforcementList: React.FC = () => {
       officerName: user.fullName,
       status: 'OPEN',
       actionTaken: actionTaken || 'Notice of Violation Issued; Compounding proceedings initiated under Section 48.',
-      penaltyAmount,
+      penaltyAmount: penaltyAmount.trim() === '' ? undefined : Number(penaltyAmount),
       evidenceNotes: evidenceNotes || 'Physical spot check detected non-compliance with statutory verification mandates.',
     });
 
@@ -292,22 +301,25 @@ export const EnforcementList: React.FC = () => {
                     onChange={e => setOffenseCategory(e.target.value as any)}
                     className="w-full bg-slate-50 border border-slate-300 rounded p-2 text-xs font-semibold"
                   >
-                    <option value="UNVERIFIED_USE">Unverified instrument used for trade (Sec 24)</option>
-                    <option value="TAMPERED_SEAL">Tampered stamp or seal</option>
-                    <option value="EXCEEDED_MPE_ERROR">Error beyond permitted limits (MPE)</option>
-                    <option value="UNAPPROVED_MODEL">Model not approved (Sec 22)</option>
-                    <option value="NON_DISPLAY_OF_CERTIFICATE">Certificate not displayed</option>
+                    {Object.entries(OFFENCE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                   </select>
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Compounding Penalty Amount (₹)</label>
+                  <label className="block font-semibold text-slate-700 mb-1">Compounding fee (₹)</label>
                   <input
                     type="number"
+                    min={0}
                     value={penaltyAmount}
-                    onChange={e => setPenaltyAmount(Number(e.target.value))}
+                    placeholder="From the State's Schedule XI"
+                    onChange={e => setPenaltyAmount(e.target.value)}
                     className="w-full bg-slate-50 border border-slate-300 rounded p-2 text-xs"
                   />
+                  <p className="mt-1 text-[11px] text-slate-500">
+                    {scheduleFee
+                      ? <>{selectedInst?.state} {scheduleFee.item}, {scheduleFee.section}. <a href={SOURCES.DL_ENF.url} target="_blank" rel="noreferrer" className="underline">Official schedule</a></>
+                      : `${selectedInst?.state || 'This State'}'s Schedule XI is not loaded for this offence. Enter the amount from the schedule, or leave it for the Controller.`}
+                  </p>
                 </div>
               </div>
 

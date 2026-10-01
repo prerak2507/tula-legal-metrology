@@ -5,17 +5,9 @@ import { VerificationCertificate } from '../types';
 import { StatusBadge } from '../components/common/StatusBadge';
 import { QRCodeSVG } from 'qrcode.react';
 import { generateCertificatePdf } from '../services/pdf';
-import { quarterMark } from '../services/rulesEngine';
-import { 
-  Award, 
-  ArrowLeft, 
-  Printer, 
-  FileDown, 
-  ShieldCheck, 
-  Calendar, 
-  ExternalLink,
-  Scale
-} from 'lucide-react';
+import { calculateStatutoryFee } from '../services/rulesEngine';
+import { certificateFacts } from '../services/certificateFacts';
+import { Award, ArrowLeft, Printer, FileDown } from 'lucide-react';
 
 export const CertificateView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -41,6 +33,14 @@ export const CertificateView: React.FC = () => {
       </div>
     );
   }
+
+  const facts = certificateFacts(cert);
+  // Split the amount paid into the two Schedule VIII columns when today's schedule explains it exactly.
+  const inst = storage.getInstrumentById(cert.instrumentId);
+  const now = inst ? calculateStatutoryFee(cert.category, cert.state, storage.getFeeRules(), { capacity: cert.capacity, accuracyClass: cert.accuracyClass, atPremises: true }) : null;
+  const fee = facts.feeTotal !== undefined && now && Math.abs(now.statutory + now.onSite + now.visitMinimum - facts.feeTotal) < 0.01
+    ? { statutory: now.statutory.toLocaleString('en-IN'), other: (now.onSite + now.visitMinimum).toLocaleString('en-IN') }
+    : { statutory: facts.feeTotal !== undefined ? facts.feeTotal.toLocaleString('en-IN') : '—', other: '—' };
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -76,194 +76,106 @@ export const CertificateView: React.FC = () => {
         </div>
       </div>
 
-      {/* Official Verification Certificate Document (Print-Ready) */}
-      <div className="bg-white border-4 border-gov-900 rounded-xl p-8 sm:p-12 shadow-xl print-page relative space-y-6">
-        {/* Inner Gold Inset Border */}
-        <div className="absolute inset-2 border-2 border-emblem-gold pointer-events-none rounded-lg" />
+      {/* Certificate of verification in the form of Schedule VIII (rule 15(3)), print-ready */}
+      <div className="relative bg-white text-ink border border-paper-400 shadow-xl print-page overflow-hidden font-plex">
+        {/* Specimen marking: the prototype names a real State office, so every copy says it is not valid */}
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 flex items-center justify-center">
+          <span className="font-display text-[110px] sm:text-[150px] font-semibold text-seal/[0.06] -rotate-[24deg] select-none tracking-widest">SPECIMEN</span>
+        </div>
+        <div className="relative m-2 sm:m-3 border-[3px] border-double border-ink/70 p-5 sm:p-8 space-y-5">
+          {/* Heading, as in Schedule VIII */}
+          <header className="text-center space-y-0.5">
+            <p className="text-[11px] tracking-[0.18em] uppercase text-ink-600">{facts.form}</p>
+            <p className="font-display text-lg sm:text-xl font-semibold uppercase tracking-wide">{facts.government}</p>
+            <p className="text-sm font-semibold">{facts.office}</p>
+            <p className="font-display text-2xl sm:text-3xl font-semibold tracking-tight pt-2">Certificate of Verification</p>
+          </header>
 
-        {/* Certificate Header */}
-        <div className="text-center space-y-1 relative z-10 border-b-2 border-slate-200 pb-5">
-          <div className="w-12 h-12 mx-auto rounded-full bg-gov-900 text-white flex items-center justify-center font-bold text-xl mb-2">
-            <Scale className="w-7 h-7 text-amber-400" />
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 border-y border-ink/20 py-2.5 text-sm">
+            <p>Name of Legal Metrology officer: <strong>{cert.issuingOfficerName}</strong>, {cert.issuingOfficerDesignation}</p>
+            <p>No. <strong className="font-readout">{cert.certificateNumber}</strong></p>
           </div>
-          <h2 className="font-serif font-extrabold text-xl text-gov-900 tracking-wide uppercase">
-            Government of India
-          </h2>
-          <h3 className="font-serif font-bold text-base text-slate-800 uppercase tracking-tight">
-            Department of Consumer Affairs
-          </h3>
-          <p className="text-xs font-serif italic text-slate-600">
-            Legal Metrology Division
+
+          <p className="text-sm leading-relaxed">
+            I hereby certify that I have this day, <strong>{new Date(cert.verificationDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</strong>, verified and stamped the under-mentioned weighing or measuring instrument
+            belonging to <strong>{cert.issuedToName}</strong>{cert.organization && cert.organization !== cert.issuedToName ? <>, <strong>{cert.organization}</strong></> : null},
+            locality <strong>{cert.address}, {cert.district}, {cert.state}</strong>.
           </p>
-          <div className="pt-2">
-            <h4 className="font-serif font-bold text-lg text-gov-800 tracking-wider">
-              CERTIFICATE OF VERIFICATION
-            </h4>
-            <p className="text-[11px] text-slate-500 max-w-xl mx-auto mt-0.5 leading-snug">
-              [Issued under Section 24 of The Legal Metrology Act, 2009 and the rules made under it]
+
+          {/* Schedule VIII table */}
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs border border-ink/30 min-w-[640px]">
+              <thead className="bg-paper-100">
+                <tr className="text-left">
+                  {['Instrument (type)', 'Capacity', 'Class', 'Manufacturer', 'Model and serial no.', 'Qty', 'Verification fee (₹)', 'Carriage, conveyance, adjusting (₹)'].map(h => (
+                    <th key={h} className="border border-ink/30 px-2 py-1.5 font-semibold align-bottom">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="align-top">
+                  <td className="border border-ink/30 px-2 py-2">{cert.instrumentType}<div className="text-[10px] text-ink-600 font-readout">{cert.instrumentId}</div></td>
+                  <td className="border border-ink/30 px-2 py-2">{cert.capacity}<div className="text-[10px] text-ink-600">{cert.scaleInterval}</div></td>
+                  <td className="border border-ink/30 px-2 py-2">{cert.accuracyClass.replace('CLASS_', '').replace(/_/g, ' ')}</td>
+                  <td className="border border-ink/30 px-2 py-2">{cert.manufacturer}<div className="text-[10px] text-ink-600 font-readout">Approval {cert.modelApprovalNumber}</div></td>
+                  <td className="border border-ink/30 px-2 py-2">{cert.model}<div className="text-[10px] font-readout">{cert.serialNumber}</div></td>
+                  <td className="border border-ink/30 px-2 py-2 text-center">1</td>
+                  <td className="border border-ink/30 px-2 py-2 font-readout text-right">{fee.statutory}</td>
+                  <td className="border border-ink/30 px-2 py-2 font-readout text-right">{fee.other}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-x-6 gap-y-2 text-sm">
+            <p>Total ₹ <strong className="font-readout">{facts.feeTotal !== undefined ? facts.feeTotal.toLocaleString('en-IN') : '—'}</strong>{' '}
+              {facts.receipt ? <>deposited vide receipt no. <strong className="font-readout">{facts.receipt}</strong>{facts.paidOn ? <> dated {facts.paidOn}</> : null}</> : facts.feeStatus === 'EXEMPT' ? '(exempt)' : '(receipt not recorded)'}
             </p>
+            <p>Used by: <strong>{cert.organization}</strong></p>
+            <p>Stamp: officer no. <strong className="font-readout">{facts.stampNumber}</strong>, quarter mark <strong className="font-readout">{facts.quarterText}</strong></p>
+            <p>Seal / stamp record: <span className="font-readout">{cert.stampId}</span>; inspection <span className="font-readout">{cert.inspectionId}</span></p>
           </div>
-        </div>
 
-        {/* Metadata Strip */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs bg-slate-50 p-4 rounded-lg border border-slate-200 relative z-10">
-          <div>
-            <span className="text-slate-500 font-medium">Certificate Identifier:</span>
-            <p className="font-mono font-extrabold text-gov-900 text-sm">{cert.certificateNumber}</p>
-          </div>
-          <div>
-            <span className="text-slate-500 font-medium">Instrument Digital UID:</span>
-            <p className="font-mono font-extrabold text-slate-900 text-sm">{cert.instrumentId}</p>
-          </div>
-          <div>
-            <span className="text-slate-500 font-medium">Verification Date:</span>
-            <p className="font-bold text-slate-900">{cert.verificationDate}</p>
-          </div>
-          <div>
-            <span className="text-slate-500 font-medium">Validity Expiration Date:</span>
-            <p className="font-bold text-slate-900">{cert.validUntil} ({cert.validityMonths} months)</p>
-          </div>
-        </div>
-
-        {/* Part 1: Occupier Particulars */}
-        <div className="space-y-2 relative z-10">
-          <h5 className="font-bold text-xs uppercase tracking-wider text-gov-900 border-b border-slate-200 pb-1">
-            1. Particulars of the Occupier / Stakeholder
-          </h5>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs pl-2">
-            <div>
-              <span className="text-slate-500">Business / Organization Name:</span>
-              <p className="font-bold text-slate-900 text-sm">{cert.organization}</p>
-            </div>
-            <div>
-              <span className="text-slate-500">Name of Occupier / Contact Person:</span>
-              <p className="font-semibold text-slate-900">{cert.issuedToName}</p>
-            </div>
-            <div className="sm:col-span-2">
-              <span className="text-slate-500">Premises / Installation Location:</span>
-              <p className="font-medium text-slate-800">{cert.address}, {cert.district}, {cert.state}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Part 2: Metrological Specifications */}
-        <div className="space-y-2 relative z-10">
-          <h5 className="font-bold text-xs uppercase tracking-wider text-gov-900 border-b border-slate-200 pb-1">
-            2. Metrological Specifications of the Instrument
-          </h5>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs pl-2 bg-slate-50/70 p-3 rounded-lg border border-slate-200">
-            <div>
-              <span className="text-slate-500">Instrument Type:</span>
-              <p className="font-bold text-slate-900">{cert.instrumentType}</p>
-            </div>
-            <div>
-              <span className="text-slate-500">Manufacturer:</span>
-              <p className="font-semibold text-slate-900">{cert.manufacturer}</p>
-            </div>
-            <div>
-              <span className="text-slate-500">Model &amp; Series:</span>
-              <p className="font-semibold text-slate-900">{cert.model}</p>
-            </div>
-            <div>
-              <span className="text-slate-500">Serial Number:</span>
-              <p className="font-mono font-bold text-slate-900">{cert.serialNumber}</p>
-            </div>
-            <div>
-              <span className="text-slate-500">Nominal Capacity:</span>
-              <p className="font-bold text-emerald-800">{cert.capacity}</p>
-            </div>
-            <div>
-              <span className="text-slate-500">Scale Interval (e / d):</span>
-              <p className="font-mono text-slate-800">{cert.scaleInterval}</p>
-            </div>
-            <div>
-              <span className="text-slate-500">Accuracy Class:</span>
-              <p className="font-bold text-slate-900">{cert.accuracyClass.replace(/_/g, ' ')}</p>
-            </div>
-            <div>
-              <span className="text-slate-500">Model Approval No:</span>
-              <p className="font-mono text-gov-800 font-bold">{cert.modelApprovalNumber}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Part 3: Stamping & Verification Statement */}
-        <div className="space-y-2 relative z-10">
-          <h5 className="font-bold text-xs uppercase tracking-wider text-gov-900 border-b border-slate-200 pb-1">
-            3. Metrological Verification &amp; Stamping Declaration
-          </h5>
-          <p className="text-xs text-slate-700 leading-relaxed pl-2">
-            I hereby certify that the weighing and measuring instrument detailed above has been tested and verified in accordance with the provisions of The Legal Metrology Act, 2009 and the rules framed thereunder. The instrument satisfies all Maximum Permissible Error (MPE) tolerances, and the official verification mark/stamp has been lawfully affixed.
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs pl-2 bg-emerald-50/50 p-3 rounded-lg border border-emerald-200">
-            <div>
-              <span className="text-slate-500">Official Stamp / Seal ID:</span>
-              <p className="font-mono font-bold text-emerald-900">{cert.stampId}</p>
-            </div>
-            <div>
-              <span className="text-slate-500">Quarter &amp; Year Seal Mark:</span>
-              <p className="font-bold text-slate-900">{(() => { const m = storage.getStampings().find(s => s.id === cert.stampId)?.quarterAndYear || quarterMark(new Date(cert.verificationDate)); return `${m} (quarter ${'ABCD'.indexOf(m[0]) + 1}, 20${m.slice(-2)})`; })()}</p>
-            </div>
-            <div>
-              <span className="text-slate-500">Inspection Record Ref:</span>
-              <p className="font-mono text-slate-800">{cert.inspectionId}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Part 4: Cryptographic Authenticity & Public QR Code */}
-        <div className="border-t-2 border-slate-200 pt-4 relative z-10 flex flex-col sm:flex-row items-center justify-between gap-6">
-          <div className="space-y-2 flex-1">
-            <h5 className="font-bold text-xs uppercase tracking-wider text-gov-900">
-              4. Cryptographic Authenticity &amp; Public Verification
-            </h5>
-            {cert.signatureStatus === 'SIGNED' ? (
-              <p className="text-[11px] text-emerald-800 bg-emerald-50 border border-emerald-200 rounded p-2">
-                Signed with ECDSA P-256 key <span className="font-mono">{cert.signingKid}</span> on {cert.signedAt?.slice(0, 10)}. The QR carries the signed details, so a copy with any field changed fails the check.
-              </p>
-            ) : (
-              <div className="text-[11px] text-amber-900 bg-amber-50 border border-amber-200 rounded p-2 space-y-1.5 no-print">
-                <p><strong>Not signed yet.</strong> {cert.signingError || (cert.signatureStatus === 'LEGACY_UNSIGNED' ? 'Older record issued before signing was enabled.' : 'Waiting for the signing service.')}</p>
-                {cert.signatureStatus === 'PENDING_SIGNATURE' && (
-                  <button disabled={signing} onClick={async () => { setSigning(true); await storage.signCertificate(cert.id); setSigning(false); }} className="px-3 py-1.5 rounded bg-amber-600 text-white font-bold disabled:opacity-50">
-                    {signing ? 'Signing…' : 'Retry signing now'}
-                  </button>
-                )}
+          {/* Next verification due, signature and QR */}
+          <div className="flex flex-col sm:flex-row items-stretch justify-between gap-5 border-t border-ink/20 pt-4">
+            <div className="flex-1 space-y-3">
+              <div className="inline-block border-2 border-ink px-4 py-2">
+                <p className="text-[11px] uppercase tracking-[0.14em] text-ink-600">Next verification due on</p>
+                <p className="font-display text-2xl font-semibold">{new Date(cert.validUntil).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                <p className="text-[11px] text-ink-600">{facts.validityRule}</p>
               </div>
-            )}
-            <p className="text-[10px] text-slate-500 leading-tight">
-              Display this certificate where the instrument is used for trade. Anyone can scan the QR to check it, even without internet. Issued through the TULA prototype (SIH 26036).
-            </p>
-          </div>
-
-          <div className="flex flex-col items-center text-center shrink-0">
-            <QRCodeSVG
-              value={cert.qrPayloadUrl}
-              size={168}
-              level="M"
-              includeMargin={true}
-              className="border border-slate-300 rounded shadow-xs"
-            />
-            <span className="text-[10px] font-semibold text-gov-800 mt-1">Scan to verify</span>
-            <Link to={cert.qrPayloadUrl.replace(/^https?:\/\/[^/]+/, '')} className="text-[10px] text-gov-700 underline no-print">Open check page</Link>
-          </div>
-        </div>
-
-        {/* Part 5: Signatures & Authority */}
-        <div className="pt-6 border-t border-slate-200 flex flex-col sm:flex-row items-end justify-between gap-4 relative z-10">
-          <div className="text-[11px] text-slate-500">
-            <p>Issuing Authority:</p>
-            <p className="font-semibold text-slate-800">{cert.issuingAuthority}</p>
-          </div>
-
-          <div className="text-right text-xs">
-            <div className={`font-serif italic font-bold text-sm ${cert.signatureStatus === 'SIGNED' ? 'text-gov-800' : 'text-amber-700'}`}>
-              {cert.signatureStatus === 'SIGNED' ? 'Digitally signed' : 'Digital signature pending'}
+              {cert.signatureStatus === 'SIGNED' ? (
+                <p className="text-[11px] text-verify-700">Digitally signed (ECDSA P-256, key <span className="font-readout">{cert.signingKid}</span>, {cert.signedAt?.slice(0, 10)}). The QR carries the signed details; a copy with any field changed fails the check.</p>
+              ) : (
+                <div className="text-[11px] text-ink bg-brass-200/40 border border-brass/40 rounded p-2 space-y-1.5 no-print">
+                  <p><strong>Not signed yet.</strong> {cert.signingError || (cert.signatureStatus === 'LEGACY_UNSIGNED' ? 'Older record issued before signing was enabled.' : 'Waiting for the signing service.')}</p>
+                  {cert.signatureStatus === 'PENDING_SIGNATURE' && (
+                    <button disabled={signing} onClick={async () => { setSigning(true); await storage.signCertificate(cert.id); setSigning(false); }} className="px-3 py-1.5 rounded bg-ink text-paper font-semibold disabled:opacity-50">
+                      {signing ? 'Signing…' : 'Retry signing now'}
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
-            <p className="font-bold text-slate-900 mt-1">{cert.issuingOfficerName}</p>
-            <p className="text-[11px] text-slate-600">{cert.issuingOfficerDesignation}</p>
-            <p className="font-mono text-[10px] text-slate-500">{cert.issuingOfficerBadgeOrGATC}</p>
+            <div className="flex sm:flex-col items-center sm:items-end gap-4 sm:gap-2 text-right">
+              <div className="text-center">
+                <QRCodeSVG value={cert.qrPayloadUrl} size={132} level="M" includeMargin className="border border-ink/30" />
+                <p className="text-[10px] font-semibold">Scan to check</p>
+              </div>
+              <div className="text-sm">
+                <p className="font-display italic">{cert.signatureStatus === 'SIGNED' ? 'Digitally signed' : 'Signature pending'}</p>
+                <p className="font-semibold">{cert.issuingOfficerName}</p>
+                <p className="text-[11px] text-ink-600">Legal Metrology officer</p>
+              </div>
+            </div>
           </div>
+
+          <footer className="border-t border-ink/20 pt-3 space-y-1 text-[11px] text-ink-600">
+            <p>{facts.displayRule}</p>
+            <p>A rejected instrument gets a separate certificate of rejection with reasons (Schedule VIII, note).</p>
+            <p className="text-seal-700 font-semibold">Specimen generated by the TULA prototype for Smart India Hackathon 2026 (PS 26036). Not issued by any government office and not valid for trade.</p>
+            <p className="no-print">Format: <a href={facts.formUrl} target="_blank" rel="noreferrer" className="underline">{facts.form}</a> · <Link to="/sources" className="underline">All sources</Link> · <Link to={cert.qrPayloadUrl.replace(/^https?:\/\/[^/]+/, '')} className="underline">Open the public check</Link></p>
+          </footer>
         </div>
       </div>
     </div>

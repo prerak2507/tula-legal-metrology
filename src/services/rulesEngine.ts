@@ -4,9 +4,9 @@ import {
 
 // ---------------------------------------------------------------------------
 // Rules are DATA. Each State loads its own fee schedule and validity periods
-// (from its Legal Metrology (Enforcement) Rules) through the Rules screen; the
-// engine never hard-codes a State's numbers. Values below are the demo defaults
-// used by the prototype and are labelled as such everywhere they appear.
+// (from its Legal Metrology (Enforcement) Rules) through the Rules screen. The
+// defaults below are the gazetted Delhi and Gujarat schedules, each row citing
+// its source; a State admin can override them on the Rules screen.
 // ---------------------------------------------------------------------------
 
 export const STATE_CODES: Record<string, string> = {
@@ -15,36 +15,179 @@ export const STATE_CODES: Record<string, string> = {
 };
 export const stateCode = (state: string) => STATE_CODES[state] || 'IN';
 
-const DEMO_CITATION = 'Demo value. Replace with the State Legal Metrology (Enforcement) Rules schedule';
-
+// ---------------------------------------------------------------------------
+// Validity: Legal Metrology (General) Rules, 2011, rule 27. Re-verification every 24 months for
+// weights, measures, beam scales and counter machines, and every 12 months for other instruments.
+// Confirmed by the Delhi Weights & Measures FAQ. Sources: src/config/sources.ts (GR_2011, DL_FAQ).
+// ---------------------------------------------------------------------------
+const R27_24 = 'Legal Metrology (General) Rules, 2011, rule 27(a): 24 months';
+const R27_12 = 'Legal Metrology (General) Rules, 2011, rule 27(c): 12 months';
 export const DEFAULT_VALIDITY_RULES: ValidityRule[] = [
-  { category: 'NON_AUTOMATIC_WEIGHING', validityMonths: 12, description: 'Annual re-verification', statutoryReference: DEMO_CITATION },
-  { category: 'AUTOMATIC_WEIGHING', validityMonths: 12, description: 'Annual re-verification', statutoryReference: DEMO_CITATION },
-  { category: 'PLATFORM_SCALE', validityMonths: 12, description: 'Annual re-verification', statutoryReference: DEMO_CITATION },
-  { category: 'COUNTER_MACHINE', validityMonths: 12, description: 'Annual re-verification', statutoryReference: DEMO_CITATION },
-  { category: 'BEAM_SCALE', validityMonths: 12, description: 'Annual re-verification', statutoryReference: DEMO_CITATION },
-  { category: 'WEIGHBRIDGE', validityMonths: 12, description: 'Annual re-verification', statutoryReference: DEMO_CITATION },
-  { category: 'FUEL_DISPENSER_PETROL_DIESEL', validityMonths: 12, description: 'Annual re-verification', statutoryReference: DEMO_CITATION },
-  { category: 'FUEL_DISPENSER_CNG', validityMonths: 12, description: 'Annual re-verification', statutoryReference: DEMO_CITATION },
-  { category: 'FUEL_DISPENSER_LPG_LNG', validityMonths: 12, description: 'Annual re-verification', statutoryReference: DEMO_CITATION },
-  { category: 'FLOW_METER', validityMonths: 12, description: 'Annual re-verification', statutoryReference: DEMO_CITATION },
-  { category: 'WATER_METER', validityMonths: 24, description: 'Two-year re-verification', statutoryReference: DEMO_CITATION },
-  { category: 'STANDARD_WEIGHT', validityMonths: 24, description: 'Two-year re-verification', statutoryReference: DEMO_CITATION },
-  { category: 'SPHYGMOMANOMETER', validityMonths: 12, description: 'Annual re-verification', statutoryReference: DEMO_CITATION },
+  { category: 'NON_AUTOMATIC_WEIGHING', validityMonths: 12, description: 'Every 12 months', statutoryReference: R27_12 },
+  { category: 'AUTOMATIC_WEIGHING', validityMonths: 12, description: 'Every 12 months', statutoryReference: R27_12 },
+  { category: 'PLATFORM_SCALE', validityMonths: 12, description: 'Every 12 months', statutoryReference: R27_12 },
+  { category: 'WEIGHBRIDGE', validityMonths: 12, description: 'Every 12 months', statutoryReference: R27_12 },
+  { category: 'COUNTER_MACHINE', validityMonths: 24, description: 'Every 24 months', statutoryReference: R27_24 },
+  { category: 'BEAM_SCALE', validityMonths: 24, description: 'Every 24 months', statutoryReference: R27_24 },
+  { category: 'STANDARD_WEIGHT', validityMonths: 24, description: 'Every 24 months', statutoryReference: R27_24 },
+  { category: 'FUEL_DISPENSER_PETROL_DIESEL', validityMonths: 12, description: 'Every 12 months', statutoryReference: R27_12 },
+  { category: 'FUEL_DISPENSER_CNG', validityMonths: 12, description: 'Every 12 months', statutoryReference: R27_12 },
+  { category: 'FUEL_DISPENSER_LPG_LNG', validityMonths: 12, description: 'Every 12 months', statutoryReference: R27_12 },
+  { category: 'FLOW_METER', validityMonths: 12, description: 'Every 12 months', statutoryReference: R27_12 },
+  { category: 'WATER_METER', validityMonths: 12, description: 'Every 12 months', statutoryReference: R27_12 },
+  { category: 'GAS_METER', validityMonths: 12, description: 'Every 12 months', statutoryReference: R27_12 },
+  { category: 'SPHYGMOMANOMETER', validityMonths: 12, description: 'Every 12 months', statutoryReference: R27_12 },
+  { category: 'CLINICAL_THERMOMETER', validityMonths: 12, description: 'Every 12 months', statutoryReference: R27_12 },
 ];
 
-export const DEFAULT_FEE_RULES: FeeRule[] = [
-  { id: 'FEE-IN-01', jurisdiction: 'NATIONAL', category: 'NON_AUTOMATIC_WEIGHING', capacityRange: 'Up to 50 kg', statutoryFee: 200, userCharge: 50, effectiveFrom: '2026-04-01', ruleCitation: DEMO_CITATION },
-  { id: 'FEE-IN-02', jurisdiction: 'NATIONAL', category: 'PLATFORM_SCALE', capacityRange: '50 kg to 500 kg', statutoryFee: 500, userCharge: 100, effectiveFrom: '2026-04-01', ruleCitation: DEMO_CITATION },
-  { id: 'FEE-IN-03', jurisdiction: 'NATIONAL', category: 'WEIGHBRIDGE', capacityRange: '10 t to 100 t', statutoryFee: 4000, userCharge: 500, effectiveFrom: '2026-04-01', ruleCitation: DEMO_CITATION },
-  { id: 'FEE-IN-04', jurisdiction: 'NATIONAL', category: 'FUEL_DISPENSER_PETROL_DIESEL', capacityRange: 'Per nozzle', statutoryFee: 2000, userCharge: 300, effectiveFrom: '2026-04-01', ruleCitation: DEMO_CITATION },
-  { id: 'FEE-IN-05', jurisdiction: 'NATIONAL', category: 'FUEL_DISPENSER_CNG', capacityRange: 'Per hose', statutoryFee: 3000, userCharge: 400, effectiveFrom: '2026-04-01', ruleCitation: DEMO_CITATION },
-  { id: 'FEE-IN-06', jurisdiction: 'NATIONAL', category: 'WATER_METER', capacityRange: '15 mm to 50 mm', statutoryFee: 150, userCharge: 30, effectiveFrom: '2026-04-01', ruleCitation: DEMO_CITATION },
-  // State overrides: show how two States can charge differently for the same instrument.
-  { id: 'FEE-GJ-03', jurisdiction: 'GJ', category: 'WEIGHBRIDGE', capacityRange: '10 t to 100 t', statutoryFee: 3500, userCharge: 400, effectiveFrom: '2026-04-01', ruleCitation: `${DEMO_CITATION} (Gujarat)` },
-  { id: 'FEE-DL-02', jurisdiction: 'DL', category: 'PLATFORM_SCALE', capacityRange: '50 kg to 500 kg', statutoryFee: 450, userCharge: 100, effectiveFrom: '2026-04-01', ruleCitation: `${DEMO_CITATION} (Delhi)` },
-  { id: 'FEE-MH-04', jurisdiction: 'MH', category: 'FUEL_DISPENSER_PETROL_DIESEL', capacityRange: 'Per nozzle', statutoryFee: 2200, userCharge: 300, effectiveFrom: '2026-04-01', ruleCitation: `${DEMO_CITATION} (Maharashtra)` },
+// ---------------------------------------------------------------------------
+// Fees: Schedule IX of the State Legal Metrology (Enforcement) Rules, 2011. Delhi and Gujarat publish
+// the same Schedule IX (both follow the model rules circulated by the Centre). Rows with `upTo` are
+// capacity tiers in kg (or L/min for flow meters); the first tier that covers the capacity applies.
+// Sources: src/config/sources.ts (DL_ENF, GJ_FEES).
+// ---------------------------------------------------------------------------
+type Tier = [upTo: number, fee: number, label: string];
+const T = Infinity;
+const SCHEDULE_IX: { key: string; categories: InstrumentCategory[]; item: string; unit: FeeRule['unit']; tiers: Tier[]; classes?: AccuracyClass[] }[] = [
+  { key: 'NAWI-I-II', categories: ['NON_AUTOMATIC_WEIGHING', 'PLATFORM_SCALE', 'WEIGHBRIDGE'], classes: ['CLASS_I', 'CLASS_II', 'SPECIAL'], item: 'item 8 (class I and II)', unit: 'kg',
+    tiers: [[10, 200, 'up to 10 kg'], [50, 250, '10 kg to 50 kg'], [1000, 500, '50 kg to 1 t'], [10000, 1000, '1 t to 10 t'], [50000, 2000, '10 t to 50 t'], [T, 3000, 'above 50 t']] },
+  { key: 'NAWI-III', categories: ['NON_AUTOMATIC_WEIGHING', 'PLATFORM_SCALE', 'WEIGHBRIDGE'], item: 'item 7 (electronic, class III and IIII)', unit: 'kg',
+    tiers: [[20, 100, 'up to 20 kg'], [300, 200, '25 kg to 300 kg'], [1500, 250, '500 kg to 1500 kg'], [3000, 500, '2 t to 3 t'], [10000, 1000, '5 t to 10 t'], [150000, 2000, '15 t to 150 t'], [300000, 3000, '200 t to 300 t'], [T, 4000, '400 t']] },
+  { key: 'AWI', categories: ['AUTOMATIC_WEIGHING'], item: 'item 9 (automatic weighing instruments)', unit: 'kg',
+    tiers: [[10, 200, 'up to 10 kg'], [50, 250, '10 kg to 50 kg'], [1000, 500, '50 kg to 1 t'], [10000, 1000, '1 t to 10 t'], [50000, 2000, '10 t to 50 t'], [100000, 3000, '50 t to 100 t'], [T, 4000, 'above 100 t']] },
+  { key: 'BEAM-AB', categories: ['BEAM_SCALE'], classes: ['CLASS_I', 'CLASS_II', 'SPECIAL'], item: 'item 4 (beam scales class A and B)', unit: 'kg',
+    tiers: [[0.5, 60, '500 g and below'], [5, 100, '1 kg to 5 kg'], [50, 150, '10 kg to 50 kg'], [100, 300, '100 kg'], [T, 400, '200 kg']] },
+  { key: 'BEAM-CD', categories: ['BEAM_SCALE'], item: 'item 5 (beam scales class C and D)', unit: 'kg',
+    tiers: [[0.5, 10, '500 g and below'], [5, 15, '1 kg to 5 kg'], [50, 20, '10 kg to 50 kg'], [200, 100, '100 kg to 200 kg'], [T, 200, '300 kg to 1000 kg']] },
+  { key: 'COUNTER', categories: ['COUNTER_MACHINE'], item: 'item 18 (counter machines)', unit: 'kg',
+    tiers: [[10, 20, 'up to 10 kg'], [T, 50, 'above 10 kg']] },
+  { key: 'PUMP', categories: ['FUEL_DISPENSER_PETROL_DIESEL'], item: 'item 10(a) (dispensing pumps)', unit: 'unit', tiers: [[T, 1000, 'each pump']] },
+  { key: 'CNG', categories: ['FUEL_DISPENSER_CNG'], item: 'item 16 (CNG dispensers)', unit: 'unit', tiers: [[T, 1000, 'each unit']] },
+  { key: 'LPG', categories: ['FUEL_DISPENSER_LPG_LNG'], item: 'item 17 (LPG dispensers)', unit: 'unit', tiers: [[T, 1000, 'each unit']] },
+  { key: 'FLOW', categories: ['FLOW_METER'], item: 'item 11 (flow meters)', unit: 'L/min',
+    tiers: [[100, 2000, 'up to 100 L/min'], [500, 3000, '100 to 500 L/min'], [T, 5000, 'above 500 L/min']] },
+  { key: 'WATER', categories: ['WATER_METER'], item: 'item 14 (water meters)', unit: 'unit', tiers: [[T, 25, 'each meter']] },
+  { key: 'THERMO', categories: ['CLINICAL_THERMOMETER'], item: 'item 13 (clinical thermometers)', unit: 'unit', tiers: [[T, 0.5, 'each']] },
+  { key: 'WEIGHTS', categories: ['STANDARD_WEIGHT'], item: 'item 1(e) and 1(f) (weights)', unit: 'kg',
+    tiers: [[0.5, 5, '500 g and below'], [1, 10, '1 kg'], [2, 15, '2 kg'], [20, 20, '5 kg to 20 kg'], [50, 25, '50 kg'], [100, 50, '100 kg'], [200, 100, '200 kg'], [500, 200, '500 kg'], [1000, 500, '1000 kg'], [2000, 1000, '2000 kg'], [T, 2000, '5000 kg']] },
 ];
+
+const SCHEDULE_SOURCES: Record<string, { citation: string; url: string }> = {
+  DL: { citation: 'Delhi Legal Metrology (Enforcement) Rules, 2011, Schedule IX', url: 'https://weightnmeasures.delhi.gov.in/sites/default/files/inline-files/delhi_legal_metrology_enforcement_rules_2011_english.pdf' },
+  GJ: { citation: 'Gujarat Legal Metrology (Enforcement) Rules, 2011, Schedule IX', url: 'https://lmdca.gujarat.gov.in/en/fee-structure' },
+};
+
+export const DEFAULT_FEE_RULES: FeeRule[] = Object.entries(SCHEDULE_SOURCES).flatMap(([code, src]) =>
+  SCHEDULE_IX.flatMap(s => s.categories.flatMap(category => s.tiers.map(([upTo, fee, label], i) => ({
+    id: `FEE-${code}-${s.key}-${category}-${i + 1}`,
+    jurisdiction: code,
+    category,
+    capacityRange: label,
+    statutoryFee: fee,
+    userCharge: 0,
+    effectiveFrom: '2011-04-01',
+    ruleCitation: `${src.citation}, ${s.item}`,
+    upTo: Number.isFinite(upTo) ? upTo : undefined,
+    unit: s.unit,
+    accuracyClasses: s.classes,
+    sourceUrl: src.url,
+  })))));
+
+// Rule 16(2): verification at the user's premises adds half the Schedule IX fee plus the officer's
+// expenses (minimum Rs 100), except for instruments verified in situ because they cannot be moved.
+export const IN_SITU_EXEMPT: InstrumentCategory[] = [
+  'FUEL_DISPENSER_PETROL_DIESEL', 'FUEL_DISPENSER_CNG', 'FUEL_DISPENSER_LPG_LNG', 'FLOW_METER',
+  'WEIGHBRIDGE', 'PLATFORM_SCALE', 'AUTOMATIC_WEIGHING',
+];
+export const VISIT_EXPENSES_MINIMUM = 100;
+
+/** "150 kg" -> 150, "100,000 kg" -> 100000, "60 t" -> 60000, "500 g" -> 0.5, "45 Litres / min" -> 45. */
+export function parseCapacity(capacity?: string): number | undefined {
+  if (!capacity) return undefined;
+  const m = capacity.replace(/,/g, '').match(/([\d.]+)\s*(mg|g|kg|t|tonnes?|tons?|l|litres?|liters?)?/i);
+  if (!m) return undefined;
+  const v = parseFloat(m[1]);
+  const u = (m[2] || 'kg').toLowerCase();
+  if (u === 'mg') return v / 1e6;
+  if (u === 'g') return v / 1000;
+  if (u.startsWith('t')) return v * 1000;
+  return v;
+}
+
+/** Quarters of the year after the one in which validity ended, counting a part quarter as one (rule 16(3)). */
+export function quartersLate(dueDate: string, on: Date = new Date()): number {
+  const due = new Date(dueDate);
+  if (Number.isNaN(due.getTime()) || on <= due) return 0;
+  const q = (d: Date) => d.getFullYear() * 4 + Math.floor(d.getMonth() / 3);
+  return Math.max(0, q(on) - q(due));
+}
+
+export interface FeeBreakdown {
+  statutory: number;          // Schedule IX
+  onSite: number;             // rule 16(2): half the Schedule IX fee
+  visitMinimum: number;       // rule 16(2): officer's expenses, at least Rs 100
+  lateFee: number;            // rule 16(3): half the fee per quarter after expiry
+  lateQuarters: number;
+  userCharge: number;         // onSite + visitMinimum + lateFee
+  total: number;
+  citation: string;
+  sourceUrl?: string;
+  ruleId: string;
+  jurisdiction: string;
+  tierLabel: string;
+  listed: boolean;            // false when the instrument is not in the schedule
+  inSitu: boolean;
+}
+
+/**
+ * Fee for verifying one instrument: the State's Schedule IX tier for its capacity and class, plus the
+ * rule 16 charges. A State without its own loaded schedule falls back to Delhi's, and says so.
+ */
+export function calculateStatutoryFee(
+  category: InstrumentCategory,
+  state?: string,
+  customRules?: FeeRule[],
+  opts: { capacity?: string; accuracyClass?: AccuracyClass; atPremises?: boolean; dueDate?: string; on?: Date } = {},
+): FeeBreakdown {
+  const rules = customRules && customRules.length ? customRules : DEFAULT_FEE_RULES;
+  const code = state ? stateCode(state) : 'DL';
+  const own = rules.filter(r => r.jurisdiction === code && r.category === category);
+  const pool = own.length ? own : rules.filter(r => r.jurisdiction === 'DL' && r.category === category);
+  const borrowed = !own.length && code !== 'DL';
+  const cap = parseCapacity(opts.capacity);
+  const byClass = pool.filter(r => r.accuracyClasses?.length && opts.accuracyClass && r.accuracyClasses.includes(opts.accuracyClass));
+  const candidates = (byClass.length ? byClass : pool.filter(r => !r.accuracyClasses?.length)).length
+    ? (byClass.length ? byClass : pool.filter(r => !r.accuracyClasses?.length))
+    : pool;
+  const tiers = [...candidates].sort((a, b) => (a.upTo ?? Infinity) - (b.upTo ?? Infinity));
+  const override = own.find(r => r.id.endsWith('-OVR'));
+  const fromSchedule = tiers.filter(r => !r.id.endsWith('-OVR'));
+  const match = override
+    || (cap === undefined ? fromSchedule[0] : fromSchedule.find(r => r.upTo === undefined || cap <= r.upTo) || fromSchedule[fromSchedule.length - 1]);
+
+  const listed = !!match;
+  const statutory = match ? match.statutoryFee : 500;
+  const inSitu = IN_SITU_EXEMPT.includes(category);
+  const atPremises = opts.atPremises !== false;
+  const onSite = atPremises && !inSitu ? Math.round(statutory / 2 * 100) / 100 : 0;
+  const visitMinimum = atPremises && !inSitu ? VISIT_EXPENSES_MINIMUM : 0;
+  const lateQuarters = opts.dueDate ? quartersLate(opts.dueDate, opts.on) : 0;
+  const lateFee = Math.round(statutory / 2 * lateQuarters * 100) / 100;
+  const userCharge = onSite + visitMinimum + lateFee;
+  const citation = match
+    ? `${match.ruleCitation}${borrowed ? ` (${state}'s own schedule not loaded yet; Delhi's applied)` : ''}`
+    : 'Not listed in Schedule IX. Demo value until the Controller fixes the fee';
+  return {
+    statutory, onSite, visitMinimum, lateFee, lateQuarters, userCharge, total: statutory + userCharge,
+    citation, sourceUrl: match?.sourceUrl, ruleId: match?.id || 'UNLISTED', jurisdiction: match?.jurisdiction || code,
+    tierLabel: match?.capacityRange || '', listed, inSitu,
+  };
+}
+
+export function getValidityPeriodMonths(category: InstrumentCategory, customRules?: ValidityRule[]): number {
+  const rules = customRules && customRules.length ? customRules : DEFAULT_VALIDITY_RULES;
+  return rules.find(r => r.category === category)?.validityMonths ?? 12;
+}
 
 // Categories a State may route to a Government Approved Test Centre. Configurable list,
 // maintained per the GATC Rules, 2013 as amended.
@@ -60,34 +203,6 @@ export function isCategoryGatcEligible(category: InstrumentCategory): boolean {
 /** Categories that go to a GATC by default when the State has one (heavy / specialised test equipment). */
 export function prefersGatc(category: InstrumentCategory): boolean {
   return ['FUEL_DISPENSER_CNG', 'FUEL_DISPENSER_LPG_LNG', 'WEIGHBRIDGE', 'FLOW_METER', 'GAS_METER'].includes(category);
-}
-
-/** State rule first, then the national demo default, then the first rule. */
-export function calculateStatutoryFee(
-  category: InstrumentCategory,
-  state?: string,
-  customRules?: FeeRule[],
-): { statutory: number; userCharge: number; total: number; citation: string; ruleId: string; jurisdiction: string } {
-  const rules = customRules && customRules.length ? customRules : DEFAULT_FEE_RULES;
-  const code = state ? stateCode(state) : 'NATIONAL';
-  const match =
-    rules.find(r => r.category === category && r.jurisdiction === code) ||
-    rules.find(r => r.category === category && r.jurisdiction === 'NATIONAL') ||
-    rules.find(r => r.category === 'NON_AUTOMATIC_WEIGHING' && r.jurisdiction === 'NATIONAL') ||
-    rules[0];
-  return {
-    statutory: match.statutoryFee,
-    userCharge: match.userCharge,
-    total: match.statutoryFee + match.userCharge,
-    citation: match.ruleCitation,
-    ruleId: match.id,
-    jurisdiction: match.jurisdiction,
-  };
-}
-
-export function getValidityPeriodMonths(category: InstrumentCategory, customRules?: ValidityRule[]): number {
-  const rules = customRules && customRules.length ? customRules : DEFAULT_VALIDITY_RULES;
-  return rules.find(r => r.category === category)?.validityMonths ?? 12;
 }
 
 /** Quarter verification mark, e.g. 2026-09-30 -> "C-26" (A=Jan-Mar ... D=Oct-Dec). */

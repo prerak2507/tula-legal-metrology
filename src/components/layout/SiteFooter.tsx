@@ -6,6 +6,7 @@ const LINKS: [string, string][] = [
   ['/accessibility', 'Accessibility'],
   ['/privacy', 'Privacy'],
   ['/terms', 'Terms of use'],
+  ['/sources', 'Sources'],
   ['/status', 'Built vs planned'],
   ['/verify', 'Check a certificate'],
 ];

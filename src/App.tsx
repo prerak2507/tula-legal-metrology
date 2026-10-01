@@ -23,6 +23,7 @@ const StatusPage = lazy(() => import('./pages/StatusPage').then(m => ({ default:
 const HelpPage = lazy(() => import('./pages/InfoPages').then(m => ({ default: m.HelpPage })));
 const AccessibilityPage = lazy(() => import('./pages/InfoPages').then(m => ({ default: m.AccessibilityPage })));
 const PrivacyPage = lazy(() => import('./pages/InfoPages').then(m => ({ default: m.PrivacyPage })));
+const SourcesPage = lazy(() => import('./pages/InfoPages').then(m => ({ default: m.SourcesPage })));
 const TermsPage = lazy(() => import('./pages/InfoPages').then(m => ({ default: m.TermsPage })));
 const DemoGuide = lazy(() => import('./pages/DemoGuide').then(m => ({ default: m.DemoGuide })));
 
@@ -54,6 +55,7 @@ export const App: React.FC = () => {
         <Route path="/accessibility" element={<AccessibilityPage />} />
         <Route path="/privacy" element={<PrivacyPage />} />
         <Route path="/terms" element={<TermsPage />} />
+        <Route path="/sources" element={<SourcesPage />} />
 
         {/* Authenticated Application Shell with Sidebar */}
         <Route element={<AppShell />}>

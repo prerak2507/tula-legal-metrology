@@ -176,11 +176,26 @@ export const ApplicationNew: React.FC = () => {
           <section className="bg-white p-5 rounded-xl border border-slate-200 space-y-2">
             <h2 className="font-bold text-sm text-slate-900 flex items-center gap-2"><IndianRupee className="w-4 h-4 text-gov-700" /> Fee ({inst.state} rules)</h2>
             <div className="text-sm space-y-1">
-              <div className="flex justify-between"><span className="text-slate-600">Verification fee</span><span className="font-semibold">₹{fee.statutory.toLocaleString('en-IN')}</span></div>
-              <div className="flex justify-between"><span className="text-slate-600">Service charge</span><span className="font-semibold">₹{fee.userCharge.toLocaleString('en-IN')}</span></div>
+              <div className="flex justify-between gap-3"><span className="text-slate-600">Verification fee, Schedule IX{fee.tierLabel ? ` (${fee.tierLabel})` : ''}</span><span className="font-semibold">₹{fee.statutory.toLocaleString('en-IN')}</span></div>
+              {fee.inSitu ? (
+                <div className="flex justify-between gap-3"><span className="text-slate-600">Verified in place, no on-site fee (rule 16(2) proviso)</span><span className="font-semibold">₹0</span></div>
+              ) : (
+                <>
+                  <div className="flex justify-between gap-3"><span className="text-slate-600">On-site verification, half the fee (rule 16(2))</span><span className="font-semibold">₹{fee.onSite.toLocaleString('en-IN')}</span></div>
+                  <div className="flex justify-between gap-3"><span className="text-slate-600">Officer&apos;s visit expenses, minimum (rule 16(2))</span><span className="font-semibold">₹{fee.visitMinimum.toLocaleString('en-IN')}</span></div>
+                </>
+              )}
+              {fee.lateFee > 0 && (
+                <div className="flex justify-between gap-3"><span className="text-seal-700">Late re-verification, {fee.lateQuarters} quarter{fee.lateQuarters === 1 ? '' : 's'} after expiry (rule 16(3))</span><span className="font-semibold text-seal-700">₹{fee.lateFee.toLocaleString('en-IN')}</span></div>
+              )}
               <div className="flex justify-between border-t border-slate-200 pt-1 text-base"><span className="font-bold">Total</span><span className="font-extrabold">₹{fee.total.toLocaleString('en-IN')}</span></div>
             </div>
-            <p className="text-[11px] text-slate-500">Rule {fee.ruleId} ({fee.jurisdiction === 'NATIONAL' ? 'default schedule' : `${inst.state} schedule`}). {fee.citation}.</p>
+            <p className="text-[11px] text-slate-500">
+              {fee.citation}.{' '}
+              {fee.sourceUrl && <a href={fee.sourceUrl} target="_blank" rel="noreferrer" className="underline font-semibold">Official schedule</a>}
+              {!fee.inSitu && ' Visit expenses above ₹100 (transport of working standards) are assessed by the office.'}
+              {!fee.listed && ' This instrument is not in the schedule, so the amount is a placeholder until the Controller fixes it.'}
+            </p>
           </section>
         )}
 

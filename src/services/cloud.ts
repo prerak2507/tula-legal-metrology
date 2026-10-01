@@ -25,8 +25,8 @@ export const MAPPINGS: Record<string, Mapping> = {
   lm_audit_logs_v2: { table: 'audit_logs', key: o => o.id, row: o => ({ id: o.id, actor_id: o.actorId, entity_id: o.entityId, state: currentState() ?? null, data: o }) },
   lm_notifications_v2: { table: 'notifications', key: o => o.id, row: o => ({ id: o.id, recipient_id: o.recipientId, recipient_role: o.recipientRole, data: o }) },
   lm_outbox_v2: { table: 'outbox', key: o => o.id, row: o => ({ id: o.id, recipient_id: o.recipientId, data: o }) },
-  lm_fee_rules_v2: { table: 'fee_rules', key: o => o.id, row: o => ({ id: o.id, jurisdiction: o.jurisdiction, data: o }) },
-  lm_validity_rules_v2: { table: 'validity_rules', key: o => o.category, row: o => ({ id: o.category, data: o }) },
+  lm_fee_rules_v3: { table: 'fee_rules', key: o => o.id, row: o => ({ id: o.id, jurisdiction: o.jurisdiction, data: o }) },
+  lm_validity_rules_v3: { table: 'validity_rules', key: o => o.category, row: o => ({ id: o.category, data: o }) },
 };
 const TABLE_TO_KEY = Object.fromEntries(Object.entries(MAPPINGS).map(([k, m]) => [m.table, k]));
 

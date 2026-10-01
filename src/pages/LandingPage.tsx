@@ -324,6 +324,7 @@ export const LandingPage: React.FC = () => {
                 <ul className="mt-4 space-y-2.5">
                   <li><a href="#requirements" className="hover:text-paper">PS 26036 coverage</a></li>
                   <li><Link to="/status" className="hover:text-paper">Built vs planned</Link></li>
+                  <li><Link to="/sources" className="hover:text-paper">Sources and data</Link></li>
                   <li><a href="#compare" className="hover:text-paper">Compared</a></li>
                   <li><a href="https://github.com/prerak2507/tula-legal-metrology" className="inline-flex items-center gap-1 hover:text-paper" rel="noreferrer" target="_blank">Source code <ArrowUpRight className="w-3.5 h-3.5" /></a></li>
                 </ul>

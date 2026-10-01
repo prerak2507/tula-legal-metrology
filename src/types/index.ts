@@ -304,7 +304,11 @@ export interface FeeRule {
   statutoryFee: number;
   userCharge: number;
   effectiveFrom: string;
-  ruleCitation: string;          // First Schedule, Legal Metrology (General) Rules, 2011
+  ruleCitation: string;          // e.g. Delhi Legal Metrology (Enforcement) Rules, 2011, Schedule IX, item 7
+  upTo?: number;                 // capacity tier upper bound (kg, or L/min for flow meters)
+  unit?: 'kg' | 'L/min' | 'unit';
+  accuracyClasses?: AccuracyClass[]; // tier applies only to these classes
+  sourceUrl?: string;            // official document the row was taken from
 }
 
 export interface ValidityRule {

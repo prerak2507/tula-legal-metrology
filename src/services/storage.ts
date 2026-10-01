@@ -31,8 +31,8 @@ const K = {
   ENFORCEMENTS: 'lm_enforcements_v2',
   AUDIT_LOGS: 'lm_audit_logs_v2',
   NOTIFICATIONS: 'lm_notifications_v2',
-  FEE_RULES: 'lm_fee_rules_v2',
-  VALIDITY_RULES: 'lm_validity_rules_v2',
+  FEE_RULES: 'lm_fee_rules_v3',
+  VALIDITY_RULES: 'lm_validity_rules_v3',
   OFFLINE_QUEUE: 'lm_offline_queue_v2',
   REMINDER_LOG: 'lm_reminder_log_v2',
 };
@@ -319,7 +319,9 @@ class MetrologyStorageService {
     this.notify();
   }
   feeFor(inst: Instrument) {
-    return calculateStatutoryFee(inst.category, inst.state, this.getFeeRules());
+    return calculateStatutoryFee(inst.category, inst.state, this.getFeeRules(), {
+      capacity: inst.capacity, accuracyClass: inst.accuracyClass, atPremises: true, dueDate: inst.nextVerificationDueDate,
+    });
   }
 
   // ------------------------------------------------------------ instruments

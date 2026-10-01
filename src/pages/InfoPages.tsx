@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { PublicHeader } from '../components/layout/PublicHeader';
 import { SiteFooter } from '../components/layout/SiteFooter';
+import { SOURCES } from '../config/sources';
 
 const REPO = 'https://github.com/prerak2507/tula-legal-metrology';
 
@@ -129,6 +130,43 @@ export const TermsPage: React.FC = () => (
     <section>
       <h2>Source code</h2>
       <p>The code is public on <a href={REPO} target="_blank" rel="noreferrer">GitHub</a>.</p>
+    </section>
+  </Page>
+);
+
+const DEMO_STILL: [string, string][] = [
+  ['People, businesses and instruments', 'All demo accounts, traders and their instruments are fictional. Approval marks on the demo instruments are real entries from the DoCA register.'],
+  ['Payments', 'The fee step records a demo UPI reference. No money is collected.'],
+  ['SMS and email', 'Messages are written and stored; they are sent only when the provider keys are set.'],
+  ['Gujarat compounding fees', 'Gujarat revised Schedule XI in July 2025; a readable copy was not available, so the officer enters the amount.'],
+  ['Instruments not in Schedule IX', 'Gas meters and some others are not listed in the Delhi or Gujarat schedule. Their fee is a placeholder until the Controller fixes one.'],
+  ['States other than Delhi and Gujarat', 'Their own schedules are not loaded yet. The engine applies Delhi’s and says so on every fee.'],
+];
+
+export const SourcesPage: React.FC = () => (
+  <Page title="Sources" intro="Every rule, fee and reference record in TULA comes from a published document. Links were checked on 1 October 2026.">
+    <section>
+      <h2>Official documents used</h2>
+      <ul className="!list-none !pl-0 space-y-4">
+        {Object.values(SOURCES).map(s => (
+          <li key={s.id} className="border-l-2 border-brass pl-4">
+            <a href={s.url} target="_blank" rel="noreferrer">{s.title}</a>
+            <span className={`ml-2 align-middle text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${s.official ? 'bg-verify-50 text-verify-700' : 'bg-paper-200 text-ink-600'}`}>{s.official ? 'Official' : 'Secondary copy'}</span>
+            <p className="text-sm text-ink-600">{s.publisher}</p>
+            <p className="text-sm">Used for: {s.usedFor}</p>
+          </li>
+        ))}
+      </ul>
+    </section>
+    <section>
+      <h2>Still demo data</h2>
+      <ul>
+        {DEMO_STILL.map(([k, v]) => <li key={k}><strong>{k}.</strong> {v}</li>)}
+      </ul>
+    </section>
+    <section>
+      <h2>How the data is refreshed</h2>
+      <p>The model approval register is copied by <code>scripts/fetch-model-approvals.mjs</code> from the public DoCA page. Fee schedules and validity periods are loaded per State on the Rules screen, where every row cites its schedule and item number.</p>
     </section>
   </Page>
 );

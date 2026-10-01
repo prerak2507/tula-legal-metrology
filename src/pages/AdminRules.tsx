@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { storage } from '../services/storage';
 import { FeeRule, ValidityRule, InstrumentCategory } from '../types';
-import { calculateStatutoryFee, stateCode } from '../services/rulesEngine';
+import { IN_SITU_EXEMPT, stateCode } from '../services/rulesEngine';
 import { CATEGORY_LABELS, LIVE_STATES } from '../config/geo';
 import { checkSupabaseConnection } from '../services/supabase';
-import { Settings, Save, CheckCircle2, AlertTriangle, Server, Map } from 'lucide-react';
+import { Settings, Save, CheckCircle2, AlertTriangle, Server, Map, ExternalLink } from 'lucide-react';
 
 const CATS = Object.keys(CATEGORY_LABELS) as InstrumentCategory[];
 
@@ -15,7 +15,7 @@ export const AdminRules: React.FC = () => {
   const [jurisdiction, setJurisdiction] = useState<string>(editableStates[0] || 'Delhi');
   const [rules, setRules] = useState<FeeRule[]>(storage.getFeeRules());
   const [validity, setValidity] = useState<ValidityRule[]>(storage.getValidityRules());
-  const [edits, setEdits] = useState<Record<string, { fee: string; charge: string }>>({});
+  const [edits, setEdits] = useState<Record<string, string>>({});
   const [saved, setSaved] = useState<string | null>(null);
   const [health, setHealth] = useState<Record<string, boolean> | null>(null);
   const [db, setDb] = useState<string>('checking…');
@@ -28,24 +28,29 @@ export const AdminRules: React.FC = () => {
   }, []);
 
   const code = stateCode(jurisdiction);
+  // The State's Schedule IX tiers per instrument, and any flat override a State admin has set.
   const rows = useMemo(() => CATS.map(cat => {
-    const eff = calculateStatutoryFee(cat, jurisdiction, rules);
-    const override = rules.find(r => r.category === cat && r.jurisdiction === code);
-    return { cat, eff, override };
-  }), [rules, jurisdiction, code]);
+    const own = rules.filter(r => r.category === cat && r.jurisdiction === code);
+    const override = own.find(r => r.id.endsWith('-OVR'));
+    const tiers = own.filter(r => !r.id.endsWith('-OVR'))
+      .sort((a, b) => (a.accuracyClasses?.length ? 0 : 1) - (b.accuracyClasses?.length ? 0 : 1) || (a.upTo ?? Infinity) - (b.upTo ?? Infinity));
+    return { cat, tiers, override };
+  }), [rules, code]);
 
   const canEdit = editableStates.includes(jurisdiction);
 
   const saveFees = () => {
     const next = [...rules];
     for (const [cat, v] of Object.entries(edits)) {
-      const fee = parseInt(v.fee, 10), charge = parseInt(v.charge, 10);
-      if (Number.isNaN(fee) || Number.isNaN(charge) || fee < 0 || charge < 0) continue;
-      const idx = next.findIndex(r => r.category === cat && r.jurisdiction === code);
+      const id = `FEE-${code}-${cat}-OVR`;
+      const idx = next.findIndex(r => r.id === id);
+      if (v.trim() === '') { if (idx >= 0) next.splice(idx, 1); continue; }
+      const fee = Number(v);
+      if (Number.isNaN(fee) || fee < 0) continue;
       const rule: FeeRule = {
-        id: `FEE-${code}-${cat}`, jurisdiction: code, category: cat as InstrumentCategory, capacityRange: 'All',
-        statutoryFee: fee, userCharge: charge, effectiveFrom: new Date().toISOString().slice(0, 10),
-        ruleCitation: `${jurisdiction} schedule, updated by ${user.fullName}`,
+        id, jurisdiction: code, category: cat as InstrumentCategory, capacityRange: 'All capacities',
+        statutoryFee: fee, userCharge: 0, effectiveFrom: new Date().toISOString().slice(0, 10),
+        ruleCitation: `${jurisdiction} override set by ${user.fullName} (replaces Schedule IX until removed)`,
       };
       if (idx >= 0) next[idx] = rule; else next.push(rule);
     }
@@ -65,7 +70,7 @@ export const AdminRules: React.FC = () => {
       <div>
         <div className="flex items-center gap-2 text-xs font-bold text-gov-800 uppercase tracking-wider"><Settings className="w-4 h-4" /> Rules engine</div>
         <h1 className="text-2xl font-extrabold text-slate-900">Fees and validity by State</h1>
-        <p className="text-sm text-slate-600">Each State loads its own schedule. Changes apply to new applications immediately and are written to the audit trail.</p>
+        <p className="text-sm text-slate-600">Loaded from each State&apos;s gazetted rules. Overrides apply to new applications immediately and are written to the audit trail.</p>
       </div>
 
       {saved && <p role="status" className="p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-sm text-emerald-800 flex gap-2"><CheckCircle2 className="w-4 h-4 mt-0.5" />{saved}</p>}
@@ -81,32 +86,39 @@ export const AdminRules: React.FC = () => {
         </div>
         {!canEdit && <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded p-2">View only. {user.role === 'CENTRAL_ADMIN' ? '' : `Your account can edit ${editableStates.join(', ') || 'no State'} only.`}</p>}
         <div className="overflow-x-auto">
-          <table className="w-full text-sm min-w-[560px]">
-            <thead><tr className="text-left text-xs text-slate-500 border-b border-slate-200">
-              <th className="py-2">Instrument</th><th>Verification fee (₹)</th><th>Service charge (₹)</th><th>Total</th><th>Source</th>
+          <table className="w-full text-sm min-w-[720px]">
+            <thead><tr className="text-left text-xs text-ink-600 border-b border-paper-300">
+              <th className="py-2 pr-3">Instrument</th><th className="pr-3">Schedule IX fee by capacity</th><th className="pr-3">At the premises (rule 16(2))</th><th className="pr-3">State override (₹)</th><th>Source</th>
             </tr></thead>
-            <tbody className="divide-y divide-slate-100">
-              {rows.map(({ cat, eff, override }) => {
-                const e = edits[cat];
+            <tbody className="divide-y divide-paper-200 align-top">
+              {rows.map(({ cat, tiers, override }) => {
+                const src = tiers[0]?.sourceUrl || override?.sourceUrl;
                 return (
                   <tr key={cat}>
-                    <td className="py-2 font-semibold text-slate-800">{CATEGORY_LABELS[cat]}</td>
-                    <td><input disabled={!canEdit} inputMode="numeric" value={e?.fee ?? String(eff.statutory)} onChange={ev => setEdits(p => ({ ...p, [cat]: { fee: ev.target.value, charge: p[cat]?.charge ?? String(eff.userCharge) } }))} className="w-24 border border-slate-300 rounded p-1.5 disabled:bg-slate-50" /></td>
-                    <td><input disabled={!canEdit} inputMode="numeric" value={e?.charge ?? String(eff.userCharge)} onChange={ev => setEdits(p => ({ ...p, [cat]: { fee: p[cat]?.fee ?? String(eff.statutory), charge: ev.target.value } }))} className="w-24 border border-slate-300 rounded p-1.5 disabled:bg-slate-50" /></td>
-                    <td className="font-bold">₹{(eff.statutory + eff.userCharge).toLocaleString('en-IN')}</td>
-                    <td className="text-xs text-slate-500">{override ? `${jurisdiction} rule` : 'Default'}</td>
+                    <td className="py-2.5 pr-3 font-semibold text-ink">{CATEGORY_LABELS[cat]}</td>
+                    <td className="py-2.5 pr-3 text-xs text-ink-700">
+                      {tiers.length ? tiers.map(t => (
+                        <span key={t.id} className="inline-block mr-2 mb-1 whitespace-nowrap"><span className="text-ink-600">{t.accuracyClasses?.length ? 'Class I/II, ' : ''}{t.capacityRange}</span> <strong className="font-readout">₹{t.statutoryFee.toLocaleString('en-IN')}</strong></span>
+                      )) : <span className="text-brass-700">Not listed in Schedule IX</span>}
+                    </td>
+                    <td className="py-2.5 pr-3 text-xs text-ink-700">{IN_SITU_EXEMPT.includes(cat) ? 'No extra: verified in place' : 'Half the fee + expenses (min ₹100)'}</td>
+                    <td className="py-2.5 pr-3"><input disabled={!canEdit} inputMode="decimal" placeholder="none" aria-label={`Override fee for ${CATEGORY_LABELS[cat]}`}
+                      value={edits[cat] ?? (override ? String(override.statutoryFee) : '')} onChange={ev => setEdits(p => ({ ...p, [cat]: ev.target.value }))}
+                      className="w-24 border border-paper-300 rounded p-1.5 disabled:bg-paper-50" /></td>
+                    <td className="py-2.5 text-xs">{src ? <a href={src} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-semibold text-ink underline">Official <ExternalLink className="w-3 h-3" /></a> : <span className="text-ink-600">—</span>}</td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
         </div>
-        {canEdit && <button onClick={saveFees} disabled={!Object.keys(edits).length} className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-gov-700 text-white text-sm font-bold disabled:opacity-40"><Save className="w-4 h-4" /> Save {jurisdiction} fees</button>}
-        <p className="text-[11px] text-slate-500">Prototype values are demo figures. A State replaces them with its gazetted schedule.</p>
+        {canEdit && <button onClick={saveFees} disabled={!Object.keys(edits).length} className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-gov-700 text-white text-sm font-bold disabled:opacity-40"><Save className="w-4 h-4" /> Save {jurisdiction} overrides</button>}
+        <p className="text-[11px] text-ink-600">Fees are the gazetted Schedule IX of the {jurisdiction} Legal Metrology (Enforcement) Rules, 2011. An override replaces the schedule for that instrument and is written to the audit trail. Leave it empty to use the schedule.</p>
       </section>
 
       <section className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
         <h2 className="font-bold text-sm text-slate-900">Validity period (months)</h2>
+        <p className="text-[11px] text-ink-600">Legal Metrology (General) Rules, 2011, rule 27: 24 months for weights, measures, beam scales and counter machines; 12 months for other instruments.</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {validity.map((v, i) => (
             <label key={v.category} className="flex items-center justify-between gap-2 text-sm p-2 rounded border border-slate-200">

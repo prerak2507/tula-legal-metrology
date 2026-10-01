@@ -85,20 +85,48 @@ describe('readings and verdict', () => {
   });
 });
 
-describe('fees by State', () => {
-  it('uses the State rule when one exists, otherwise the default', () => {
-    expect(calculateStatutoryFee('WEIGHBRIDGE').total).toBe(4500);
-    expect(calculateStatutoryFee('WEIGHBRIDGE', 'Gujarat').total).toBe(3900);
-    expect(calculateStatutoryFee('WEIGHBRIDGE', 'Delhi').total).toBe(4500);
-    expect(calculateStatutoryFee('PLATFORM_SCALE', 'Delhi').total).toBe(550);
+describe('fees from Schedule IX of the Delhi and Gujarat Enforcement Rules', () => {
+  const at = (category: Parameters<typeof calculateStatutoryFee>[0], state: string, capacity: string, cls: 'CLASS_II' | 'CLASS_III' = 'CLASS_III', extra = {}) =>
+    calculateStatutoryFee(category, state, undefined, { capacity, accuracyClass: cls, ...extra });
+  it('picks the capacity tier (item 7, electronic class III)', () => {
+    expect(at('PLATFORM_SCALE', 'Delhi', '150 kg').statutory).toBe(200);
+    expect(at('WEIGHBRIDGE', 'Delhi', '60 t').statutory).toBe(2000);
+    expect(at('NON_AUTOMATIC_WEIGHING', 'Delhi', '15 kg').statutory).toBe(100);
   });
-  it('accepts an edited schedule without code changes', () => {
-    const edited = [...DEFAULT_FEE_RULES, { ...DEFAULT_FEE_RULES[0], id: 'X', jurisdiction: 'DL', category: 'WEIGHBRIDGE' as const, statutoryFee: 100, userCharge: 1 }];
-    expect(calculateStatutoryFee('WEIGHBRIDGE', 'Delhi', edited).total).toBe(101);
+  it('uses the class I and II table (item 8) for those classes', () => {
+    expect(at('NON_AUTOMATIC_WEIGHING', 'Delhi', '30 kg', 'CLASS_II').statutory).toBe(250);
   });
+  it('adds half the fee and the Rs 100 minimum visit at the premises, except in situ (rule 16(2))', () => {
+    expect(at('NON_AUTOMATIC_WEIGHING', 'Delhi', '30 kg').total).toBe(200 + 100 + 100);
+    expect(at('COUNTER_MACHINE', 'Gujarat', '10 kg').total).toBe(20 + 10 + 100);
+    expect(at('WEIGHBRIDGE', 'Gujarat', '60 t').total).toBe(2000);
+    expect(at('FUEL_DISPENSER_PETROL_DIESEL', 'Delhi', 'per nozzle').total).toBe(1000);
+  });
+  it('charges half the fee per quarter after expiry (rule 16(3))', () => {
+    const f = at('WEIGHBRIDGE', 'Delhi', '60 t', 'CLASS_III', { dueDate: '2026-03-15', on: new Date('2026-08-10') });
+    expect(f.lateQuarters).toBe(2);
+    expect(f.lateFee).toBe(2000);
+  });
+  it('falls back to Delhi for a State without a loaded schedule, and says so', () => {
+    const f = at('PLATFORM_SCALE', 'Maharashtra', '150 kg');
+    expect(f.statutory).toBe(200);
+    expect(f.citation).toMatch(/not loaded/);
+  });
+  it('flags instruments the schedule does not list', () => {
+    expect(at('GAS_METER', 'Delhi', '10 m3/h').listed).toBe(false);
+  });
+  it('a State override replaces the schedule without code changes', () => {
+    const edited = [...DEFAULT_FEE_RULES, { ...DEFAULT_FEE_RULES[0], id: 'FEE-DL-WEIGHBRIDGE-OVR', jurisdiction: 'DL', category: 'WEIGHBRIDGE' as const, statutoryFee: 100, upTo: undefined, accuracyClasses: undefined }];
+    expect(calculateStatutoryFee('WEIGHBRIDGE', 'Delhi', edited, { capacity: '60 t' }).total).toBe(100);
+  });
+});
+
+describe('validity (General Rules 2011, rule 27)', () => {
   it('validity and GATC routing are configurable data', () => {
     expect(getValidityPeriodMonths('WEIGHBRIDGE')).toBe(12);
-    expect(getValidityPeriodMonths('WATER_METER')).toBe(24);
+    expect(getValidityPeriodMonths('WATER_METER')).toBe(12);
+    expect(getValidityPeriodMonths('COUNTER_MACHINE')).toBe(24);
+    expect(getValidityPeriodMonths('BEAM_SCALE')).toBe(24);
     expect(isCategoryGatcEligible('FUEL_DISPENSER_CNG')).toBe(true);
     expect(isCategoryGatcEligible('COUNTER_MACHINE')).toBe(false);
   });
