@@ -28,7 +28,7 @@ export function certificateFacts(cert: VerificationCertificate) {
     formUrl: rules.url,
     quarterMark: mark,
     quarterText: quarter > 0 ? `${mark}: quarter ${quarter} (${['Jan to Mar', 'Apr to Jun', 'Jul to Sep', 'Oct to Dec'][quarter - 1]}) of 20${mark.slice(-2)}` : mark,
-    stampNumber: cert.issuingOfficerBadgeOrGATC,   // rule 15(1): stamp shows the number allotted to the officer
+    stampNumber: (cert.issuingOfficerBadgeOrGATC || '').replace(/^Badge\s*#\s*/i, ''),   // rule 15(1): stamp shows the number allotted to the officer
     feeTotal: app?.feeAmount,
     receipt: app?.paymentReference,
     paidOn: app?.paidAt?.slice(0, 10),
