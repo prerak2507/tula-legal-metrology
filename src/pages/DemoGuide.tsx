@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import { GovBar } from '../components/layout/GovBar';
+import { SiteFooter } from '../components/layout/SiteFooter';
 import { Link, useNavigate } from 'react-router-dom';
 import { storage } from '../services/storage';
 import { latestRun, formatDuration } from '../services/analytics';
@@ -42,8 +44,9 @@ export const DemoGuide: React.FC = () => {
   const doneCount = steps.filter(s => s.done).length;
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="bg-white border-b border-slate-200">
+    <div className="min-h-screen w-full flex flex-col bg-paper-50">
+      <GovBar />
+      <header className="bg-paper/95 border-b border-paper-300">
         <div className="max-w-3xl mx-auto px-4 h-16 flex items-center justify-between">
           <Link to="/" aria-label="TULA home"><TulaLogo variant="full" theme="light" size="sm" /></Link>
           <nav className="flex items-center gap-2 text-sm">
@@ -52,9 +55,9 @@ export const DemoGuide: React.FC = () => {
           </nav>
         </div>
       </header>
-      <main className="max-w-3xl mx-auto px-4 py-6 space-y-5">
+      <main id="main" className="flex-1 w-full max-w-3xl mx-auto px-4 py-6 space-y-5">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">Live demo: registration to verified QR</h1>
+          <h1 className="font-display text-3xl sm:text-4xl font-semibold tracking-tight text-ink">Live demo: registration to verified QR</h1>
           <p className="text-sm text-slate-600 mt-1">Nine steps across three people. Each step ticks itself when it really happens. About 5 minutes.</p>
         </div>
 
@@ -104,6 +107,7 @@ export const DemoGuide: React.FC = () => {
           <RotateCcw className="w-3.5 h-3.5" /> Refresh from the database
         </button>
       </main>
+      <SiteFooter />
     </div>
   );
 };

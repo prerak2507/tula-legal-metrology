@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { TulaLogo } from '../components/common/TulaLogo';
 import { GuillocheBand } from '../components/landing/Guilloche';
+import { GovBar } from '../components/layout/GovBar';
 
 // Short labels so all six accounts fit on one screen. Names and places come from the seeded accounts.
 const ROLE_META: Record<string, { label: string; code: string; icon: React.ElementType }> = {
@@ -63,7 +64,9 @@ export const Login: React.FC = () => {
   const input = 'w-full bg-paper-50 border border-paper-300 rounded-md pl-9 pr-3 py-2.5 text-sm text-ink outline-none focus:border-ink focus:ring-2 focus:ring-ink/10 min-h-[44px]';
 
   return (
-    <div className="w-full flex-1 min-h-[100dvh] lg:h-[100dvh] grid lg:grid-cols-[5fr_7fr] font-plex bg-paper text-ink">
+    <div className="w-full flex-1 min-h-[100dvh] lg:h-[100dvh] flex flex-col">
+    <GovBar />
+    <div className="flex-1 min-h-0 grid lg:grid-cols-[5fr_7fr] font-plex bg-paper text-ink">
       {/* Brand panel (desktop) */}
       <aside className="relative hidden lg:flex flex-col justify-between bg-ink text-paper p-10 xl:p-12 overflow-hidden">
         <GuillocheBand className="absolute inset-x-0 top-1/3 w-full h-1/2 text-brass/20" lines={20} />
@@ -96,7 +99,7 @@ export const Login: React.FC = () => {
       </aside>
 
       {/* Sign-in */}
-      <main className="flex flex-col px-4 py-4 sm:px-8 sm:py-6 lg:px-12 lg:py-8 lg:overflow-y-auto">
+      <main id="main" className="flex flex-col px-4 py-4 sm:px-8 sm:py-6 lg:px-12 lg:py-8 lg:overflow-y-auto">
         <div className="flex items-center justify-between gap-3">
           <Link to="/" className="lg:hidden" aria-label="TULA home"><TulaLogo variant="full" theme="light" size="sm" /></Link>
           <Link to="/" className="hidden lg:inline-flex items-center gap-1.5 text-sm font-medium text-ink-600 hover:text-ink"><ArrowLeft className="w-4 h-4" /> Home</Link>
@@ -159,6 +162,7 @@ export const Login: React.FC = () => {
           </p>
         </div>
       </main>
+    </div>
     </div>
   );
 };

@@ -1,419 +1,321 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { storage } from '../services/storage';
-import { 
-  UserProfile, Instrument, Application, VerificationCertificate, EnforcementCase 
-} from '../types';
+import { UserProfile, Application, Instrument } from '../types';
 import { StatCard } from '../components/common/StatCard';
 import { StatusBadge } from '../components/common/StatusBadge';
-import { 
-  Scale, FileText, Award, AlertTriangle, CheckCircle, Clock, Smartphone, PlusCircle, 
-  ShieldAlert, ArrowRight, MapPin, Calendar, TrendingUp, Users, Globe, BarChart3, Eye
+import {
+  Scale, FileText, Award, AlertTriangle, CheckCircle, Clock, Smartphone, PlusCircle,
+  ShieldAlert, ArrowRight, MapPin, Calendar, BarChart3, Settings, WifiOff,
 } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
+
+// One layout for every role. What changes is the work list at the top: each role sees its own next actions.
+
+const DAY = 86_400_000;
+const ageDays = (iso: string) => Math.max(0, Math.floor((Date.now() - Date.parse(iso)) / DAY));
+const OPEN = (a: Application) => !['COMPLETED', 'REJECTED', 'CANCELLED'].includes(a.status);
+
+const STAGES: { key: string; label: string; hint: string; statuses: Application['status'][]; mine?: boolean }[] = [
+  { key: 'scrutiny', label: 'Document scrutiny', hint: 'Your action', statuses: ['SUBMITTED', 'UNDER_SCRUTINY'], mine: true },
+  { key: 'assign', label: 'Officer to assign', hint: 'Your action', statuses: ['ACCEPTED', 'FEE_PAID', 'ASSIGNMENT_PENDING'], mine: true },
+  { key: 'trader', label: 'Waiting for trader', hint: 'Corrections or fee', statuses: ['CORRECTION_REQUIRED', 'FEE_PENDING'] },
+  { key: 'field', label: 'With field officers', hint: 'Assigned or booked', statuses: ['ASSIGNED', 'SCHEDULED', 'INSPECTION_PENDING', 'INSPECTION_IN_PROGRESS', 'INSPECTED_PENDING_SYNC'] },
+  { key: 'retest', label: 'Re-test or repair', hint: 'Owner to fix', statuses: ['RETEST_REQUIRED', 'ADJUSTMENT_REQUIRED'] },
+];
+
+const Panel: React.FC<{ title: string; action?: React.ReactNode; children: React.ReactNode; className?: string }> = ({ title, action, children, className = '' }) => (
+  <section className={`bg-white rounded-lg border border-paper-300 ${className}`}>
+    <div className="px-4 sm:px-5 py-3.5 border-b border-paper-200 flex items-center justify-between gap-3">
+      <h2 className="font-semibold text-ink text-[15px]">{title}</h2>
+      {action}
+    </div>
+    {children}
+  </section>
+);
+
+const Empty: React.FC<{ text: string; to?: string; cta?: string }> = ({ text, to, cta }) => (
+  <div className="px-5 py-8 text-center text-sm text-ink-600">
+    <p>{text}</p>
+    {to && cta && <Link to={to} className="inline-block mt-2 font-semibold text-ink underline">{cta}</Link>}
+  </div>
+);
+
+const Row: React.FC<{ to: string; title: React.ReactNode; meta: React.ReactNode; right?: React.ReactNode; cta: string; urgent?: boolean }> = ({ to, title, meta, right, cta, urgent }) => (
+  <li>
+    <Link to={to} className={`group flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 px-4 sm:px-5 py-3.5 hover:bg-paper-50 border-l-[3px] ${urgent ? 'border-seal' : 'border-transparent'}`}>
+      <div className="flex-1 min-w-0">
+        <div className="text-sm font-semibold text-ink flex flex-wrap items-center gap-2">{title}</div>
+        <div className="text-xs text-ink-600 mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5">{meta}</div>
+      </div>
+      {right}
+      <span className="shrink-0 inline-flex items-center gap-1 text-xs font-semibold text-ink group-hover:gap-2 transition-all">{cta} <ArrowRight className="w-3.5 h-3.5" /></span>
+    </Link>
+  </li>
+);
 
 export const Dashboard: React.FC = () => {
   const [user, setUser] = useState<UserProfile>(storage.getCurrentUser());
-  const [instruments, setInstruments] = useState<Instrument[]>(storage.getInstruments());
-  const [applications, setApplications] = useState<Application[]>(storage.getApplications());
-  const [certificates, setCertificates] = useState<VerificationCertificate[]>(storage.getCertificates());
-  const [enforcements, setEnforcements] = useState<EnforcementCase[]>(storage.getEnforcementCases());
+  const [, setTick] = useState(0);
 
   useEffect(() => {
-    const unsub = storage.subscribe(() => {
-      setUser(storage.getCurrentUser());
-      setInstruments(storage.getInstruments());
-      setApplications(storage.getApplications());
-      setCertificates(storage.getCertificates());
-      setEnforcements(storage.getEnforcementCases());
-    });
+    const unsub = storage.subscribe(() => { setUser(storage.getCurrentUser()); setTick(t => t + 1); });
     return unsub;
   }, []);
 
-  // ── Role-filtered data ──
-  const myInstruments = storage.getInstrumentsForUser(user);
-  const myApplications = storage.getApplicationsForUser(user);
-  const myCertificates = storage.getCertificatesForUser(user);
-  const myEnforcements = storage.getEnforcementsForUser(user);
-  void instruments; void applications; void certificates; void enforcements;
+  const instruments = storage.getInstrumentsForUser(user);
+  const applications = storage.getApplicationsForUser(user);
+  const certificates = storage.getCertificatesForUser(user);
+  const enforcements = storage.getEnforcementsForUser(user);
+  const role = user.role;
+  const isField = role === 'LMO' || role === 'GATC';
+  const isAdmin = role === 'STATE_ADMIN' || role === 'CENTRAL_ADMIN';
 
-  const jurisdictionInstruments = myInstruments;
+  const active = instruments.filter(i => i.status === 'ACTIVE').length;
+  const expiring = instruments.filter(i => i.status === 'EXPIRING_SOON').length;
+  const expired = instruments.filter(i => i.status === 'EXPIRED').length;
+  const openApps = applications.filter(OPEN);
+  const openCases = enforcements.filter(e => e.status !== 'CLOSED');
 
-  // ── Metrics ──
-  const activeInst = jurisdictionInstruments.filter(i => i.status === 'ACTIVE').length;
-  const expiringInst = jurisdictionInstruments.filter(i => i.status === 'EXPIRING_SOON').length;
-  const expiredInst = jurisdictionInstruments.filter(i => i.status === 'EXPIRED').length;
-  const pendingApps = myApplications.filter(a => a.status !== 'COMPLETED' && a.status !== 'REJECTED' && a.status !== 'CANCELLED').length;
-  const scheduledInsp = myApplications.filter(a => a.status === 'SCHEDULED' || a.status === 'ASSIGNED').length;
+  const place = role === 'CENTRAL_ADMIN' ? 'All States' : role === 'STATE_ADMIN' ? user.state : `${user.district}, ${user.state}`;
+  const firstName = user.fullName.replace(/^(Inspector|Dr\.|Shri|Smt\.)\s+/i, '').split(' ')[0];
+  const heading: Record<string, { title: string; text: string }> = {
+    BUSINESS: { title: `Namaste, ${firstName}`, text: 'Your instruments, applications and what is due next.' },
+    LMO: { title: "Today's inspections", text: `Jobs assigned to you in ${user.district}. They work offline once opened.` },
+    GATC: { title: "Today's test jobs", text: 'Heavy and specialised instruments routed to your test centre.' },
+    CONTROLLER: { title: 'Pending applications', text: `Every open application in ${user.district}, by stage and age.` },
+    STATE_ADMIN: { title: `${user.state} overview`, text: 'Districts, pendency and compliance across the State.' },
+    CENTRAL_ADMIN: { title: 'National overview', text: 'Pendency and compliance across participating States.' },
+  };
+  const h = heading[role] || heading.BUSINESS;
 
-  // ── Chart data ──
-  const statusPieData = [
-    { name: 'Active', value: activeInst, color: '#10b981' },
-    { name: 'Expiring', value: expiringInst, color: '#f59e0b' },
-    { name: 'Expired', value: expiredInst, color: '#ef4444' },
-    { name: 'Other', value: jurisdictionInstruments.length - activeInst - expiringInst - expiredInst, color: '#0ea5e9' },
+  // ── Role-specific work lists ──
+  const myJobs = applications
+    .filter(a => a.assignedToId === user.id && ['ASSIGNED', 'SCHEDULED', 'INSPECTION_PENDING', 'INSPECTION_IN_PROGRESS', 'RETEST_REQUIRED'].includes(a.status))
+    .sort((a, b) => (a.scheduledDate || '9999').localeCompare(b.scheduledDate || '9999'));
+  const offlineWaiting = storage.getOfflineQueue().length;
+
+  const stageCounts = STAGES.map(s => ({ ...s, items: openApps.filter(a => s.statuses.includes(a.status)) }));
+  const myActionItems = stageCounts.filter(s => s.mine).flatMap(s => s.items.map(a => ({ a, stage: s.label })))
+    .sort((x, y) => x.a.createdAt.localeCompare(y.a.createdAt));
+
+  const traderTodo: { key: string; to: string; title: React.ReactNode; meta: React.ReactNode; cta: string; urgent?: boolean }[] = [
+    ...instruments.filter(i => i.status === 'EXPIRED' || i.status === 'EXPIRING_SOON').map((i: Instrument) => ({
+      key: i.id, to: `/applications/new?instrumentId=${i.id}`, urgent: i.status === 'EXPIRED',
+      title: <>{i.id} <StatusBadge status={i.status} size="sm" /></>,
+      meta: <><span>{i.categoryName}</span><span>Due {i.nextVerificationDueDate}</span></>, cta: 'Apply for re-verification',
+    })),
+    ...openApps.filter(a => a.status === 'CORRECTION_REQUIRED' || a.status === 'FEE_PENDING').map(a => ({
+      key: a.id, to: `/applications/${a.id}`, urgent: true,
+      title: <>{a.id} <StatusBadge status={a.status} size="sm" /></>,
+      meta: <><span>{a.instrumentId}</span><span>₹{a.feeAmount.toLocaleString('en-IN')}</span></>, cta: a.status === 'FEE_PENDING' ? 'Pay the fee' : 'Fix and resubmit',
+    })),
+    ...openApps.filter(a => a.status === 'SCHEDULED' || a.status === 'ASSIGNED').map(a => ({
+      key: a.id, to: `/applications/${a.id}`,
+      title: <>{a.id} <StatusBadge status={a.status} size="sm" /></>,
+      meta: <><span>{a.assignedToName || 'Officer'} will visit</span>{a.scheduledDate && <span>{a.scheduledDate} {a.scheduledTimeSlot || ''}</span>}</>, cta: 'See details',
+    })),
+    ...openCases.map(e => ({
+      key: e.id, to: '/enforcement', urgent: true,
+      title: <>{e.id} <StatusBadge status={e.status} size="sm" /></>,
+      meta: <><span>{e.offenseCategory.replace(/_/g, ' ').toLowerCase()}</span><span>{e.actSection}</span></>, cta: 'Respond',
+    })),
+  ];
+
+  const areaKey = (x: { district: string; state: string }) => (role === 'CENTRAL_ADMIN' ? x.state : x.district);
+  const areas = isAdmin ? Array.from(new Set(instruments.map(areaKey).concat(applications.map(areaKey)))).sort().map(name => {
+    const inst = instruments.filter(i => areaKey(i) === name);
+    const open = openApps.filter(a => areaKey(a) === name);
+    return {
+      name,
+      instruments: inst.length,
+      open: open.length,
+      oldest: open.length ? Math.max(...open.map(a => ageDays(a.createdAt))) : 0,
+      lapsed: inst.filter(i => i.status === 'EXPIRED').length,
+      compliance: inst.length ? Math.round((inst.filter(i => i.status === 'ACTIVE' || i.status === 'EXPIRING_SOON').length / inst.length) * 100) : 0,
+    };
+  }) : [];
+
+  const pie = [
+    { name: 'Valid', value: active, color: '#1E6B47' },
+    { name: 'Due within 30 days', value: expiring, color: '#B07D2B' },
+    { name: 'Expired', value: expired, color: '#A5302A' },
+    { name: 'Other', value: instruments.length - active - expiring - expired, color: '#97A6BC' },
   ].filter(d => d.value > 0);
 
-  const categoryMap: Record<string, number> = {};
-  jurisdictionInstruments.forEach(i => {
-    const label = i.categoryName.split('(')[0].trim();
-    categoryMap[label] = (categoryMap[label] || 0) + 1;
-  });
-  const totalCategoryUnits = jurisdictionInstruments.length || 1;
-  const categoryGradients = [
-    'from-[#0070C0] to-[#1F497D]',
-    'from-[#1B7F5A] to-[#259b6f]',
-    'from-[#f59e0b] to-[#d97706]',
-    'from-[#8b5cf6] to-[#6366f1]',
-    'from-[#0284c7] to-[#0369a1]'
-  ];
-  const categoryBreakdown = Object.entries(categoryMap).map(([name, count], idx) => ({
-    name,
-    count,
-    percent: Math.round((count / totalCategoryUnits) * 100),
-    colorGradient: categoryGradients[idx % categoryGradients.length]
-  }));
-
-  // ── Role descriptions ──
-  const roleConfig: Record<string, { title: string; subtitle: string; gradient: string }> = {
-    BUSINESS: { title: 'My Instruments & Applications', subtitle: 'Track your weighing & measuring instruments, verification status, certificates, and renewal deadlines.', gradient: 'from-[#1F497D] via-[#1b3e6b] to-[#0070C0]' },
-    LMO: { title: 'Inspection Command Centre', subtitle: `Badge #${user.badgeNumber || 'N/A'} • ${user.jurisdictionOffice || user.state} • Manage scrutiny, inspections, and enforcement.`, gradient: 'from-[#1F497D] via-[#0f3e6d] to-[#0284c7]' },
-    GATC: { title: 'Testing Centre Dashboard', subtitle: `Accreditation: ${user.gatcCode || 'N/A'} • High-capacity and petroleum instrument testing operations.`, gradient: 'from-[#144234] via-[#1B7F5A] to-[#259b6f]' },
-    CONTROLLER: { title: 'Regulatory Oversight', subtitle: `${user.state} Controllerate • Pendency tracking, compliance monitoring, and enforcement oversight.`, gradient: 'from-[#2e1d52] via-[#432874] to-[#6035a6]' },
-    STATE_ADMIN: { title: 'State Administration', subtitle: `${user.state} — Fee rules, GATC accreditations, and compliance governance.`, gradient: 'from-[#61360c] via-[#854d0e] to-[#b45309]' },
-    CENTRAL_ADMIN: { title: 'National Command Centre', subtitle: 'Ministry of Consumer Affairs — Pan-India metrology standards and regulatory analytics.', gradient: 'from-[#0f172a] via-[#1F497D] to-[#0070C0]' },
-  };
-  const rc = roleConfig[user.role] || roleConfig.BUSINESS;
+  const btnPrimary = 'inline-flex items-center justify-center gap-2 bg-brass-300 hover:bg-brass-200 text-ink font-semibold px-4 py-2.5 rounded-md text-sm min-h-[44px]';
+  const btnGhost = 'inline-flex items-center justify-center gap-2 border border-paper/30 hover:bg-paper/10 text-paper font-semibold px-4 py-2.5 rounded-md text-sm min-h-[44px]';
 
   return (
-    <div className="space-y-6">
-      {/* ── Welcome Banner ── */}
-      <div className={`bg-gradient-to-r ${rc.gradient} rounded-2xl p-6 lg:p-8 text-white shadow-lg`}>
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+    <div className="space-y-5">
+      {/* ── Heading: same for every role ── */}
+      <section className="relative overflow-hidden rounded-lg bg-ink text-paper p-5 sm:p-6">
+        <div className="relative flex flex-col lg:flex-row lg:items-end justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2 mb-2">
-              <span className="px-2.5 py-0.5 rounded-full bg-white/10 text-white/80 text-[10px] font-bold uppercase tracking-wider border border-white/10">
-                {user.role.replace('_', ' ')}
-              </span>
-              <span className="text-xs text-white/50">•</span>
-              <span className="text-xs text-white/60">{user.organization}</span>
-            </div>
-            <h1 className="text-2xl lg:text-3xl font-extrabold text-white tracking-tight">
-              {user.role === 'BUSINESS' ? `Welcome back, ${user.fullName.split(' ')[0]}` : rc.title}
-            </h1>
-            <p className="text-sm text-white/60 mt-1 max-w-2xl leading-relaxed">{rc.subtitle}</p>
+            <p className="font-readout text-[11px] uppercase tracking-[0.16em] text-brass-300">{user.organization} · {place}</p>
+            <h2 className="font-display text-2xl sm:text-3xl font-semibold tracking-tight mt-2">{h.title}</h2>
+            <p className="text-sm text-paper/70 mt-1 max-w-2xl">{h.text}</p>
           </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            {user.role === 'BUSINESS' ? (
-              <>
-                <Link to="/applications/new" className="inline-flex items-center gap-2 bg-white text-gov-900 font-bold px-5 py-2.5 rounded-xl text-xs hover:bg-white/90 transition-all shadow-lg">
-                  <PlusCircle className="w-4 h-4" /> Apply for Verification
-                </Link>
-                <Link to="/instruments" className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white font-semibold px-5 py-2.5 rounded-xl text-xs border border-white/20 transition-all">
-                  <Scale className="w-4 h-4" /> My Instruments
-                </Link>
-              </>
-            ) : (user.role === 'LMO' || user.role === 'GATC') ? (
-              <>
-                <Link to="/field" className="inline-flex items-center gap-2 bg-white text-slate-900 font-bold px-5 py-2.5 rounded-xl text-xs hover:bg-white/90 transition-all shadow-lg">
-                  <Smartphone className="w-4 h-4" /> Start Field Inspection
-                </Link>
-                <Link to="/applications" className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white font-semibold px-5 py-2.5 rounded-xl text-xs border border-white/20 transition-all">
-                  <FileText className="w-4 h-4" /> View Queue
-                </Link>
-              </>
-            ) : (
-              <Link to="/reports" className="inline-flex items-center gap-2 bg-white text-slate-900 font-bold px-5 py-2.5 rounded-xl text-xs hover:bg-white/90 transition-all shadow-lg">
-                <BarChart3 className="w-4 h-4" /> Analytics & Reports
-              </Link>
-            )}
+          <div className="flex flex-wrap gap-2">
+            {role === 'BUSINESS' && <><Link to="/applications/new" className={btnPrimary}><PlusCircle className="w-4 h-4" /> Apply for verification</Link><Link to="/instruments" className={btnGhost}><Scale className="w-4 h-4" /> My instruments</Link></>}
+            {isField && <><Link to="/field" className={btnPrimary}><Smartphone className="w-4 h-4" /> Open field inspection</Link><Link to="/applications" className={btnGhost}><FileText className="w-4 h-4" /> All my jobs</Link></>}
+            {role === 'CONTROLLER' && <><Link to="/applications" className={btnPrimary}><FileText className="w-4 h-4" /> Open the queue</Link><Link to="/reports" className={btnGhost}><BarChart3 className="w-4 h-4" /> Pendency report</Link></>}
+            {isAdmin && <><Link to="/reports" className={btnPrimary}><BarChart3 className="w-4 h-4" /> Pendency and reports</Link><Link to="/admin/rules" className={btnGhost}><Settings className="w-4 h-4" /> Fees and rules</Link></>}
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* ── Stat Cards — Role Specific ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {user.role === 'BUSINESS' ? (
+      {/* ── Controller: queue by stage ── */}
+      {role === 'CONTROLLER' && (
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-px bg-paper-300 border border-paper-300 rounded-lg overflow-hidden">
+          {stageCounts.map(s => (
+            <Link key={s.key} to="/applications" className={`bg-white p-4 hover:bg-paper-50 border-t-[3px] ${s.mine && s.items.length ? 'border-brass' : 'border-transparent'}`}>
+              <p className="text-xs text-ink-600">{s.label}</p>
+              <p className="font-readout text-3xl font-semibold text-ink mt-1 tabular-nums">{s.items.length}</p>
+              <p className={`text-[11px] mt-0.5 ${s.mine ? 'text-brass-700 font-semibold' : 'text-ink-600'}`}>{s.hint}</p>
+            </Link>
+          ))}
+        </div>
+      )}
+
+      {/* ── Work list: the main thing on every home screen ── */}
+      {role === 'BUSINESS' && (
+        <Panel title="Needs your attention" action={<span className="text-xs text-ink-600">{traderTodo.length} item{traderTodo.length === 1 ? '' : 's'}</span>}>
+          {traderTodo.length === 0
+            ? <Empty text="Nothing is due. All your instruments are within validity." to="/applications/new" cta="Apply for a new verification" />
+            : <ul className="divide-y divide-paper-200">{traderTodo.map(({ key, ...t }) => <Row key={key} {...t} />)}</ul>}
+        </Panel>
+      )}
+
+      {isField && (
+        <Panel title={`Assigned to you (${myJobs.length})`} action={offlineWaiting > 0 ? <span className="inline-flex items-center gap-1 text-xs font-semibold text-brass-700"><WifiOff className="w-3.5 h-3.5" /> {offlineWaiting} saved offline, will sync</span> : <Link to="/field" className="text-xs font-semibold text-ink underline">Field inspection</Link>}>
+          {myJobs.length === 0
+            ? <Empty text="No open jobs right now. You can practise on a recent instrument, or run the guided demo to get one assigned." to="/field" cta="Practise an inspection" />
+            : <ul className="divide-y divide-paper-200">{myJobs.map(a => (
+              <Row key={a.id} to={`/field?applicationId=${a.id}`} urgent={a.status === 'RETEST_REQUIRED'}
+                title={<>{a.id} <StatusBadge status={a.status} size="sm" /></>}
+                meta={<><span>{a.organization}</span><span className="inline-flex items-center gap-1"><MapPin className="w-3 h-3" />{a.location}</span>{a.scheduledDate && <span className="inline-flex items-center gap-1"><Calendar className="w-3 h-3" />{a.scheduledDate} {a.scheduledTimeSlot || ''}</span>}</>}
+                cta="Inspect" />
+            ))}</ul>}
+        </Panel>
+      )}
+
+      {role === 'CONTROLLER' && (
+        <Panel title="Waiting on you, oldest first" action={<span className="text-xs text-ink-600">Over 7 days marked red</span>}>
+          {myActionItems.length === 0
+            ? <Empty text="Nothing is waiting for scrutiny or assignment." />
+            : <ul className="divide-y divide-paper-200">{myActionItems.slice(0, 8).map(({ a, stage }) => {
+              const age = ageDays(a.createdAt);
+              return (
+                <Row key={a.id} to={`/applications/${a.id}`} urgent={age > 7}
+                  title={<>{a.id} <span className="font-normal text-ink-600">· {a.organization}</span></>}
+                  meta={<><span>{stage}</span><span>{a.serviceType.replace(/_/g, ' ').toLowerCase()}</span><span>{a.instrumentId}</span></>}
+                  right={<span className={`font-readout text-sm tabular-nums shrink-0 ${age > 7 ? 'text-seal font-semibold' : 'text-ink-600'}`}>{age} day{age === 1 ? '' : 's'}</span>}
+                  cta={stage === 'Document scrutiny' ? 'Scrutinise' : 'Assign'} />
+              );
+            })}</ul>}
+        </Panel>
+      )}
+
+      {isAdmin && (
+        <Panel title={role === 'CENTRAL_ADMIN' ? 'By State' : 'By district'} action={<Link to="/reports" className="text-xs font-semibold text-ink underline">Full report</Link>}>
+          {areas.length === 0 ? <Empty text="No records yet." /> : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm min-w-[560px]">
+                <thead className="text-left text-[11px] uppercase tracking-[0.12em] text-ink-600">
+                  <tr className="border-b border-paper-200">
+                    <th className="px-5 py-2.5 font-semibold">{role === 'CENTRAL_ADMIN' ? 'State' : 'District'}</th>
+                    <th className="px-3 py-2.5 font-semibold text-right">Instruments</th>
+                    <th className="px-3 py-2.5 font-semibold text-right">Valid</th>
+                    <th className="px-3 py-2.5 font-semibold text-right">Expired</th>
+                    <th className="px-3 py-2.5 font-semibold text-right">Open applications</th>
+                    <th className="px-5 py-2.5 font-semibold text-right">Oldest open</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-paper-200">
+                  {areas.map(r => (
+                    <tr key={r.name} className="hover:bg-paper-50">
+                      <th scope="row" className="px-5 py-3 text-left font-semibold text-ink">{r.name}</th>
+                      <td className="px-3 py-3 text-right font-readout tabular-nums">{r.instruments}</td>
+                      <td className="px-3 py-3 text-right font-readout tabular-nums">{r.compliance}%</td>
+                      <td className={`px-3 py-3 text-right font-readout tabular-nums ${r.lapsed ? 'text-seal font-semibold' : ''}`}>{r.lapsed}</td>
+                      <td className="px-3 py-3 text-right font-readout tabular-nums">{r.open}</td>
+                      <td className={`px-5 py-3 text-right font-readout tabular-nums ${r.oldest > 7 ? 'text-seal font-semibold' : ''}`}>{r.open ? `${r.oldest} d` : '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Panel>
+      )}
+
+      {/* ── Key numbers ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {role === 'BUSINESS' ? (
           <>
-            <StatCard title="My Instruments" value={myInstruments.length} subtitle="Registered Fleet" icon={Scale} variant="blue" />
-            <StatCard title="Active & Verified" value={myInstruments.filter(i => i.status === 'ACTIVE').length} subtitle="Within validity" icon={CheckCircle} variant="emerald" />
-            <StatCard title="Pending Apps" value={myApplications.filter(a => a.status !== 'COMPLETED' && a.status !== 'REJECTED').length} subtitle="In Progress" icon={FileText} variant="amber" />
-            <StatCard title="My Certificates" value={myCertificates.length} subtitle="Issued to You" icon={Award} variant="blue" />
+            <StatCard title="My instruments" value={instruments.length} subtitle="Registered" icon={Scale} variant="blue" />
+            <StatCard title="Valid" value={active + expiring} subtitle="Within validity" icon={CheckCircle} variant="emerald" />
+            <StatCard title="Applications open" value={openApps.length} subtitle="In progress" icon={FileText} variant="amber" />
+            <StatCard title="Certificates" value={certificates.length} subtitle="Issued to you" icon={Award} variant="slate" />
           </>
-        ) : (user.role === 'LMO' || user.role === 'GATC') ? (
+        ) : isField ? (
           <>
-            <StatCard title="Jurisdiction Instruments" value={jurisdictionInstruments.length} subtitle={`${user.state} Registry`} icon={Scale} variant="blue" />
-            <StatCard title="Pending Scrutiny" value={myApplications.filter(a => a.status === 'UNDER_SCRUTINY' || a.status === 'SUBMITTED').length} subtitle="Needs Your Review" icon={FileText} variant="amber" badge={myApplications.filter(a => a.status === 'UNDER_SCRUTINY').length > 0 ? 'Action' : undefined} />
-            <StatCard title="Scheduled Inspections" value={scheduledInsp} subtitle="Field Work Pending" icon={Calendar} variant="blue" badge={scheduledInsp > 0 ? `${scheduledInsp}` : undefined} />
-            <StatCard title="Enforcement Cases" value={myEnforcements.filter(e => e.status === 'OPEN' || e.status === 'UNDER_REVIEW').length} subtitle="Active Violations" icon={ShieldAlert} variant="rose" />
+            <StatCard title="Assigned to you" value={myJobs.length} subtitle="Open jobs" icon={Smartphone} variant="blue" />
+            <StatCard title="Booked visits" value={myJobs.filter(a => a.scheduledDate).length} subtitle="With a date" icon={Calendar} variant="amber" />
+            <StatCard title="Certificates issued" value={certificates.filter(c => c.issuingOfficerName === user.fullName).length} subtitle="By you" icon={Award} variant="emerald" />
+            <StatCard title="Open cases" value={openCases.length} subtitle="Enforcement" icon={ShieldAlert} variant="rose" />
           </>
         ) : (
           <>
-            <StatCard title="Total Instruments" value={jurisdictionInstruments.length} subtitle={user.role === 'CENTRAL_ADMIN' ? 'Pan-India' : user.state} icon={Scale} variant="blue" />
-            <StatCard title="Active & Verified" value={activeInst} subtitle="Compliance Rate" icon={CheckCircle} variant="emerald" />
-            <StatCard title="Expiring / Expired" value={expiringInst + expiredInst} subtitle="Needs Attention" icon={AlertTriangle} variant="amber" badge={(expiringInst + expiredInst) > 0 ? 'Alert' : undefined} />
-            <StatCard title="Enforcement Actions" value={myEnforcements.length} subtitle="Total Cases" icon={ShieldAlert} variant="rose" />
+            <StatCard title="Instruments" value={instruments.length} subtitle={place} icon={Scale} variant="blue" />
+            <StatCard title="Valid" value={instruments.length ? `${Math.round(((active + expiring) / instruments.length) * 100)}%` : '—'} subtitle={`${active + expiring} of ${instruments.length}`} icon={CheckCircle} variant="emerald" />
+            <StatCard title="Expired or due" value={expired + expiring} subtitle="Need re-verification" icon={AlertTriangle} variant="amber" />
+            <StatCard title="Open cases" value={openCases.length} subtitle="Enforcement" icon={ShieldAlert} variant="rose" />
           </>
         )}
       </div>
 
-      {/* ── Main Content Grid ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Chart: Status Distribution */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-bold text-slate-900 text-sm">
-              {user.role === 'BUSINESS' ? 'My Fleet Status' : 'Verification Status'}
-            </h3>
-            <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Live</span>
-          </div>
-          <div className="h-52">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={statusPieData} cx="50%" cy="50%" innerRadius={45} outerRadius={72} paddingAngle={4} dataKey="value">
-                  {statusPieData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="mt-3 space-y-1.5 text-xs">
-            {statusPieData.map(d => (
-              <div key={d.name} className="flex items-center justify-between text-slate-600">
-                <span className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: d.color }} />
-                  {d.name}
-                </span>
-                <span className="font-bold text-slate-800">{d.value}</span>
+      {/* ── Register status and recent applications ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-[2fr_3fr] gap-5">
+        <Panel title={role === 'BUSINESS' ? 'My instruments by status' : 'Register by status'} action={<Link to="/instruments" className="text-xs font-semibold text-ink underline">Open register</Link>}>
+          {pie.length === 0 ? <Empty text="No instruments yet." to={role === 'BUSINESS' ? '/instruments' : undefined} cta="Add an instrument" /> : (
+            <div className="p-4 sm:p-5 grid grid-cols-[140px_1fr] items-center gap-4">
+              <div className="h-[140px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={pie} cx="50%" cy="50%" innerRadius={40} outerRadius={64} paddingAngle={2} dataKey="value" stroke="none">
+                      {pie.map(d => <Cell key={d.name} fill={d.color} />)}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
               </div>
-            ))}
-          </div>
-        </div>
+              <ul className="space-y-2 text-sm">
+                {pie.map(d => (
+                  <li key={d.name} className="flex items-center justify-between gap-3">
+                    <span className="flex items-center gap-2 text-ink-700"><span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: d.color }} />{d.name}</span>
+                    <span className="font-readout font-semibold tabular-nums">{d.value}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </Panel>
 
-        {/* Chart: Category Breakdown */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-bold text-slate-900 text-sm">
-              {user.role === 'BUSINESS' ? 'Instruments by Type' : 'Instruments by Class'}
-            </h3>
-            <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Registry</span>
-          </div>
-
-          <div className="space-y-3.5 my-auto">
-            {categoryBreakdown.length === 0 ? (
-              <div className="text-center py-8 text-slate-400 text-xs">
-                No instruments registered in this view.
-              </div>
-            ) : (
-              categoryBreakdown.map(cat => (
-                <div key={cat.name} className="space-y-1.5 group">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-medium text-slate-800 group-hover:text-blue-700 transition-colors" title={cat.name}>
-                      {cat.name}
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[11px] font-semibold text-slate-500">{cat.count} units</span>
-                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700">
-                        {cat.percent}%
-                      </span>
-                    </div>
-                  </div>
-                  <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                    <div 
-                      className={`h-full rounded-full bg-gradient-to-r ${cat.colorGradient} transition-all duration-500`}
-                      style={{ width: `${Math.max(cat.percent, 8)}%` }}
-                    />
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-
-          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
-            <span>Total registered: <strong>{jurisdictionInstruments.length}</strong></span>
-            <Link to="/instruments" className="font-semibold text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1">
-              View catalog &rarr;
-            </Link>
-          </div>
-        </div>
-
-        {/* Activity Queue — Role-Specific */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-bold text-slate-900 text-sm">
-              {user.role === 'BUSINESS' ? 'My Applications' : user.role === 'LMO' || user.role === 'GATC' ? 'Your Work Queue' : 'Application Pipeline'}
-            </h3>
-            <Link to="/applications" className="text-xs text-gov-700 hover:text-gov-900 font-semibold flex items-center gap-1">
-              View all <ArrowRight className="w-3 h-3" />
-            </Link>
-          </div>
-
-          <div className="space-y-2.5 flex-1 overflow-y-auto max-h-72">
-            {myApplications.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-8 text-slate-400">
-                <FileText className="w-8 h-8 mb-2 text-slate-300" />
-                <p className="text-xs font-medium">No applications in your queue</p>
-              </div>
-            ) : myApplications.slice(0, 5).map(app => (
-              <Link
-                key={app.id}
-                to={`/applications/${app.id}`}
-                className="block p-3.5 rounded-xl border border-slate-100 hover:border-slate-300 hover:bg-slate-50/70 transition-all text-xs group"
-              >
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="font-bold text-gov-800 group-hover:text-gov-900">{app.id}</span>
-                  <StatusBadge status={app.status} size="sm" />
-                </div>
-                <p className="font-semibold text-slate-900 text-[13px] line-clamp-1">
-                  {user.role === 'BUSINESS' ? app.instrumentId : `${app.applicantName} — ${app.organization}`}
-                </p>
-                <div className="flex items-center justify-between text-slate-500 mt-2 text-[11px]">
-                  <span>{app.serviceType.replace(/_/g, ' ')}</span>
-                  <span>₹{app.feeAmount.toLocaleString()}</span>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
+        <Panel title={role === 'BUSINESS' ? 'My applications' : 'Recent applications'} action={<Link to="/applications" className="text-xs font-semibold text-ink underline">View all</Link>}>
+          {applications.length === 0 ? <Empty text="No applications yet." to={role === 'BUSINESS' ? '/applications/new' : undefined} cta="Apply for verification" /> : (
+            <ul className="divide-y divide-paper-200">
+              {[...applications].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).slice(0, 5).map(a => (
+                <Row key={a.id} to={`/applications/${a.id}`}
+                  title={<>{a.id} <StatusBadge status={a.status} size="sm" /></>}
+                  meta={<><span>{role === 'BUSINESS' ? a.instrumentId : a.organization}</span><span className="inline-flex items-center gap-1"><Clock className="w-3 h-3" />updated {new Date(a.updatedAt).toLocaleDateString('en-IN')}</span></>}
+                  cta="Open" />
+              ))}
+            </ul>
+          )}
+        </Panel>
       </div>
-
-      {/* ── Bottom Section — Role-Specific ── */}
-      {/* Business: Expiring instruments */}
-      {user.role === 'BUSINESS' && myInstruments.filter(i => i.status === 'EXPIRED' || i.status === 'EXPIRING_SOON').length > 0 && (
-        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b border-slate-200 bg-gradient-to-r from-rose-50 to-amber-50 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 text-rose-600" />
-              <h3 className="font-bold text-slate-900 text-sm">Instruments Needing Attention</h3>
-            </div>
-            <span className="text-[10px] font-semibold text-slate-500">Renew to avoid Section 24 penalties</span>
-          </div>
-          <div className="divide-y divide-slate-100">
-            {myInstruments.filter(i => i.status === 'EXPIRED' || i.status === 'EXPIRING_SOON').map(inst => (
-              <div key={inst.id} className="p-4 sm:px-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50 transition-colors">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-slate-900 text-sm">{inst.id}</span>
-                    <StatusBadge status={inst.status} size="sm" />
-                  </div>
-                  <p className="text-xs text-slate-600">{inst.categoryName} • {inst.installationAddress}</p>
-                  <p className="text-xs text-slate-500">Due: <strong className="text-rose-700">{inst.nextVerificationDueDate}</strong></p>
-                </div>
-                <Link to={`/applications/new?instrumentId=${inst.id}`} className="px-4 py-2 rounded-lg text-xs font-semibold bg-gov-800 hover:bg-gov-900 text-white transition-colors shrink-0">
-                  Apply Re-Verification →
-                </Link>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Business: Active Enforcement Notices */}
-      {user.role === 'BUSINESS' && myEnforcements.filter(e => e.status !== 'CLOSED').length > 0 && (
-        <div className="bg-white rounded-2xl border border-rose-200 shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b border-rose-100 bg-rose-50/80 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <ShieldAlert className="w-4 h-4 text-rose-600" />
-              <h3 className="font-bold text-slate-900 text-sm">Active Statutory Violation Notices</h3>
-            </div>
-            <Link to="/enforcement" className="text-xs text-rose-700 hover:text-rose-900 font-semibold">
-              Section 48 Compounding Desk &rarr;
-            </Link>
-          </div>
-          <div className="divide-y divide-slate-100">
-            {myEnforcements.filter(e => e.status !== 'CLOSED').map(enf => (
-              <div key={enf.id} className="p-4 sm:px-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50 transition-colors">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-slate-900 text-sm">{enf.id}</span>
-                    <StatusBadge status={enf.status} size="sm" />
-                    <span className="text-[10px] font-mono text-slate-500">{enf.actSection}</span>
-                  </div>
-                  <p className="text-xs text-slate-600">{enf.offenseCategory.replace(/_/g, ' ')} • {enf.location}</p>
-                  <p className="text-[11px] text-rose-700 font-medium">{enf.actionTaken}</p>
-                </div>
-                <Link to="/enforcement" className="px-4 py-2 rounded-lg text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white transition-colors shrink-0">
-                  Resolve / Pay Fine &rarr;
-                </Link>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* LMO/GATC: Upcoming inspections */}
-      {(user.role === 'LMO' || user.role === 'GATC') && (
-        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b border-slate-200 bg-gradient-to-r from-sky-50 to-blue-50 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-sky-600" />
-              <h3 className="font-bold text-slate-900 text-sm">Upcoming Field Inspections</h3>
-            </div>
-            <Link to="/field" className="text-xs text-gov-700 hover:text-gov-900 font-semibold flex items-center gap-1">
-              Open Field Mode <ArrowRight className="w-3 h-3" />
-            </Link>
-          </div>
-          <div className="divide-y divide-slate-100">
-            {myApplications.filter(a => a.status === 'SCHEDULED' || a.status === 'ASSIGNED').map(app => (
-              <div key={app.id} className="p-4 sm:px-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50 transition-colors">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-slate-900 text-sm">{app.id}</span>
-                    <StatusBadge status={app.status} size="sm" />
-                  </div>
-                  <p className="text-xs text-slate-600 font-medium">{app.applicantName} — {app.organization}</p>
-                  <div className="flex items-center gap-3 text-[11px] text-slate-500">
-                    <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{app.location}</span>
-                    {app.scheduledDate && <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{app.scheduledDate} {app.scheduledTimeSlot || ''}</span>}
-                  </div>
-                </div>
-                <Link to="/field" className="px-4 py-2 rounded-lg text-xs font-semibold bg-sky-700 hover:bg-sky-800 text-white transition-colors shrink-0">
-                  <Smartphone className="w-3.5 h-3.5 inline mr-1" />Start Inspection
-                </Link>
-              </div>
-            ))}
-            {myApplications.filter(a => a.status === 'SCHEDULED' || a.status === 'ASSIGNED').length === 0 && (
-              <div className="p-8 text-center text-xs text-slate-400">No inspections currently scheduled</div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Controller/Admin: Enforcement Overview */}
-      {(user.role === 'CONTROLLER' || user.role === 'STATE_ADMIN' || user.role === 'CENTRAL_ADMIN') && (
-        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b border-slate-200 bg-gradient-to-r from-rose-50 to-orange-50 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <ShieldAlert className="w-4 h-4 text-rose-600" />
-              <h3 className="font-bold text-slate-900 text-sm">Active Enforcement Cases</h3>
-            </div>
-            <Link to="/enforcement" className="text-xs text-gov-700 hover:text-gov-900 font-semibold flex items-center gap-1">
-              View all <ArrowRight className="w-3 h-3" />
-            </Link>
-          </div>
-          <div className="divide-y divide-slate-100">
-            {myEnforcements.filter(e => e.status !== 'CLOSED').slice(0, 4).map(enf => (
-              <div key={enf.id} className="p-4 sm:px-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50 transition-colors">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-slate-900 text-sm">{enf.id}</span>
-                    <StatusBadge status={enf.status} size="sm" />
-                    <span className="text-[10px] font-mono text-slate-400">{enf.actSection}</span>
-                  </div>
-                  <p className="text-xs text-slate-600">{enf.businessName} — {enf.location}</p>
-                  <p className="text-[11px] text-slate-500">{enf.offenseCategory.replace(/_/g, ' ')} {enf.penaltyAmount ? `• ₹${enf.penaltyAmount.toLocaleString()} penalty` : ''}</p>
-                </div>
-                <Link to="/enforcement" className="px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors shrink-0">
-                  <Eye className="w-3 h-3 inline mr-1" />Review
-                </Link>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 };

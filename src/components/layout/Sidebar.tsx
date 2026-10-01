@@ -48,55 +48,52 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentUser, notifications, co
   const unread = notifications.filter(n => !n.read);
 
   // Role-customized task-oriented navigation
+  const isBiz = currentUser.role === 'BUSINESS';
+  const isField = currentUser.role === 'LMO' || currentUser.role === 'GATC';
   const navSections = [
     {
       label: 'Overview',
       items: [
-        { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+        { label: 'Home', path: '/dashboard', icon: LayoutDashboard },
       ],
     },
     {
-      label: currentUser.role === 'BUSINESS' ? 'My Workflow' : 'Operational Work',
+      label: 'Work',
       items: [
-        { label: currentUser.role === 'BUSINESS' ? 'Verification Requests' : 'Applications Queue', path: '/applications', icon: FileText },
+        { label: isBiz ? 'My applications' : 'Applications', path: '/applications', icon: FileText },
         {
-          label: currentUser.role === 'BUSINESS' ? 'Scheduled Premises Visits' : currentUser.role === 'GATC' ? 'Lab Testing Hub' : 'Field Inspection HUD',
+          label: isBiz ? 'Inspection visits' : currentUser.role === 'GATC' ? 'Test centre jobs' : 'Field inspection',
           path: '/field',
-          icon: currentUser.role === 'BUSINESS' ? Calendar : Smartphone,
-          highlight: currentUser.role === 'LMO' || currentUser.role === 'GATC',
+          icon: isBiz ? Calendar : Smartphone,
+          highlight: isField,
         },
       ],
     },
     {
-      label: 'Instrument Lifecycle',
+      label: 'Records',
       items: [
-        { label: currentUser.role === 'BUSINESS' ? 'My Instrument Fleet' : 'Instrument Registry', path: '/instruments', icon: Scale },
-        { label: currentUser.role === 'BUSINESS' ? 'Verification Certificates' : 'Verification Certificates', path: '/certificates', icon: Award },
+        { label: isBiz ? 'My instruments' : 'Instrument register', path: '/instruments', icon: Scale },
+        { label: 'Certificates', path: '/certificates', icon: Award },
+        { label: isBiz ? 'Notices' : 'Enforcement', path: '/enforcement', icon: ShieldAlert },
       ],
     },
     {
-      label: 'Trust & Compliance',
+      label: 'Oversight',
       items: [
-        { label: 'Live QR Public Verification', path: '/verify', icon: QrCode },
-        { label: currentUser.role === 'BUSINESS' ? 'Notices & Compliance' : 'Enforcement & Grievances', path: '/enforcement', icon: ShieldAlert },
-      ],
-    },
-    {
-      label: 'Governance & Audit',
-      items: [
-        { label: currentUser.role === 'BUSINESS' ? 'Compliance Analytics' : 'Pendency & Impact', path: '/reports', icon: FileBarChart2 },
-        { label: 'SMS / Email Updates', path: '/notifications', icon: Bell },
-        { label: 'Statutory Audit Trail', path: '/audit', icon: History },
+        { label: isBiz ? 'Reports' : 'Pendency and reports', path: '/reports', icon: FileBarChart2 },
+        { label: 'SMS and email updates', path: '/notifications', icon: Bell },
+        { label: 'Audit trail', path: '/audit', icon: History },
         ...((currentUser.role === 'STATE_ADMIN' || currentUser.role === 'CENTRAL_ADMIN' || currentUser.role === 'CONTROLLER')
-          ? [{ label: 'Legal Metrology Rules Engine', path: '/admin/rules', icon: Settings }]
+          ? [{ label: 'Fees and rules', path: '/admin/rules', icon: Settings }]
           : []),
       ],
     },
     {
-      label: 'Prototype',
+      label: 'Public and prototype',
       items: [
-        { label: 'Live Demo Guide', path: '/demo', icon: PlayCircle },
-        { label: 'Built vs Planned', path: '/status', icon: ListChecks },
+        { label: 'Check a certificate', path: '/verify', icon: QrCode },
+        { label: 'Guided demo', path: '/demo', icon: PlayCircle },
+        { label: 'Built vs planned', path: '/status', icon: ListChecks },
       ],
     },
   ];
@@ -104,16 +101,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentUser, notifications, co
   // Dynamic role-based quick action button
   const getQuickAction = () => {
     if (currentUser.role === 'BUSINESS') {
-      return { label: 'Apply for Verification', path: '/applications/new', icon: PlusCircle };
+      return { label: 'Apply for verification', path: '/applications/new', icon: PlusCircle };
     }
     if (currentUser.role === 'LMO') {
-      return { label: 'Start Field Inspection', path: '/field', icon: Smartphone };
+      return { label: "Today's inspections", path: '/field', icon: Smartphone };
     }
     if (currentUser.role === 'GATC') {
-      return { label: 'Lab Test & Stamping', path: '/field', icon: Smartphone };
+      return { label: "Today's test jobs", path: '/field', icon: Smartphone };
     }
     if (currentUser.role === 'CONTROLLER' || currentUser.role === 'STATE_ADMIN' || currentUser.role === 'CENTRAL_ADMIN') {
-      return { label: 'Analytics & Audit', path: '/reports', icon: FileBarChart2 };
+      return { label: currentUser.role === 'CONTROLLER' ? 'Pending applications' : 'Pendency and reports', path: currentUser.role === 'CONTROLLER' ? '/applications' : '/reports', icon: currentUser.role === 'CONTROLLER' ? FileText : FileBarChart2 };
     }
     return { label: 'New Application', path: '/applications/new', icon: PlusCircle };
   };
@@ -131,7 +128,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentUser, notifications, co
     )}
     <aside
       aria-label="Main navigation"
-      className={`fixed top-0 left-0 h-[100dvh] z-50 flex flex-col bg-white border-r border-slate-200/80 transition-all duration-300 ease-in-out w-[280px] max-w-[85vw] ${
+      className={`fixed top-0 left-0 h-[100dvh] z-50 flex flex-col bg-white border-r border-paper-300 transition-all duration-300 ease-in-out w-[280px] max-w-[85vw] ${
         mobileOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'
       } lg:translate-x-0 lg:shadow-none ${collapsed ? 'lg:w-[72px]' : 'lg:w-[260px]'}`}
     >
@@ -150,9 +147,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentUser, notifications, co
         <div className="px-4 pt-4 pb-2">
           <Link
             to={quickAction.path}
-            className="flex items-center gap-2 w-full bg-gov-800 hover:bg-gov-900 text-white font-semibold text-xs px-4 py-2.5 rounded-xl transition-colors shadow-sm"
+            className="flex items-center gap-2 w-full bg-ink hover:bg-ink-800 text-paper font-semibold text-[13px] px-4 py-2.5 rounded-md min-h-[44px] transition-colors shadow-sm"
           >
-            <QuickActionIcon className="w-4 h-4 text-amber-400" />
+            <QuickActionIcon className="w-4 h-4 text-brass-300" />
             <span className="truncate">{quickAction.label}</span>
           </Link>
         </div>
@@ -161,10 +158,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentUser, notifications, co
         <div className="flex justify-center pt-4 pb-2">
           <Link
             to={quickAction.path}
-            className="w-9 h-9 rounded-xl bg-gov-800 hover:bg-gov-900 text-white flex items-center justify-center transition-colors shadow-sm"
+            className="w-10 h-10 rounded-md bg-ink hover:bg-ink-800 text-white flex items-center justify-center transition-colors shadow-sm"
             title={quickAction.label}
           >
-            <QuickActionIcon className="w-4 h-4 text-amber-400" />
+            <QuickActionIcon className="w-4 h-4 text-brass-300" />
           </Link>
         </div>
       )}
@@ -174,7 +171,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentUser, notifications, co
         {navSections.map((section) => (
           <div key={section.label}>
             {!collapsed && (
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-3 mb-1.5">
+              <p className="font-readout text-[10px] font-medium text-brass-700 uppercase tracking-[0.16em] px-3 mb-1.5">
                 {section.label}
               </p>
             )}
@@ -190,22 +187,19 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentUser, notifications, co
                     to={item.path}
                     title={collapsed ? item.label : undefined}
                     className={`
-                      flex items-center gap-3 rounded-xl text-[13px] font-medium transition-all duration-200
+                      flex items-center gap-3 rounded-md text-[13px] font-medium transition-all duration-200 border-l-[3px]
                       ${collapsed ? 'justify-center px-0 py-2.5 mx-auto w-11 h-11' : 'px-3 py-2.5'}
                       ${isActive
-                        ? 'bg-gov-50 text-gov-800 font-semibold shadow-sm'
-                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                        ? 'bg-paper-100 text-ink font-semibold border-brass'
+                        : 'text-ink-600 hover:text-ink hover:bg-paper-50 border-transparent'
                       }
-                      ${highlight && !isActive ? 'ring-1 ring-amber-300/50 bg-amber-50/40' : ''}
+                      ${highlight && !isActive ? 'bg-brass-200/30' : ''}
                     `}
                   >
                     <Icon className={`w-[18px] h-[18px] shrink-0 ${
-                      isActive ? 'text-gov-700' : 'text-slate-400'
+                      isActive ? 'text-brass-700' : 'text-ink-600/70'
                     }`} />
                     {!collapsed && <span>{item.label}</span>}
-                    {isActive && !collapsed && (
-                      <div className="ml-auto w-1.5 h-1.5 rounded-full bg-gov-700" />
-                    )}
                   </Link>
                 );
               })}
@@ -282,15 +276,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentUser, notifications, co
         <div className={`px-3 py-3 ${collapsed ? 'flex justify-center' : ''}`}>
           {collapsed ? (
             <div
-              className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#1F497D] to-[#0070C0] text-white font-bold text-xs flex items-center justify-center cursor-default shadow-xs"
+              className="w-9 h-9 rounded-xl bg-ink text-white font-bold text-xs flex items-center justify-center cursor-default shadow-xs"
               title={`${currentUser.fullName} (${currentUser.role})`}
             >
               {currentUser.fullName.charAt(0)}
             </div>
           ) : (
-            <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2">
+            <div className="p-2.5 rounded-md bg-paper-50 border border-paper-300 space-y-2">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#1F497D] to-[#0070C0] text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-2xs">
+                <div className="w-8 h-8 rounded-lg bg-ink text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-2xs">
                   {currentUser.fullName.charAt(0)}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -304,7 +298,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentUser, notifications, co
                   {currentUser.accountType === 'SELF' ? 'Registered account' : 'Demo account'}
                 </span>
                 <div className="flex items-center gap-1.5 text-[10px]">
-                  <Link to="/" className="text-slate-500 hover:text-[#0070C0] font-semibold" title="Return to public landing page">
+                  <Link to="/" className="text-slate-500 hover:text-gov-600 font-semibold" title="Return to public landing page">
                     Home
                   </Link>
                   <span className="text-slate-300">•</span>

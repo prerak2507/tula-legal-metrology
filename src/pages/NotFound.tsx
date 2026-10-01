@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { GovBar } from '../components/layout/GovBar';
+import { SiteFooter } from '../components/layout/SiteFooter';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Search,
@@ -31,12 +33,11 @@ export const NotFound: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-100 flex flex-col justify-between text-slate-800 antialiased selection:bg-sky-100">
-      {/* Top Tricolor Accent Bar */}
-      <div className="h-1.5 w-full bg-gradient-to-r from-[#FF9933] via-white to-[#138808]" />
+    <div className="min-h-screen w-full bg-paper-50 flex flex-col justify-between text-slate-800 antialiased">
+      <GovBar />
 
       {/* Header Bar */}
-      <header className="px-4 sm:px-8 py-4 border-b border-slate-200/80 bg-white/80 backdrop-blur-md sticky top-0 z-30">
+      <header className="px-4 sm:px-8 py-4 border-b border-paper-300 bg-paper/95 backdrop-blur-md sticky top-0 z-30">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <Link to="/" className="flex items-center group">
             <TulaLogo size="sm" variant="full" />
@@ -46,15 +47,15 @@ export const NotFound: React.FC = () => {
               to="/verify"
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors font-medium"
             >
-              <QrCode className="w-3.5 h-3.5 text-[#0070C0]" />
-              <span>Public QR Scanner</span>
+              <QrCode className="w-3.5 h-3.5 text-gov-600" />
+              <span>Check a certificate</span>
             </Link>
             <Link
               to="/login"
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#1F497D] text-white hover:bg-[#163863] transition-colors font-bold shadow-xs"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-gov-800 text-white hover:bg-gov-900 transition-colors font-bold shadow-xs"
             >
               <LogIn className="w-3.5 h-3.5" />
-              <span>Gateway Login</span>
+              <span>Sign in</span>
             </Link>
           </div>
         </div>
@@ -73,13 +74,13 @@ export const NotFound: React.FC = () => {
             404
           </span>
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="w-20 h-20 rounded-2xl bg-white shadow-xl border border-slate-200 flex items-center justify-center text-[#1F497D] animate-bounce duration-1000">
-              <Scale className="w-10 h-10 text-[#0070C0]" />
+            <div className="w-20 h-20 rounded-2xl bg-white shadow-xl border border-slate-200 flex items-center justify-center text-gov-800 animate-bounce duration-1000">
+              <Scale className="w-10 h-10 text-gov-600" />
             </div>
           </div>
         </div>
 
-        <h1 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight mb-3">
+        <h1 className="font-display text-3xl sm:text-5xl font-semibold text-ink tracking-tight mb-3">
           Statutory Endpoint or Metrology Record Not Found
         </h1>
         <p className="text-sm sm:text-base text-slate-600 max-w-xl mx-auto leading-relaxed mb-8">
@@ -90,7 +91,7 @@ export const NotFound: React.FC = () => {
         <div className="max-w-md mx-auto mb-10">
           <form
             onSubmit={handleQuickLookup}
-            className="flex items-center bg-white rounded-xl border border-slate-300 shadow-sm focus-within:border-[#0070C0] focus-within:ring-2 focus-within:ring-[#0070C0]/20 p-1.5 transition-all"
+            className="flex items-center bg-white rounded-xl border border-slate-300 shadow-sm focus-within:border-gov-600 focus-within:ring-2 focus-within:ring-gov-600/20 p-1.5 transition-all"
           >
             <Search className="w-4 h-4 text-slate-400 ml-2.5 shrink-0" />
             <input
@@ -102,7 +103,7 @@ export const NotFound: React.FC = () => {
             />
             <button
               type="submit"
-              className="bg-[#1F497D] hover:bg-[#163863] text-white text-xs font-bold px-4 py-2 rounded-lg transition-colors shrink-0"
+              className="bg-gov-800 hover:bg-gov-900 text-white text-xs font-bold px-4 py-2 rounded-lg transition-colors shrink-0"
             >
               Verify ID
             </button>
@@ -119,10 +120,10 @@ export const NotFound: React.FC = () => {
             to="/"
             className="p-4 rounded-xl bg-white border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all group"
           >
-            <div className="w-9 h-9 rounded-lg bg-sky-50 text-[#0070C0] flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
+            <div className="w-9 h-9 rounded-lg bg-sky-50 text-gov-600 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
               <Home className="w-5 h-5" />
             </div>
-            <h2 className="text-xs sm:text-sm font-bold text-slate-900 group-hover:text-[#0070C0] transition-colors flex items-center justify-between">
+            <h2 className="text-xs sm:text-sm font-bold text-slate-900 group-hover:text-gov-600 transition-colors flex items-center justify-between">
               Public Portal
               <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:translate-x-1 transition-transform" />
             </h2>
@@ -153,11 +154,11 @@ export const NotFound: React.FC = () => {
             to="/login"
             className="p-4 rounded-xl bg-white border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all group"
           >
-            <div className="w-9 h-9 rounded-lg bg-indigo-50 text-[#1F497D] flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
+            <div className="w-9 h-9 rounded-lg bg-indigo-50 text-gov-800 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
               <LogIn className="w-5 h-5" />
             </div>
-            <h2 className="text-xs sm:text-sm font-bold text-slate-900 group-hover:text-[#1F497D] transition-colors flex items-center justify-between">
-              National Gateway
+            <h2 className="text-xs sm:text-sm font-bold text-slate-900 group-hover:text-gov-800 transition-colors flex items-center justify-between">
+              Sign in
               <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:translate-x-1 transition-transform" />
             </h2>
             <p className="text-[11px] text-slate-500 mt-1">
@@ -173,15 +174,7 @@ export const NotFound: React.FC = () => {
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-slate-200/80 bg-white/60 py-6 px-4 text-center text-xs text-slate-500">
-        <p className="font-semibold text-slate-700">
-          TULA — Online Verification System for Weighing and Measuring Instruments
-        </p>
-        <p className="text-[11px] text-slate-400 mt-1">
-          Smart India Hackathon • Problem Statement ID: 26036 • Ministry of Consumer Affairs, Food &amp; Public Distribution
-        </p>
-      </footer>
+      <SiteFooter />
     </div>
   );
 };

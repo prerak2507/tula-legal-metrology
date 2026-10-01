@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { GovBar } from '../components/layout/GovBar';
+import { SiteFooter } from '../components/layout/SiteFooter';
 import { Link, useNavigate } from 'react-router-dom';
 import { storage, WorkflowError } from '../services/storage';
 import { LIVE_STATES } from '../config/geo';
@@ -75,17 +77,18 @@ export const Register: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="bg-white border-b border-slate-200">
+    <div className="min-h-screen w-full flex flex-col bg-paper-50">
+      <GovBar />
+      <header className="bg-paper/95 border-b border-paper-300">
         <div className="max-w-2xl mx-auto px-4 h-16 flex items-center justify-between">
           <Link to="/" aria-label="TULA home"><TulaLogo variant="full" theme="light" size="sm" /></Link>
           <Link to="/login" className="text-sm font-semibold text-gov-700">Sign in</Link>
         </div>
       </header>
-      <main className="max-w-2xl mx-auto px-4 py-6 space-y-4">
+      <main id="main" className="flex-1 w-full max-w-2xl mx-auto px-4 py-6 space-y-4">
         <Link to="/login" className="inline-flex items-center gap-1 text-xs font-semibold text-gov-700"><ArrowLeft className="w-3.5 h-3.5" /> Back</Link>
         <div>
-          <h1 className="text-2xl font-extrabold text-slate-900">Register your business</h1>
+          <h1 className="font-display text-3xl font-semibold tracking-tight text-ink">Register your business</h1>
           <p className="text-sm text-slate-600">For shops, fuel stations, weighbridges and anyone who uses a scale or meter for trade.</p>
         </div>
 
@@ -138,6 +141,7 @@ export const Register: React.FC = () => {
           </form>
         )}
       </main>
+      <SiteFooter />
     </div>
   );
 };

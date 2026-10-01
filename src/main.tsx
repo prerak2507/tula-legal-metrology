@@ -4,6 +4,9 @@ import './index.css'
 import App from './App'
 import { cloud } from './services/cloud'
 import './services/storage'
+import { applyA11yPrefs } from './services/a11y'
+
+applyA11yPrefs()
 
 void cloud.init()
 

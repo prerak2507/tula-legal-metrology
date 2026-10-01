@@ -82,7 +82,7 @@ export const RoleSwitcherDropdown: React.FC<RoleSwitcherDropdownProps> = ({
         title="Account & role settings"
       >
         {/* Avatar */}
-        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#1F497D] to-[#0070C0] text-white font-bold text-[11px] flex items-center justify-center shrink-0 shadow-xs">
+        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-gov-800 to-gov-600 text-white font-bold text-[11px] flex items-center justify-center shrink-0 shadow-xs">
           {currentUser.fullName.charAt(0)}
         </div>
 
@@ -101,7 +101,7 @@ export const RoleSwitcherDropdown: React.FC<RoleSwitcherDropdownProps> = ({
       {isOpen && (
         <div className="absolute right-0 top-full mt-2 w-80 sm:w-[360px] bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden z-50 divide-y divide-slate-100 animate-in fade-in slide-in-from-top-2 duration-150">
           {/* Header — Identity Card */}
-          <div className="p-4 bg-gradient-to-r from-[#1F497D] to-[#0d223f] text-white">
+          <div className="p-4 bg-gradient-to-r from-gov-800 to-gov-950 text-white">
             <div className="flex items-center justify-between mb-2">
               <span className="text-[10px] uppercase font-bold tracking-wider text-sky-300">
                 Active Session
@@ -134,12 +134,12 @@ export const RoleSwitcherDropdown: React.FC<RoleSwitcherDropdownProps> = ({
             </div>
 
             <div className="p-2.5 rounded-xl bg-blue-50/70 border border-blue-200/80 text-[11px] text-blue-900 space-y-1">
-              <p className="font-bold flex items-center gap-1.5 text-[#1F497D]">
-                <Shield className="w-3.5 h-3.5 text-[#0070C0]" />
+              <p className="font-bold flex items-center gap-1.5 text-gov-800">
+                <Shield className="w-3.5 h-3.5 text-gov-600" />
                 <span>Audit &amp; Security Compliance</span>
               </p>
               <p className="text-[10px] text-slate-600 leading-relaxed">
-                In-app role flipping is disabled to preserve statutory audit trails under Section 24. Switch accounts via the Gateway.
+                Each role is a separate account, so every action in the audit trail belongs to one person. Sign out to switch.
               </p>
             </div>
 
@@ -150,7 +150,7 @@ export const RoleSwitcherDropdown: React.FC<RoleSwitcherDropdownProps> = ({
               className="w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-colors flex items-center justify-center gap-2 shadow-xs"
             >
               <LogOut className="w-4 h-4 text-amber-400" />
-              <span>Log Out &amp; Switch Account at Gateway</span>
+              <span>Sign out and switch role</span>
             </Link>
           </div>
 
@@ -159,7 +159,7 @@ export const RoleSwitcherDropdown: React.FC<RoleSwitcherDropdownProps> = ({
             <Link
               to="/"
               onClick={() => setIsOpen(false)}
-              className="text-slate-600 hover:text-[#1F497D] font-bold"
+              className="text-slate-600 hover:text-gov-800 font-bold"
               title="Return to Public Landing Page"
             >
               &larr; Landing Page
@@ -167,7 +167,7 @@ export const RoleSwitcherDropdown: React.FC<RoleSwitcherDropdownProps> = ({
             <Link
               to="/verify"
               onClick={() => setIsOpen(false)}
-              className="text-[#0070C0] hover:text-[#1F497D] font-bold flex items-center gap-1"
+              className="text-gov-600 hover:text-gov-800 font-bold flex items-center gap-1"
             >
               <QrCode className="w-3.5 h-3.5" />
               Live QR Scanner

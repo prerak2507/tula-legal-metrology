@@ -20,13 +20,17 @@ const Login = lazy(() => import('./pages/Login').then(m => ({ default: m.Login }
 const Register = lazy(() => import('./pages/Register').then(m => ({ default: m.Register })));
 const Notifications = lazy(() => import('./pages/Notifications').then(m => ({ default: m.Notifications })));
 const StatusPage = lazy(() => import('./pages/StatusPage').then(m => ({ default: m.StatusPage })));
+const HelpPage = lazy(() => import('./pages/InfoPages').then(m => ({ default: m.HelpPage })));
+const AccessibilityPage = lazy(() => import('./pages/InfoPages').then(m => ({ default: m.AccessibilityPage })));
+const PrivacyPage = lazy(() => import('./pages/InfoPages').then(m => ({ default: m.PrivacyPage })));
+const TermsPage = lazy(() => import('./pages/InfoPages').then(m => ({ default: m.TermsPage })));
 const DemoGuide = lazy(() => import('./pages/DemoGuide').then(m => ({ default: m.DemoGuide })));
 
 const PageSkeleton: React.FC = () => (
   <div className="p-6 space-y-3 animate-pulse" aria-busy="true" aria-label="Loading">
-    <div className="h-6 w-1/3 bg-slate-200 rounded" />
-    <div className="h-4 w-2/3 bg-slate-200 rounded" />
-    <div className="h-32 w-full bg-slate-100 rounded-xl" />
+    <div className="h-6 w-1/3 bg-paper-200 rounded" />
+    <div className="h-4 w-2/3 bg-paper-200 rounded" />
+    <div className="h-32 w-full bg-paper-100 rounded-xl" />
   </div>
 );
 import { NotFound } from './pages/NotFound';
@@ -46,6 +50,10 @@ export const App: React.FC = () => {
         <Route path="/register" element={<Register />} />
         <Route path="/status" element={<StatusPage />} />
         <Route path="/demo" element={<DemoGuide />} />
+        <Route path="/help" element={<HelpPage />} />
+        <Route path="/accessibility" element={<AccessibilityPage />} />
+        <Route path="/privacy" element={<PrivacyPage />} />
+        <Route path="/terms" element={<TermsPage />} />
 
         {/* Authenticated Application Shell with Sidebar */}
         <Route element={<AppShell />}>

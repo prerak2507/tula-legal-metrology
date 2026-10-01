@@ -37,5 +37,7 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react(), localApi()],
     envPrefix: ['VITE_', 'NEXT_PUBLIC_'],
+    // Shown as "Last updated" in the portal footer.
+    define: { __BUILD_DATE__: JSON.stringify(new Date().toISOString()) },
   }
 })

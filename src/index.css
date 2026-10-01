@@ -11,7 +11,7 @@
   }
 
   body {
-    @apply bg-slate-50 text-slate-900 font-sans antialiased min-h-screen selection:bg-sky-200 selection:text-sky-900;
+    @apply bg-paper-50 text-slate-900 font-sans antialiased min-h-screen selection:bg-brass-200 selection:text-ink;
     margin: 0;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -244,3 +244,13 @@
 @media (prefers-reduced-motion: reduce) {
   .stamp-in { animation: none; }
 }
+
+/* ━━━━━━━━━━━ ACCESSIBILITY ━━━━━━━━━━━ */
+:focus-visible { outline: 2px solid #B07D2B; outline-offset: 2px; }
+/* High contrast: darken muted text on light surfaces, underline links, strengthen borders. */
+html.hc :is(.text-slate-300, .text-slate-400, .text-slate-500, .text-slate-600, .text-ink-600, .text-gray-400, .text-gray-500):not(:is(.bg-slate-900, .bg-slate-800, .bg-ink, .bg-ink-900, .bg-ink-800, .bg-gov-800, .bg-gov-900, .bg-gov-950) *) {
+  color: #0B1220 !important;
+}
+html.hc :is(.border-slate-100, .border-slate-200, .border-paper-200, .border-paper-300) { border-color: #3A4D68 !important; }
+html.hc main a:not([class*="bg-"]) { text-decoration: underline; text-underline-offset: 2px; }
+html.hc :focus-visible { outline-width: 3px; }

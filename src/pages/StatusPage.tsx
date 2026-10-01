@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import { GovBar } from '../components/layout/GovBar';
+import { SiteFooter } from '../components/layout/SiteFooter';
 import { Link } from 'react-router-dom';
 import { cloud } from '../services/cloud';
 import { storage } from '../services/storage';
@@ -58,8 +60,9 @@ export const StatusPage: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="bg-white border-b border-slate-200">
+    <div className="min-h-screen w-full flex flex-col bg-paper-50">
+      <GovBar />
+      <header className="bg-paper/95 border-b border-paper-300">
         <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
           <Link to="/" aria-label="TULA home"><TulaLogo variant="full" theme="light" size="sm" /></Link>
           <nav className="flex items-center gap-2 text-sm">
@@ -68,9 +71,9 @@ export const StatusPage: React.FC = () => {
           </nav>
         </div>
       </header>
-      <main className="max-w-5xl mx-auto px-4 py-6 space-y-6">
+      <main id="main" className="flex-1 w-full max-w-5xl mx-auto px-4 py-6 space-y-6">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">What works today, and what is planned</h1>
+          <h1 className="font-display text-3xl sm:text-4xl font-semibold tracking-tight text-ink">What works today, and what is planned</h1>
           <p className="text-sm text-slate-600 mt-1">Mapped to every requirement in SIH problem statement 26036. "Working" means you can do it in the live prototype right now.</p>
         </div>
 
@@ -117,6 +120,7 @@ export const StatusPage: React.FC = () => {
 
         <p className="text-xs text-slate-500">Fee amounts and validity periods in the prototype are demo values. Each State replaces them with its gazetted schedule in the Rules screen.</p>
       </main>
+      <SiteFooter />
     </div>
   );
 };

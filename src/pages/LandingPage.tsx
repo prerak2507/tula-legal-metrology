@@ -8,6 +8,7 @@ import { TulaLogo } from '../components/common/TulaLogo';
 import { ForgeChallenge } from '../components/landing/ForgeChallenge';
 import { InspectorSim } from '../components/landing/InspectorSim';
 import { GuillocheBand } from '../components/landing/Guilloche';
+import { GovBar } from '../components/layout/GovBar';
 import { storage } from '../services/storage';
 import { UserRole } from '../types';
 import { cloud } from '../services/cloud';
@@ -110,6 +111,7 @@ export const LandingPage: React.FC = () => {
 
   return (
     <div className="min-h-screen w-full bg-paper text-ink font-plex">
+      <GovBar />
       <header className="sticky top-0 z-40 bg-paper/90 backdrop-blur border-b border-paper-300">
         <div className="h-[3px] w-full flex" aria-hidden="true"><span className="flex-1 bg-[#FF9933]" /><span className="flex-1 bg-white" /><span className="flex-1 bg-[#138808]" /></div>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
@@ -135,7 +137,7 @@ export const LandingPage: React.FC = () => {
       </header>
 
       {/* Hero: the forgery challenge */}
-      <section className="relative bg-ink text-paper overflow-hidden">
+      <section id="main" className="relative bg-ink text-paper overflow-hidden">
         <GuillocheBand className="absolute inset-x-0 top-10 w-full h-[70%] text-brass/20" lines={22} />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(226,194,127,0.12),transparent_55%)]" aria-hidden="true" />
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6 pt-12 pb-14 sm:pt-20 sm:pb-20 grid lg:grid-cols-[1.05fr_1fr] gap-12 lg:gap-14 items-center">

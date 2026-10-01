@@ -4,12 +4,23 @@ import { cloud, cloudEnabled, CloudStatus } from '../../services/cloud';
 import { Globe, GitBranch, Search, Sparkles, Sliders, Menu, WifiOff, RefreshCw, CheckCircle2 } from 'lucide-react';
 import { Sidebar } from './Sidebar';
 import { RoleSwitcherDropdown } from './RoleSwitcherDropdown';
+import { GovBar } from './GovBar';
+import { SiteFooter } from './SiteFooter';
 import { DemoControlModal } from '../demo/DemoControlModal';
 import { ConnectedWorkflowModal } from '../common/ConnectedWorkflowModal';
 import { GlobalSearchModal } from '../common/GlobalSearchModal';
 import { AiAssistantModal } from '../ai/AiAssistantModal';
 import { storage } from '../../services/storage';
 import { UserProfile, Instrument, Application, VerificationCertificate, NotificationItem } from '../../types';
+
+const ROLE_NAMES: Record<string, string> = {
+  BUSINESS: 'Shop owner',
+  LMO: 'Legal Metrology Officer',
+  GATC: 'Govt. Approved Test Centre',
+  CONTROLLER: 'Controller of Legal Metrology',
+  STATE_ADMIN: 'State administrator',
+  CENTRAL_ADMIN: 'DoCA administrator',
+};
 
 export const AppShell: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<UserProfile>(storage.getCurrentUser());
@@ -70,31 +81,31 @@ export const AppShell: React.FC = () => {
   // Determine page title from route
   const getPageTitle = () => {
     const path = location.pathname;
-    if (path.startsWith('/dashboard')) return 'Dashboard';
+    if (path.startsWith('/dashboard')) return 'Home';
     if (path.startsWith('/instruments')) return 'Instruments';
-    if (path.startsWith('/applications/new')) return 'New Application';
+    if (path.startsWith('/applications/new')) return 'New application';
     if (path.startsWith('/applications')) return 'Applications';
-    if (path.startsWith('/field') || path.startsWith('/inspections')) return 'Field Verification';
+    if (path.startsWith('/field') || path.startsWith('/inspections')) return 'Field inspection';
     if (path.startsWith('/certificates')) return 'Certificates';
     if (path.startsWith('/enforcement')) return 'Enforcement';
     if (path.startsWith('/reports')) return 'Reports';
-    if (path.startsWith('/audit')) return 'Audit Trail';
-    if (path.startsWith('/admin/rules')) return 'Rules & Fees';
-    if (path.startsWith('/verify')) return 'Public Verification';
-    if (path.startsWith('/notifications')) return 'SMS / Email Updates';
+    if (path.startsWith('/audit')) return 'Audit trail';
+    if (path.startsWith('/admin/rules')) return 'Fees and rules';
+    if (path.startsWith('/verify')) return 'Check a certificate';
+    if (path.startsWith('/notifications')) return 'SMS and email updates';
     return 'TULA';
   };
 
   // Portal pages need a signed-in account when the live database is on.
   if (cloudEnabled && !cs.ready) {
-    return <div className="min-h-screen flex items-center justify-center text-sm text-slate-500" aria-busy="true">Checking your sign-in…</div>;
+    return <div className="min-h-screen w-full flex items-center justify-center text-sm text-ink-600 bg-paper-50" aria-busy="true">Checking your sign-in…</div>;
   }
   if (cloudEnabled && !cs.signedIn) {
     return <Navigate to={`/login?next=${encodeURIComponent(location.pathname + location.search)}`} replace />;
   }
 
   return (
-    <div className="min-h-screen bg-slate-50/80">
+    <div className="min-h-screen w-full bg-paper-50">
       {/* Sidebar — starts from top-0 with zero overlap */}
       <Sidebar
         currentUser={currentUser}
@@ -109,13 +120,12 @@ export const AppShell: React.FC = () => {
       <div
         className={`transition-all duration-300 ease-in-out min-w-0 ${
           sidebarCollapsed ? 'lg:ml-[72px]' : 'lg:ml-[260px]'
-        }`}
+        } flex flex-col min-h-screen`}
       >
-        {/* ── Slim Top Accent Strip ── */}
-        <div className="h-[3px] w-full bg-gradient-to-r from-[#FF9933] via-white to-[#138808] sticky top-0 z-30" />
+        <GovBar />
 
         {/* ── Clean Main Header ── */}
-        <header className="sticky top-[3px] z-30 bg-white/95 backdrop-blur-xl border-b border-slate-200/80">
+        <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-xl border-b border-paper-300">
           <div className="flex items-center justify-between h-14 px-3 sm:px-5 gap-2">
 
             {/* Left: Page context */}
@@ -127,10 +137,11 @@ export const AppShell: React.FC = () => {
               >
                 <Menu className="w-5 h-5" />
               </button>
-              <div>
-                <h2 className="text-sm font-bold text-slate-900 leading-tight truncate">{getPageTitle()}</h2>
-                <p className="text-[10px] text-slate-400 font-medium leading-tight hidden xl:block">
-                  Dept. of Consumer Affairs • Ministry of Consumer Affairs, Food &amp; Public Distribution
+              <div className="min-w-0">
+                <h1 className="text-base font-semibold text-ink leading-tight truncate">{getPageTitle()}</h1>
+                <p className="text-[11px] text-ink-600 leading-tight truncate">
+                  <span className="font-semibold text-brass-700">{ROLE_NAMES[currentUser.role] || currentUser.role}</span>
+                  <span className="hidden sm:inline"> · {currentUser.role === 'CENTRAL_ADMIN' ? 'All States' : currentUser.role === 'STATE_ADMIN' ? currentUser.state : `${currentUser.district}, ${currentUser.state}`}</span>
                 </p>
               </div>
             </div>
@@ -158,17 +169,18 @@ export const AppShell: React.FC = () => {
               {/* Search */}
               <button
                 onClick={() => setIsSearchModalOpen(true)}
-                className="hidden md:inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 border border-slate-200/80 text-xs font-medium transition-colors"
+                className="hidden md:inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-paper-50 hover:bg-paper-100 text-ink-600 hover:text-ink border border-paper-300 text-xs font-medium transition-colors"
                 title="Search instruments, applications, certificates (Ctrl+K)"
               >
                 <Search className="w-3.5 h-3.5" />
-                <span>Search...</span>
-                <kbd className="text-[10px] font-mono px-1.5 py-0.5 bg-white rounded border border-slate-200 text-slate-400 ml-1">⌘K</kbd>
+                <span>Search</span>
+                <kbd className="text-[10px] font-readout px-1.5 py-0.5 bg-white rounded border border-paper-300 text-ink-600 ml-1">Ctrl K</kbd>
               </button>
               <button
                 onClick={() => setIsSearchModalOpen(true)}
-                className="md:hidden p-2 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+                className="md:hidden p-2.5 rounded-md text-ink-600 hover:text-ink hover:bg-paper-100 transition-colors"
                 title="Search"
+                aria-label="Search"
               >
                 <Search className="w-4 h-4" />
               </button>
@@ -179,28 +191,28 @@ export const AppShell: React.FC = () => {
               {/* TULA Gemini AI Advisor */}
               <button
                 onClick={() => setIsAiModalOpen(true)}
-                className="inline-flex items-center gap-1.5 p-2 sm:px-2.5 sm:py-1.5 rounded-lg bg-purple-50 hover:bg-purple-100 border border-purple-200/80 text-xs font-bold text-purple-900 transition-all"
+                className="inline-flex items-center gap-1.5 p-2 sm:px-2.5 sm:py-1.5 rounded-md bg-white hover:bg-paper-100 border border-paper-300 text-xs font-semibold text-ink transition-all"
                 title="Ask the TULA help assistant (Google Gemini)"
                 aria-label="Open help assistant"
               >
-                <Sparkles className="w-3.5 h-3.5 text-purple-600" />
-                <span className="hidden sm:inline">Help</span>
+                <Sparkles className="w-3.5 h-3.5 text-brass-700" />
+                <span className="hidden sm:inline">Ask</span>
               </button>
 
               {/* Connected Workflow */}
               <button
                 onClick={() => setIsWorkflowModalOpen(true)}
-                className="hidden lg:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 border border-blue-200/80 text-xs font-semibold text-blue-800 transition-colors"
-                title="View how all 6 stakeholder roles connect in real-time"
+                className="hidden lg:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-white hover:bg-paper-100 border border-paper-300 text-xs font-semibold text-ink transition-colors"
+                title="Trace how one application moved through every role"
               >
-                <GitBranch className="w-3.5 h-3.5 text-blue-600" />
+                <GitBranch className="w-3.5 h-3.5 text-brass-700" />
                 <span>Workflow</span>
               </button>
 
               {/* Landing Page */}
               <Link
                 to="/"
-                className="hidden sm:inline-flex p-2 rounded-lg text-slate-400 hover:text-[#0070C0] hover:bg-blue-50 transition-colors"
+                className="hidden sm:inline-flex p-2 rounded-md text-ink-600 hover:text-ink hover:bg-paper-100 transition-colors"
                 title="Return to Public Landing Page"
                 aria-label="Public home page"
               >
@@ -219,30 +231,22 @@ export const AppShell: React.FC = () => {
           </div>
         </header>
 
-        {/* ── Compact Demo Notice ── */}
-        <div className="bg-amber-50/80 border-b border-amber-200/60 px-5 py-1.5 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <span className="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-200/80 text-amber-900 text-[9px] font-extrabold uppercase tracking-wider border border-amber-300/80">
-              <Sparkles className="w-2.5 h-2.5 text-amber-600 animate-pulse" />
-              Demo
-            </span>
-            <span className="text-[11px] text-amber-800 truncate hidden sm:inline">
-              Prototype on a live database. Demo payments and gateways are marked. <Link to="/status" className="underline font-semibold">What is live and what is planned</Link>
-            </span>
-            <Link to="/status" className="text-[11px] text-amber-800 underline sm:hidden">Prototype status</Link>
-          </div>
+        <div className="bg-brass-200/50 border-b border-brass/30 px-3 sm:px-5 py-1.5 flex items-center justify-between gap-4 text-[11px] text-ink">
+          <p className="min-w-0 truncate">
+            <span className="font-readout font-semibold tracking-wider text-brass-700 mr-2">DEMO</span>
+            <span className="hidden sm:inline">Live database. Payments and SMS / email gateways are simulated. </span>
+            <Link to="/status" className="underline font-semibold">Built vs planned</Link>
+          </p>
           <div className="flex items-center gap-3 shrink-0">
             <button
               onClick={() => setIsDemoModalOpen(true)}
-              className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-white text-[10px] font-semibold transition-colors"
-              title="Demo simulation controls"
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-ink hover:bg-ink-800 text-paper font-semibold transition-colors min-h-[28px]"
+              title="Presenter shortcuts"
             >
-              <Sliders className="w-3 h-3 text-amber-400" />
-              <span className="hidden sm:inline">Controls</span>
+              <Sliders className="w-3 h-3 text-brass-300" />
+              <span className="hidden sm:inline">Shortcuts</span>
             </button>
-            <Link to="/login" className="text-[10px] text-amber-700 hover:text-amber-900 font-bold hover:underline whitespace-nowrap">
-              Switch Account →
-            </Link>
+            <Link to="/login" className="font-semibold hover:underline whitespace-nowrap">Switch role</Link>
           </div>
         </div>
 
@@ -253,29 +257,11 @@ export const AppShell: React.FC = () => {
         )}
 
         {/* Page Content */}
-        <main className="p-3 sm:p-6 lg:p-8 max-w-[1400px] mx-auto">
+        <main id="main" className="flex-1 w-full p-3 sm:p-6 lg:p-8 max-w-[1400px] mx-auto">
           <Outlet />
         </main>
 
-        {/* Floating AI Metrology Assistant Trigger */}
-        <button
-          onClick={() => setIsAiModalOpen(true)}
-          className="fixed bottom-5 right-5 z-30 hidden md:flex items-center gap-2 px-3.5 py-2.5 rounded-full bg-gradient-to-r from-indigo-700 via-purple-700 to-indigo-800 text-white font-semibold text-xs shadow-xl hover:shadow-2xl hover:scale-105 active:scale-95 transition-all border border-purple-400/40 cursor-pointer group"
-          title="Open the TULA help assistant (Gemini)"
-        >
-          <Sparkles className="w-3.5 h-3.5 text-purple-200 group-hover:rotate-12 transition-transform" />
-          <span className="tracking-tight">Help</span>
-        </button>
-
-        {/* Honest Prototype Footer */}
-        <footer className="border-t border-slate-200/80 bg-white px-6 py-4 text-center text-[11px] text-slate-500">
-          <p className="font-semibold text-slate-700">
-            TULA prototype for Smart India Hackathon, problem statement 26036 • Team FriendlyFire
-          </p>
-          <p className="text-[10px] text-slate-400 mt-0.5">
-            Legal Metrology Act, 2009 • Legal Metrology (General) Rules, 2011 • Legal Metrology (Government Approved Test Centre) Rules, 2013
-          </p>
-        </footer>
+        <SiteFooter />
       </div>
 
       {/* Connected Workflow Modal */}

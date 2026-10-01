@@ -8,17 +8,18 @@ export default {
     extend: {
       colors: {
         gov: {
-          50: '#f0f6fc',
-          100: '#e1eef9',
-          200: '#b9dbf2',
-          300: '#7cbfe8',
-          400: '#389fda',
-          500: '#1481c5',
-          600: '#0b66a5',
-          700: '#0a5286',
-          800: '#0d4670',
-          900: '#0f3a5d',
-          950: '#09243c',
+          // Ink scale shared by the public pages and the portal.
+          50: '#F1F3F6',
+          100: '#E3E7EE',
+          200: '#C5CEDB',
+          300: '#97A6BC',
+          400: '#5F7493',
+          500: '#3A5275',
+          600: '#2A4163',
+          700: '#1F3554',
+          800: '#172A45',
+          900: '#0E1A2B',
+          950: '#0A1320',
         },
         emblem: {
           gold: '#c59b27',
@@ -51,7 +52,7 @@ export default {
         }
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
+        sans: ['"IBM Plex Sans"', '"IBM Plex Sans Devanagari"', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
         display: ['Fraunces', 'Georgia', 'serif'],
         plex: ['"IBM Plex Sans"', '"IBM Plex Sans Devanagari"', 'system-ui', 'sans-serif'],
         readout: ['"IBM Plex Mono"', 'ui-monospace', 'monospace'],

@@ -1,4 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { GovBar } from '../components/layout/GovBar';
+import { SiteFooter } from '../components/layout/SiteFooter';
 import { useParams, useSearchParams, useNavigate, Link } from 'react-router-dom';
 import jsQR from 'jsqr';
 import { storage } from '../services/storage';
@@ -225,8 +227,9 @@ export const PublicVerify: React.FC = () => {
   const shown = outcome && 'payload' in outcome ? outcome.payload : undefined;
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="bg-white border-b border-slate-200">
+    <div className="min-h-screen w-full flex flex-col bg-paper-50">
+      <GovBar />
+      <header className="bg-paper/95 border-b border-paper-300">
         <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between gap-3">
           <Link to="/" aria-label="TULA home"><TulaLogo variant="full" theme="light" size="sm" /></Link>
           <nav className="flex items-center gap-2">
@@ -240,9 +243,9 @@ export const PublicVerify: React.FC = () => {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 py-6 space-y-5">
+      <main id="main" className="flex-1 w-full max-w-4xl mx-auto px-4 py-6 space-y-5">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900" lang={lang}>{T.title}</h1>
+          <h1 className={`${lang === 'en' ? 'font-display tracking-tight' : ''} text-3xl sm:text-4xl font-semibold text-ink`} lang={lang}>{T.title}</h1>
           <p className="text-sm text-slate-600 mt-1">
             {T.intro}
           </p>
@@ -377,6 +380,7 @@ export const PublicVerify: React.FC = () => {
           <p>{T.rights}</p>
         </section>
       </main>
+      <SiteFooter />
 
       {reportOpen && (
         <ReportModal
