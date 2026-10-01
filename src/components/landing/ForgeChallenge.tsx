@@ -2,18 +2,19 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { SEED_SIGNATURES } from '../../data/seedSignatures';
 import { b64urlToBytes, bytesToB64url, verifySignedQr } from '../../services/certSigning';
-import { ShieldCheck, ShieldX, RotateCcw, Pencil, ArrowRight } from 'lucide-react';
+import { ShieldCheck, ShieldX, RotateCcw, ArrowRight } from 'lucide-react';
+import { Rosette } from './Guilloche';
 
-// A real certificate signed by TULA's issuing key. The visitor can edit it; the badge is the
+// A real certificate signed by TULA's issuing key. The visitor can edit it; the stamp is the
 // exact check a buyer's phone runs on a scanned QR.
 const SEED = SEED_SIGNATURES['CERT-2026-08912'];
 const ORIGINAL = JSON.parse(new TextDecoder().decode(b64urlToBytes(SEED.p))) as Record<string, string>;
 
 const FIELDS: { key: string; label: string; hint: string }[] = [
-  { key: 'exp', label: 'Valid until', hint: 'Try 2029-01-17' },
-  { key: 'cap', label: 'Capacity', hint: 'Try 500 kg' },
-  { key: 'org', label: 'Owner', hint: 'Any other shop' },
-  { key: 'sn', label: 'Serial no.', hint: 'Copy onto another scale' },
+  { key: 'exp', label: 'Valid until', hint: 'try 2029-01-17' },
+  { key: 'cap', label: 'Capacity', hint: 'try 500 kg' },
+  { key: 'org', label: 'Owner', hint: 'any other shop' },
+  { key: 'sn', label: 'Serial no.', hint: 'copy onto another scale' },
 ];
 
 export const ForgeChallenge: React.FC = () => {
@@ -40,60 +41,81 @@ export const ForgeChallenge: React.FC = () => {
   const ok = state === 'genuine';
 
   return (
-    <div className="relative">
-      <div className={`absolute -inset-3 rounded-[28px] blur-2xl opacity-40 transition-colors duration-500 ${ok ? 'bg-emerald-400' : 'bg-rose-500'}`} aria-hidden="true" />
-      <div className="relative rounded-3xl bg-white shadow-2xl border border-slate-200 overflow-hidden">
-        <div className={`px-5 py-4 flex items-center justify-between gap-3 text-white transition-colors duration-300 ${ok ? 'bg-emerald-600' : 'bg-rose-600'}`} aria-live="polite">
-          <div className="flex items-center gap-2.5">
-            {ok ? <ShieldCheck className="w-7 h-7" /> : <ShieldX className="w-7 h-7" />}
-            <div>
-              <p className="font-extrabold text-lg leading-tight">{state === 'checking' ? 'Checking…' : ok ? 'Genuine certificate' : 'Rejected: edited copy'}</p>
-              <p className="text-xs text-white/85">{ok ? 'Signature matches every field' : `Changed: ${changed.join(', ')}. The signature no longer matches.`}</p>
+    <div className="relative font-plex">
+      {/* Instruction tab */}
+      <div className="absolute -top-3 left-6 z-10 px-3 py-1 rounded-full bg-brass-300 text-ink text-[11px] font-bold tracking-wide shadow">
+        Try to forge it. Edit any field.
+      </div>
+
+      <div className="relative rounded-[6px] bg-paper-50 text-ink shadow-[0_30px_60px_-20px_rgba(0,0,0,0.6)] p-2">
+        {/* Double security border */}
+        <div className="relative rounded-[3px] border-2 border-brass/70 p-1">
+          <div className="relative overflow-hidden rounded-[2px] border border-brass/40 px-5 pt-6 pb-4 sm:px-6">
+            <Rosette className="pointer-events-none absolute -right-16 -top-16 w-64 h-64 text-brass/15" />
+
+            <div className="relative flex items-start justify-between gap-3">
+              <div>
+                <p className="font-readout text-[10px] uppercase tracking-[0.2em] text-brass-700">Legal Metrology · {ORIGINAL.st}</p>
+                <h3 className="font-display text-xl sm:text-2xl font-semibold leading-tight mt-1">Certificate of Verification</h3>
+                <p className="text-xs text-ink-600 mt-0.5">{ORIGINAL.cat}</p>
+              </div>
+              <p className="font-readout text-xs font-semibold text-ink-700 text-right whitespace-nowrap">{ORIGINAL.n}</p>
+            </div>
+
+            <div className="relative mt-5 grid grid-cols-2 gap-x-5 gap-y-4">
+              {FIELDS.map(f => {
+                const dirty = values[f.key] !== ORIGINAL[f.key];
+                return (
+                  <label key={f.key} className="block">
+                    <span className="block text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-600">{f.label}</span>
+                    <input
+                      value={values[f.key]}
+                      onChange={e => edit(f.key, e.target.value)}
+                      aria-label={`${f.label} (editable)`}
+                      className={`mt-1 w-full bg-transparent border-0 border-b-2 border-dashed px-0.5 py-1.5 text-sm font-semibold outline-none transition-colors min-h-[40px] ${dirty ? 'border-seal text-seal-700 bg-seal-50/60' : 'border-paper-400 focus:border-ink focus:bg-white/60'}`}
+                    />
+                    <span className="text-[10px] text-ink-600/70">{f.hint}</span>
+                  </label>
+                );
+              })}
+            </div>
+
+            {/* Rubber stamp */}
+            <div className="relative mt-4 flex items-end justify-between gap-3 min-h-[96px]">
+              <p className="text-[11px] text-ink-600 max-w-[60%]">
+                Checked in your browser with TULA's public key, the same way a buyer's phone checks a scanned QR.
+              </p>
+              {state !== 'checking' && (
+                <div key={state} className={`stamp-in shrink-0 w-[104px] h-[104px] rounded-full border-[3px] flex items-center justify-center ${ok ? 'border-verify text-verify' : 'border-seal text-seal'}`} style={{ transform: 'rotate(-14deg)' }}>
+                  <div className={`w-[88px] h-[88px] rounded-full border flex flex-col items-center justify-center text-center ${ok ? 'border-verify' : 'border-seal'}`}>
+                    {ok ? <ShieldCheck className="w-5 h-5" /> : <ShieldX className="w-5 h-5" />}
+                    <span className="font-readout font-bold text-[13px] tracking-[0.12em] mt-0.5">{ok ? 'GENUINE' : 'FORGED'}</span>
+                    <span className="font-readout text-[8px] tracking-[0.1em]">{ok ? 'SIGNATURE OK' : 'SIG. MISMATCH'}</span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
-          {!ok && (
-            <button onClick={() => setValues({ ...ORIGINAL })} className="shrink-0 inline-flex items-center gap-1 px-3 py-2 rounded-lg bg-white/15 hover:bg-white/25 text-xs font-bold">
-              <RotateCcw className="w-3.5 h-3.5" /> Undo
-            </button>
-          )}
-        </div>
-
-        <div className="p-5">
-          <div className="flex items-baseline justify-between gap-2">
-            <p className="font-mono font-bold text-slate-900">{ORIGINAL.n}</p>
-            <p className="text-[11px] text-slate-500">Verification certificate · {ORIGINAL.st}</p>
-          </div>
-          <p className="text-sm text-slate-600">{ORIGINAL.cat}</p>
-
-          <div className="mt-4 grid grid-cols-2 gap-3">
-            {FIELDS.map(f => {
-              const dirty = values[f.key] !== ORIGINAL[f.key];
-              return (
-                <label key={f.key} className="block">
-                  <span className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wide text-slate-500">
-                    {f.label} <Pencil className="w-3 h-3" />
-                  </span>
-                  <input
-                    value={values[f.key]}
-                    onChange={e => edit(f.key, e.target.value)}
-                    aria-label={`${f.label} (editable)`}
-                    className={`mt-1 w-full rounded-lg border px-2.5 py-2 text-sm font-semibold outline-none transition-colors ${dirty ? 'border-rose-400 bg-rose-50 text-rose-900' : 'border-slate-200 bg-slate-50 text-slate-900 focus:border-gov-500 focus:bg-white'}`}
-                  />
-                  <span className="text-[10px] text-slate-400">{f.hint}</span>
-                </label>
-              );
-            })}
-          </div>
-
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3 text-[11px] text-slate-500">
-            <span>Checked in your browser with TULA's public key, the same way a buyer's phone checks a scanned QR. No server involved.</span>
-            <Link to={`/verify/${encodeURIComponent(ORIGINAL.n)}`} className="inline-flex items-center gap-1 font-bold text-gov-700 hover:underline">Open the real one <ArrowRight className="w-3.5 h-3.5" /></Link>
-          </div>
-          {attempts >= 2 && (
-            <p className="mt-2 text-xs font-semibold text-slate-700">{attempts} forgery attempts, {attempts} caught. That is the point.</p>
-          )}
         </div>
       </div>
+
+      {/* Result line */}
+      <div className={`mt-3 rounded-lg px-4 py-3 flex items-center justify-between gap-3 text-sm transition-colors ${ok ? 'bg-verify text-white' : state === 'checking' ? 'bg-ink-700 text-paper' : 'bg-seal text-white'}`} aria-live="polite">
+        <p>
+          <strong>{state === 'checking' ? 'Checking…' : ok ? 'Genuine. ' : 'Rejected. '}</strong>
+          {state === 'checking' ? '' : ok ? 'The signature matches every field.' : `You changed ${changed.join(', ').toLowerCase()}, so the signature no longer matches.`}
+        </p>
+        {ok ? (
+          <Link to={`/verify/${encodeURIComponent(ORIGINAL.n)}`} className="shrink-0 inline-flex items-center gap-1 font-bold underline-offset-2 hover:underline">Open it <ArrowRight className="w-4 h-4" /></Link>
+        ) : state === 'rejected' && (
+          <button onClick={() => setValues({ ...ORIGINAL })} className="shrink-0 inline-flex items-center gap-1 px-3 py-2 rounded-md bg-white/15 hover:bg-white/25 text-xs font-bold min-h-[36px]">
+            <RotateCcw className="w-3.5 h-3.5" /> Undo
+          </button>
+        )}
+      </div>
+      {attempts >= 2 && (
+        <p className="mt-2 text-xs text-paper/70">{attempts} forgery attempts, {attempts} caught.</p>
+      )}
     </div>
   );
 };

@@ -2,20 +2,21 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { storage } from '../services/storage';
 import { UserRole } from '../types';
-import { 
-  ShieldCheck, 
-  ArrowRight, 
-  UserCheck, 
-  QrCode, 
-  Lock, 
-  Mail,
-  Building,
-  Globe,
-  KeyRound,
-  CheckCircle2,
-  Fingerprint
+import {
+  ArrowLeft, ArrowRight, QrCode, Lock, Mail, Store, ClipboardCheck, FlaskConical, Landmark, Building2, Globe2, Loader2, UserPlus,
 } from 'lucide-react';
 import { TulaLogo } from '../components/common/TulaLogo';
+import { GuillocheBand } from '../components/landing/Guilloche';
+
+// Short labels so all six accounts fit on one screen. Names and places come from the seeded accounts.
+const ROLE_META: Record<string, { label: string; code: string; icon: React.ElementType }> = {
+  BUSINESS: { label: 'Shop owner', code: 'BUS', icon: Store },
+  LMO: { label: 'Field officer', code: 'LMO', icon: ClipboardCheck },
+  GATC: { label: 'Test centre', code: 'GATC', icon: FlaskConical },
+  CONTROLLER: { label: 'Controller', code: 'CTRL', icon: Landmark },
+  STATE_ADMIN: { label: 'State admin', code: 'STATE', icon: Building2 },
+  CENTRAL_ADMIN: { label: 'DoCA admin', code: 'DOCA', icon: Globe2 },
+};
 
 export const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -25,22 +26,11 @@ export const Login: React.FC = () => {
   const [busyRole, setBusyRole] = useState<string | null>(null);
   const next = new URLSearchParams(window.location.search).get('next') || '/dashboard';
 
-  // Built from the seeded evaluator accounts, so names and badges always match the database.
-  const ROLE_META: Record<string, { label: string; icon: string }> = {
-    BUSINESS: { label: 'Commercial Business Occupier', icon: '💼' },
-    LMO: { label: 'Legal Metrology Officer (Inspector)', icon: '🔍' },
-    GATC: { label: 'Government Approved Test Centre', icon: '🔬' },
-    CONTROLLER: { label: 'Controller of Legal Metrology', icon: '⚖️' },
-    STATE_ADMIN: { label: 'State Administrator', icon: '🏛️' },
-    CENTRAL_ADMIN: { label: 'Central Administrator (DoCA)', icon: '🇮🇳' },
-  };
   const demoAccounts = storage.getAllDemoUsers().map(u => ({
     role: u.role,
-    label: ROLE_META[u.role]?.label || u.role,
-    icon: ROLE_META[u.role]?.icon || '👤',
-    email: u.email,
-    name: `${u.fullName} (${u.role === 'CENTRAL_ADMIN' ? 'All States' : `${u.district}, ${u.state}`})`,
-    clearance: u.badgeNumber || u.gatcCode || u.designation || u.organization,
+    meta: ROLE_META[u.role] || { label: u.role, code: u.role, icon: Building2 },
+    name: u.fullName,
+    place: u.role === 'CENTRAL_ADMIN' ? 'All States' : `${u.district}, ${u.state}`,
   }));
 
   const handleOneClickLogin = async (role: UserRole) => {
@@ -70,144 +60,105 @@ export const Login: React.FC = () => {
     }
   };
 
+  const input = 'w-full bg-paper-50 border border-paper-300 rounded-md pl-9 pr-3 py-2.5 text-sm text-ink outline-none focus:border-ink focus:ring-2 focus:ring-ink/10 min-h-[44px]';
+
   return (
-    <div className="max-w-4xl mx-auto py-6 px-4 space-y-6">
-      {/* Top Breadcrumb Navigation */}
-      <div className="flex items-center justify-between pb-3 border-b border-slate-200">
-        <Link
-          to="/"
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-[#1F497D] transition-colors"
-        >
-          <Globe className="w-4 h-4 text-[#0070C0]" />
-          <span>&larr; Back to Public Landing Page</span>
-        </Link>
-        <Link
-          to="/verify"
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#0070C0] hover:text-[#1F497D] transition-colors"
-        >
-          <QrCode className="w-3.5 h-3.5" />
-          <span>Public Live QR Scanner</span>
-        </Link>
-      </div>
-
-      {/* Brand Header */}
-      <div className="text-center space-y-3">
-        <div className="flex justify-center">
-          <TulaLogo variant="full" theme="light" size="lg" />
+    <div className="w-full flex-1 min-h-[100dvh] lg:h-[100dvh] grid lg:grid-cols-[5fr_7fr] font-plex bg-paper text-ink">
+      {/* Brand panel (desktop) */}
+      <aside className="relative hidden lg:flex flex-col justify-between bg-ink text-paper p-10 xl:p-12 overflow-hidden">
+        <GuillocheBand className="absolute inset-x-0 top-1/3 w-full h-1/2 text-brass/20" lines={20} />
+        <div className="relative">
+          <Link to="/" aria-label="TULA home" className="inline-flex items-baseline gap-2.5">
+            <span className="font-display text-3xl font-semibold tracking-tight">TULA</span>
+            <span lang="hi" className="text-xl font-semibold text-brass-300">तुला</span>
+          </Link>
         </div>
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-[11px] font-semibold text-blue-900">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-          <span>National Legal Metrology Authentication Gateway</span>
-          <span className="text-slate-300">•</span>
-          <span>SIH 26036 Prototype</span>
-        </div>
-        <p className="text-xs sm:text-sm text-slate-600 max-w-lg mx-auto">
-          Department of Consumer Affairs, Ministry of Consumer Affairs, Food &amp; Public Distribution
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
-        {/* Left: 1-Click Demo Personas */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-md space-y-4">
-          <div className="border-b border-slate-100 pb-3">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-              Instant Access
-            </span>
-            <h2 className="text-base font-bold text-slate-900 mt-1">Evaluator accounts</h2>
-            <p className="text-xs text-slate-500">
-              Real accounts on the live database, one per role. Tap to sign in. Password for all six: <span className="font-mono font-bold text-slate-800">TulaDemo@2026</span>
-            </p>
+        <div className="relative">
+          <p className="font-readout text-xs tracking-[0.18em] uppercase text-brass-300">SIH 2026 · PS 26036</p>
+          <h1 className="font-display text-4xl xl:text-5xl font-semibold leading-[1.05] tracking-tight mt-4">
+            One record for every scale.
+            <span className="block italic font-normal text-brass-300 mt-1">From application to a QR anyone can check.</span>
+          </h1>
+          <div className="mt-8 grid gap-2.5 max-w-md">
+            <Link to="/register" className="group flex items-center gap-3 rounded-md bg-paper/5 border border-paper/15 hover:bg-paper/10 px-4 py-3">
+              <UserPlus className="w-5 h-5 text-brass-300 shrink-0" />
+              <span className="flex-1 text-sm"><strong className="block font-semibold">New business? Register</strong><span className="text-paper/60">Add your scales and apply online. About two minutes.</span></span>
+              <ArrowRight className="w-4 h-4 text-paper/60 group-hover:translate-x-0.5 transition-transform" />
+            </Link>
+            <Link to="/verify" className="group flex items-center gap-3 rounded-md bg-paper/5 border border-paper/15 hover:bg-paper/10 px-4 py-3">
+              <QrCode className="w-5 h-5 text-brass-300 shrink-0" />
+              <span className="flex-1 text-sm"><strong className="block font-semibold">Buyer? Check a certificate</strong><span className="text-paper/60">Scan the QR. No login needed.</span></span>
+              <ArrowRight className="w-4 h-4 text-paper/60 group-hover:translate-x-0.5 transition-transform" />
+            </Link>
           </div>
+        </div>
+        <p className="relative text-xs text-paper/50">Officer sign-in through e-Pramaan is planned for the pilot. A student prototype, not an official Government of India website.</p>
+      </aside>
 
-          <div className="space-y-2">
-            {demoAccounts.map(acc => (
-              <button
-                key={acc.role}
-                type="button"
-                onClick={() => handleOneClickLogin(acc.role)}
-                disabled={busyRole !== null}
-                className="w-full p-3 rounded-xl border border-slate-200 hover:border-[#0070C0] hover:bg-blue-50/40 text-left transition-all flex items-center justify-between group"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl p-1 bg-slate-50 rounded-lg border border-slate-100 shadow-2xs shrink-0">
-                    {acc.icon}
-                  </span>
-                  <div>
-                    <h3 className="font-bold text-xs text-slate-900 group-hover:text-[#1F497D]">{acc.label}</h3>
-                    <p className="text-[11px] text-slate-500 font-medium">{busyRole === acc.role ? 'Signing in…' : acc.name}</p>
-                    <p className="text-[10px] text-slate-400 font-mono">{acc.email}</p>
-                    <span className="text-[9px] font-mono text-[#0070C0] bg-blue-50 px-1.5 py-0.5 rounded inline-block mt-0.5">
-                      {acc.clearance}
+      {/* Sign-in */}
+      <main className="flex flex-col px-4 py-4 sm:px-8 sm:py-6 lg:px-12 lg:py-8 lg:overflow-y-auto">
+        <div className="flex items-center justify-between gap-3">
+          <Link to="/" className="lg:hidden" aria-label="TULA home"><TulaLogo variant="full" theme="light" size="sm" /></Link>
+          <Link to="/" className="hidden lg:inline-flex items-center gap-1.5 text-sm font-medium text-ink-600 hover:text-ink"><ArrowLeft className="w-4 h-4" /> Home</Link>
+          <Link to="/verify" className="inline-flex items-center gap-1.5 text-sm font-semibold text-ink hover:underline min-h-[44px]"><QrCode className="w-4 h-4" /> Check a certificate</Link>
+        </div>
+
+        <div className="w-full max-w-xl mx-auto my-auto py-4 lg:py-6">
+          <h2 className="font-display text-[1.75rem] sm:text-4xl font-semibold tracking-tight leading-tight">Sign in</h2>
+          <p className="text-sm text-ink-600 mt-1">
+            Tap an evaluator account to enter that role on the live database. Password for all six: <span className="font-readout font-semibold text-ink">TulaDemo@2026</span>
+          </p>
+
+          <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {demoAccounts.map(acc => {
+              const Icon = acc.meta.icon;
+              return (
+                <button key={acc.role} type="button" onClick={() => handleOneClickLogin(acc.role)} disabled={busyRole !== null}
+                  className="group text-left rounded-md bg-paper-50 border border-paper-300 hover:border-ink hover:bg-white px-3 py-2.5 transition-colors disabled:opacity-60 min-h-[64px]">
+                  <span className="flex items-center justify-between gap-2">
+                    <span className="flex items-center gap-1.5 font-semibold text-sm">
+                      {busyRole === acc.role ? <Loader2 className="w-4 h-4 animate-spin text-brass-700" /> : <Icon className="w-4 h-4 text-brass-700" />}
+                      {acc.meta.label}
                     </span>
-                  </div>
-                </div>
-                <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-[#0070C0] group-hover:translate-x-0.5 transition-transform shrink-0" />
-              </button>
-            ))}
+                    <span className="font-readout text-[9px] tracking-wider text-ink-600 hidden sm:inline">{acc.meta.code}</span>
+                  </span>
+                  <span className="block text-[11px] text-ink-600 truncate mt-0.5">{busyRole === acc.role ? 'Signing in…' : acc.name}</span>
+                  <span className="block text-[10px] text-ink-600/70 truncate">{acc.place}</span>
+                </button>
+              );
+            })}
           </div>
+
+          <div className="flex items-center gap-3 my-4 text-[11px] uppercase tracking-[0.16em] text-ink-600">
+            <span className="flex-1 h-px bg-paper-300" /> or with email <span className="flex-1 h-px bg-paper-300" />
+          </div>
+
+          <form onSubmit={handlePasswordLogin} className="grid sm:grid-cols-2 gap-2.5">
+            <label className="block">
+              <span className="sr-only">Email</span>
+              <span className="relative block">
+                <Mail className="w-4 h-4 text-ink-600 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input type="email" required placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} autoComplete="email" className={input} />
+              </span>
+            </label>
+            <label className="block">
+              <span className="sr-only">Password</span>
+              <span className="relative block">
+                <Lock className="w-4 h-4 text-ink-600 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input type="password" required placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} autoComplete="current-password" className={input} />
+              </span>
+            </label>
+            <button type="submit" disabled={busyRole !== null} className="sm:col-span-2 inline-flex items-center justify-center gap-2 bg-ink hover:bg-ink-800 text-paper font-semibold rounded-md text-sm disabled:opacity-50 min-h-[46px]">
+              {busyRole === 'password' ? <><Loader2 className="w-4 h-4 animate-spin" /> Signing in…</> : <>Sign in <ArrowRight className="w-4 h-4" /></>}
+            </button>
+          </form>
+          {loginError && <p role="alert" className="mt-3 text-sm text-seal bg-seal-50 border border-seal/30 rounded-md px-3 py-2">{loginError}</p>}
+
+          <p className="lg:hidden mt-4 text-sm text-ink-600">
+            New business? <Link to="/register" className="font-semibold text-ink underline">Register in two minutes</Link>
+          </p>
         </div>
-
-        {/* Right: National SSO & Custom Credentials Sign In */}
-        <div className="space-y-4">
-          {/* New business registration */}
-          <div className="bg-gradient-to-br from-[#1F497D] to-[#0d223f] text-white p-6 rounded-2xl shadow-lg space-y-3">
-            <span className="text-[10px] uppercase font-bold tracking-wider text-sky-300">New here?</span>
-            <h2 className="text-base font-bold">Register your business</h2>
-            <p className="text-xs text-slate-300 leading-relaxed">Create an account, add your scales or pumps, and apply for verification online. Takes about two minutes.</p>
-            <Link to="/register" className="w-full py-3 px-4 rounded-xl bg-white hover:bg-slate-100 text-[#1F497D] font-bold text-sm flex items-center justify-center gap-2">
-              <Fingerprint className="w-4 h-4 text-[#0070C0]" /> Create business account
-            </Link>
-            <p className="text-[11px] text-slate-400">Officer sign-in through e-Pramaan single sign-on is planned for the pilot. The prototype uses the evaluator accounts listed here.</p>
-          </div>
-
-          {/* Registered account sign-in (one-time code) */}
-          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-md space-y-4">
-            <div>
-              <h2 className="text-sm font-bold text-slate-900">Sign in</h2>
-              <p className="text-[11px] text-slate-500">Business accounts and any evaluator account</p>
-            </div>
-            <form onSubmit={handlePasswordLogin} className="space-y-3 text-xs">
-              <label className="block">
-                <span className="block font-semibold text-slate-700 mb-1">Email</span>
-                <span className="relative block">
-                  <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
-                  <input type="email" required value={email} onChange={e => setEmail(e.target.value)} autoComplete="email"
-                    className="w-full bg-slate-50 border border-slate-300 rounded-lg pl-9 pr-3 py-2.5 text-sm" />
-                </span>
-              </label>
-              <label className="block">
-                <span className="block font-semibold text-slate-700 mb-1">Password</span>
-                <span className="relative block">
-                  <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
-                  <input type="password" required value={password} onChange={e => setPassword(e.target.value)} autoComplete="current-password"
-                    className="w-full bg-slate-50 border border-slate-300 rounded-lg pl-9 pr-3 py-2.5 text-sm" />
-                </span>
-              </label>
-              <button type="submit" disabled={busyRole !== null} className="w-full bg-[#1F497D] hover:bg-[#163a66] text-white font-bold py-3 rounded-lg text-sm disabled:opacity-50">
-                {busyRole === 'password' ? 'Signing in…' : 'Sign in'}
-              </button>
-            </form>
-            {loginError && <p role="alert" className="text-xs text-rose-700">{loginError}</p>}
-          </div>
-
-          {/* Public Verification Shortcut */}
-          <div className="bg-slate-900 text-white p-5 rounded-2xl shadow-md border border-slate-800 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <QrCode className="w-7 h-7 text-sky-400 shrink-0" />
-              <div>
-                <h3 className="font-bold text-xs text-white">Public Certificate Verification</h3>
-                <p className="text-[11px] text-slate-400">Scan QR or enter certificate number without logging in</p>
-              </div>
-            </div>
-            <Link
-              to="/verify"
-              className="px-3.5 py-1.5 rounded-lg bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-xs transition-colors shrink-0"
-            >
-              Verify QR
-            </Link>
-          </div>
-        </div>
-      </div>
+      </main>
     </div>
   );
 };

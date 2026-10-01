@@ -220,3 +220,27 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+/* ━━━━━━━━━━━ LANDING / SIGN-IN IDENTITY ━━━━━━━━━━━ */
+/* Ruler ticks: a short tick every 8px, a long one every 40px. */
+.ruler {
+  height: 10px;
+  background:
+    repeating-linear-gradient(90deg, currentColor 0 1px, transparent 1px 40px) top / 100% 10px no-repeat,
+    repeating-linear-gradient(90deg, currentColor 0 1px, transparent 1px 8px) top / 100% 5px no-repeat;
+}
+.paper-grain {
+  background-color: #F6F1E7;
+  background-image: radial-gradient(rgba(14, 26, 43, 0.045) 1px, transparent 1px);
+  background-size: 6px 6px;
+}
+.font-display { font-optical-sizing: auto; }
+@keyframes stampIn {
+  0% { transform: rotate(-14deg) scale(1.35); opacity: 0; }
+  60% { transform: rotate(-14deg) scale(0.96); opacity: 1; }
+  100% { transform: rotate(-14deg) scale(1); opacity: 1; }
+}
+.stamp-in { animation: stampIn 0.35s cubic-bezier(.2,.8,.2,1) both; }
+@media (prefers-reduced-motion: reduce) {
+  .stamp-in { animation: none; }
+}
