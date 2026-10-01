@@ -332,6 +332,13 @@ export const cloud = {
     return error ? null : (data as Record<string, number>);
   },
 
+  /** Looks up an approval mark (e.g. IND/09/25/235) in the copy of DoCA's Model Approval register. */
+  async lookupModelApproval(mark: string): Promise<unknown | null> {
+    if (!sb || !navigator.onLine) return null;
+    const { data, error } = await sb.rpc('lookup_model_approval', { mark });
+    return error ? null : data;
+  },
+
   /** Current fee schedule (public read). */
   async publicFeeRules(): Promise<unknown[] | null> {
     if (!sb || !navigator.onLine) return null;

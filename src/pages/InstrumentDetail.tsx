@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { ModelApprovalCheck } from '../components/common/ModelApprovalCheck';
 import { useParams, Link } from 'react-router-dom';
 import { storage } from '../services/storage';
 import { 
@@ -187,6 +188,7 @@ export const InstrumentDetail: React.FC = () => {
               <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 space-y-1">
                 <span className="text-slate-500 font-medium">Model Approval Number (DoCA)</span>
                 <p className="font-mono font-bold text-gov-800 text-sm">{instrument.modelApprovalNumber}</p>
+                <ModelApprovalCheck mark={instrument.modelApprovalNumber} manufacturer={instrument.manufacturer} compact />
               </div>
 
               <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 space-y-1">

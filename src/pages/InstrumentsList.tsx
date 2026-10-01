@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { ModelApprovalCheck } from '../components/common/ModelApprovalCheck';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { LIVE_STATES, CATEGORY_LABELS, ACCURACY_CLASSES } from '../config/geo';
 import { WorkflowError } from '../services/storage';
@@ -415,11 +416,14 @@ export const InstrumentsList: React.FC = () => {
                   <label className="block font-semibold text-slate-700 mb-1">Model approval number *</label>
                   <input
                     type="text"
-                    placeholder="e.g. IND/09/2023/184"
+                    placeholder="As on the nameplate, e.g. IND/09/25/235"
                     value={newModelApproval}
                     onChange={e => setNewModelApproval(e.target.value)}
                     className="w-full bg-slate-50 border border-slate-300 rounded p-2 text-xs font-mono"
                   />
+                  {newModelApproval.trim().length >= 10 && (
+                    <div className="mt-2"><ModelApprovalCheck mark={newModelApproval} manufacturer={newManufacturer} compact /></div>
+                  )}
                 </div>
 
                 <div>

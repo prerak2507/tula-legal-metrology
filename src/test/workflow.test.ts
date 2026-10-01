@@ -10,7 +10,7 @@ async function registerAndApply() {
   });
   const inst = await storage.registerInstrument({
     category: 'COUNTER_MACHINE', categoryName: 'Counter scale 30 kg', accuracyClass: 'CLASS_III', manufacturer: 'Test Scales',
-    model: 'T-30', modelApprovalNumber: 'IND/09/2026/001', serialNumber: `SN-${Date.now()}`, capacity: '30 kg', scaleInterval: 'e = 5 g',
+    model: 'T-30', modelApprovalNumber: 'IND/09/26/1', serialNumber: `SN-${Date.now()}`, capacity: '30 kg', scaleInterval: 'e = 5 g',
     purchaseDate: '2026-09-01', installationDate: '2026-09-01', ownerId: user.id, ownerName: user.fullName, organization: user.organization,
     installationAddress: 'Shop 1, Lajpat Nagar', state: 'Delhi', district: 'Central Delhi', latitude: 28.57, longitude: 77.24,
     nextVerificationDueDate: '', photos: [],
