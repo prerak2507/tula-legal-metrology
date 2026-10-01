@@ -86,6 +86,9 @@ export const PublicVerify: React.FC = () => {
   const switchLang = (l: Lang) => { setLang(l); try { localStorage.setItem('tula-lang', l); } catch { /* ignore */ } };
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  // Bring the verdict into view as soon as there is one: a buyer who scans a QR must see the answer
+  // first, not the camera box. Instant scroll when the reader prefers reduced motion.
+  const resultRef = useRef<HTMLElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const rafRef = useRef<number>(0);
 
@@ -224,6 +227,22 @@ export const PublicVerify: React.FC = () => {
     setBusy(false);
   };
 
+  const scrolledOnce = useRef(false);
+  useEffect(() => {
+    // A scanned link is a fresh visit: do not let the browser restore an old scroll position over the verdict.
+    if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+    return () => { if ('scrollRestoration' in history) history.scrollRestoration = 'auto'; };
+  }, []);
+  useEffect(() => {
+    if (busy || !outcome || !resultRef.current) return;
+    const el = resultRef.current;
+    // First verdict (usually from a scanned QR): jump straight to it. Later ones: smooth, unless reduced motion.
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    const behavior: ScrollBehavior = !scrolledOnce.current || reduce ? 'auto' : 'smooth';
+    scrolledOnce.current = true;
+    requestAnimationFrame(() => el.scrollIntoView({ behavior, block: 'start' }));
+  }, [outcome, busy]);
+
   const shown = outcome && 'payload' in outcome ? outcome.payload : undefined;
 
   return (
@@ -311,7 +330,7 @@ export const PublicVerify: React.FC = () => {
         {busy && <div className="flex items-center justify-center gap-2 text-sm text-slate-600 py-6"><Loader2 className="w-5 h-5 animate-spin" /> {T.checking}</div>}
 
         {!busy && outcome && (
-          <section aria-live="polite" className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+          <section ref={resultRef} aria-live="polite" className="bg-white rounded-lg border border-slate-200 overflow-hidden scroll-mt-4">
             {outcome.kind === 'GENUINE' && (
               <Banner tone="green" icon={<ShieldCheck className="w-7 h-7" />} title={T.genuine}
                 text={T.genuineText(outcome.payload.exp)} />
