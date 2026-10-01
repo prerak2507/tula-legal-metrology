@@ -1,0 +1,16 @@
+﻿W|960|540
+L|1|115.085|446.4|164.075|15.6|https://tula-legal-metrology.vercel.app
+L|4|602.6399|336.24|104.4|104.4|https://tula-legal-metrology.vercel.app/demo
+L|4|716.4|432.24|189.155|14.4|https://tula-legal-metrology.vercel.app/demo
+L|6|628.475|141.84|114.255|14.6|https://lmdca.gujarat.gov.in/clmdca/documents/the-legal-metrology-act-2009.pdf
+L|6|628.475|156.44|203.005|14.6|https://weightnmeasures.delhi.gov.in/sites/default/files/inline-files/delhi_legal_metrology_enforcement_rules_2011_english.pdf
+L|6|843.6|156.44|60.50504|14.6|https://weightnmeasures.delhi.gov.in/sites/default/files/inline-files/gazette_notification_3.pdf
+L|6|628.475|171.04|148.505|14.6|https://lmdca.gujarat.gov.in/en/fee-structure
+L|6|628.475|185.64|142.755|14.6|https://weightnmeasures.delhi.gov.in/sites/default/files/inline-files/w_m_manual_17-faqs.pdf
+L|6|628.475|200.24|202.13|14.6|https://lm.doca.gov.in/modelapproval/Certificates.aspx
+L|6|628.475|214.84|252.255|14.6|https://consumeraffairs.gov.in/pages/legal-metrology-overview
+L|6|628.475|229.44|86.88|14.6|https://www.oiml.org/en/files/pdf_r/r076-1-e06.pdf
+L|6|727.475|229.44|108.005|14.6|https://www.oiml.org/en/files/pdf_r/r117-1-e19.pdf
+L|6|628.475|244.04|162.63|12.6|https://tula-legal-metrology.vercel.app/sources
+L|6|604.8|390.96|93.6|93.6|https://tula-legal-metrology.vercel.app/verify/DL%2FLM%2F2026%2F08913
+L|6|728.725|443.8|165.255|10.8|https://github.com/prerak2507/tula-legal-metrology
