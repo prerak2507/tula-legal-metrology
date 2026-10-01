@@ -19,7 +19,12 @@ export const SOURCES: Record<string, Source> = {
   DL_ENF: {
     id: 'DL_ENF', title: 'Delhi Legal Metrology (Enforcement) Rules, 2011', publisher: 'Weights & Measures Department, Government of NCT of Delhi',
     url: 'https://weightnmeasures.delhi.gov.in/sites/default/files/inline-files/delhi_legal_metrology_enforcement_rules_2011_english.pdf', official: true,
-    usedFor: 'Certificate format (Schedule VIII), fees (Schedule IX), on-site and late fees (rule 16), quarter marks (rule 15), compounding fees (Schedule XI)',
+    usedFor: 'Certificate format (Schedule VIII), fees (Schedule IX), on-site and late fees (rule 16), quarter marks (rule 15). its Schedule XI was replaced in Jan 2026 (next entry)',
+  },
+  DL_ENF_2026: {
+    id: 'DL_ENF_2026', title: 'Delhi Legal Metrology (Enforcement) Amendment Rules, 2026 (new Schedule XI)', publisher: 'Weights & Measures Department, Government of NCT of Delhi (Delhi Gazette, 28 Jan 2026)',
+    url: 'https://weightnmeasures.delhi.gov.in/sites/default/files/inline-files/gazette_notification_3.pdf', official: true,
+    usedFor: 'Compounding fees: item 11 (unverified weight or measure used, section 33) ₹10,000; item 17 (contravention of any rule, section 53(3)) ₹5,000',
   },
   DL_FAQ: {
     id: 'DL_FAQ', title: 'Weights & Measures Department, Delhi: FAQs (Manual 17)', publisher: 'Weights & Measures Department, Government of NCT of Delhi',
@@ -79,6 +84,7 @@ export const LEGAL_LINKS: { label: string; url: string; note?: string }[] = [
   { label: 'Legal Metrology Act, 2009', url: SOURCES.LM_ACT.url },
   { label: 'General Rules, 2011 (rule 27)', url: SOURCES.GR_2011.url, note: 'secondary copy' },
   { label: 'Delhi Enforcement Rules, 2011', url: SOURCES.DL_ENF.url },
+  { label: 'Delhi Schedule XI, amended 2026', url: SOURCES.DL_ENF_2026.url },
   { label: 'GATC Rules, 2013 (DoCA)', url: SOURCES.DOCA_LM.url },
   { label: 'OIML R 76', url: SOURCES.OIML_R76.url },
   { label: 'OIML R 117', url: SOURCES.OIML_R117.url },
