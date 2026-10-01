@@ -56,7 +56,7 @@ export const ApplicationsList: React.FC = () => {
           <div className="flex items-center gap-2 mb-1">
             <FileText className="w-5 h-5 text-gov-700" />
             <span className="text-xs font-bold text-gov-800 uppercase tracking-wider">
-              Verification Workflow Engine
+              Applications
             </span>
           </div>
           <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">

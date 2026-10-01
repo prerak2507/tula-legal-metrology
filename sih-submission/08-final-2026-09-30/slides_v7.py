@@ -219,7 +219,7 @@ for i, (t, d) in enumerate(trial):
 
 label(s, 0.4, 5.75, 7.6, "VIABILITY: HOW IT GROWS, SURVIVES AND IS FUNDED", color=GREEN, size=11)
 via = [("Grow in the market", "Buyers are DoCA and the 36 State / UT Legal Metrology departments; traders and citizens use it free. Each State that adopts is the reference for the next."),
-       ("Survive", "Open-source, pay-per-use cloud, no licence fees. Running cost fits in the service charge States already add to verification fees. No lock-in: standard Postgres, can move to State cloud."),
+       ("Survive", "No licence fee, pay-per-use cloud. Running cost fits in the service charge States already add to verification fees. No lock-in: public source code, standard Postgres, can move to State cloud."),
        ("Get funded", "SIH award and incubation first, then Startup India Seed Fund or MeitY Startup Hub grants to reach the pilot; State e-governance budgets pay for rollout as a work order.")]
 vw = (7.6 - 2 * 0.12) / 3
 for i, (t, d) in enumerate(via):
@@ -247,7 +247,7 @@ text(s, RX + 1.7, 4.67, RW - 1.8, 2.05, [
     [(f"{LIVE}/demo", {"bold": True, "size": 10, "color": BLUE})]], spacing=3)
 s.notes_slide.notes_text_frame.text = ("Table is honest: tick = works on the live site now, half = wired but needs a provider key. "
     "Before the final build we test with 5 LMOs and 1 GATC in one district and only proceed if the usability score is at least 70. "
-    "Viability: the customer is the government; traders and citizens never pay. Running cost is small (pay-per-use cloud, open source) and fits in the "
+    "Viability: the customer is the government; traders and citizens never pay. Running cost is small (pay-per-use cloud, no licence fee) and fits in the "
     "service charge States already collect. Funding path: SIH award and incubation, then Startup India Seed Fund or MeitY Startup Hub, then State e-governance budgets.")
 
 # ================= SLIDE 5: IMPACT =================

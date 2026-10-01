@@ -12,7 +12,7 @@ const STATUS_LABEL: Record<DeliveryStatus, { text: string; cls: string }> = {
   skipped: { text: 'Not requested', cls: 'bg-slate-100 text-slate-500' },
   blocked: { text: 'Blocked (demo allow-list)', cls: 'bg-amber-100 text-amber-800' },
   queued_offline: { text: 'Queued (offline)', cls: 'bg-amber-100 text-amber-800' },
-  pending: { text: 'Sending…', cls: 'bg-sky-100 text-sky-800' },
+  pending: { text: 'Sending…', cls: 'bg-gov-100 text-gov-800' },
 };
 
 export const Notifications: React.FC = () => {

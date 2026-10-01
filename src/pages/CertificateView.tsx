@@ -217,10 +217,6 @@ export const CertificateView: React.FC = () => {
             <h5 className="font-bold text-xs uppercase tracking-wider text-gov-900">
               4. Cryptographic Authenticity &amp; Public Verification
             </h5>
-            <div className="p-3 bg-slate-900 rounded-lg text-slate-300 font-mono text-[10px] break-all space-y-1">
-              <span className="text-amber-400 font-bold block">SHA-256 record hash:</span>
-              <span>{cert.sha256Hash}</span>
-            </div>
             {cert.signatureStatus === 'SIGNED' ? (
               <p className="text-[11px] text-emerald-800 bg-emerald-50 border border-emerald-200 rounded p-2">
                 Signed with ECDSA P-256 key <span className="font-mono">{cert.signingKid}</span> on {cert.signedAt?.slice(0, 10)}. The QR carries the signed details, so a copy with any field changed fails the check.

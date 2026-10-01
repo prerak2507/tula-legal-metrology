@@ -276,7 +276,7 @@ export const LandingPage: React.FC = () => {
             </li>
           ))}
         </ol>
-        <p className="text-sm text-ink-600 mt-10 max-w-3xl border-l-2 border-brass pl-4"><strong className="text-ink">Cost:</strong> open-source code. A district pilot runs on free cloud tiers. A State runs it on a hosting and support contract or on its own cloud. Adding a State is configuration, not a new build.</p>
+        <p className="text-sm text-ink-600 mt-10 max-w-3xl border-l-2 border-brass pl-4"><strong className="text-ink">Cost:</strong> no licence fee, and the source code is public. A district pilot runs on free cloud tiers. A State runs it on a hosting and support contract or on its own cloud. Adding a State is configuration, not a new build.</p>
       </Section>
 
       {/* Closing call */}

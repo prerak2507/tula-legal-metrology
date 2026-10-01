@@ -215,8 +215,8 @@ export const ApplicationDetail: React.FC = () => {
                 <p className="text-[11px] text-slate-500">Done by the district office before an officer is assigned</p>
               </div>
               {canScrutinise && (
-                <button type="button" onClick={handleAi} disabled={aiLoading} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-purple-50 hover:bg-purple-100 border border-purple-200 text-xs font-bold text-purple-900 disabled:opacity-50 min-h-[40px]">
-                  {aiLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5 text-purple-600" />}
+                <button type="button" onClick={handleAi} disabled={aiLoading} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-paper-50 hover:bg-paper-100 border border-brass-200 text-xs font-bold text-ink disabled:opacity-50 min-h-[40px]">
+                  {aiLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5 text-brass-600" />}
                   {aiLoading ? 'Checking…' : 'AI check (advisory)'}
                 </button>
               )}
@@ -228,10 +228,10 @@ export const ApplicationDetail: React.FC = () => {
               </p>
             )}
             {ai && (
-              <div className="p-4 rounded-xl bg-purple-50/60 border border-purple-200 space-y-2">
+              <div className="p-4 rounded-xl bg-paper-50/60 border border-brass-200 space-y-2">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <h4 className="text-xs font-bold text-purple-950">AI scrutiny notes <span className="font-normal text-purple-700">({ai.model}, suggestions only)</span></h4>
-                  <span className="text-[10px] font-bold uppercase text-purple-800">{ai.flags.length} flag{ai.flags.length === 1 ? '' : 's'}</span>
+                  <h4 className="text-xs font-bold text-ink-900">AI scrutiny notes <span className="font-normal text-brass-700">({ai.model}, suggestions only)</span></h4>
+                  <span className="text-[10px] font-bold uppercase text-ink-800">{ai.flags.length} flag{ai.flags.length === 1 ? '' : 's'}</span>
                 </div>
                 <p className="text-xs text-slate-700">{ai.summary}</p>
                 {ai.flags.length > 0 && (
@@ -244,7 +244,7 @@ export const ApplicationDetail: React.FC = () => {
                     ))}
                   </ul>
                 )}
-                <p className="text-[10px] text-purple-800">The officer decides each item below. AI output does not change the record.</p>
+                <p className="text-[10px] text-ink-800">The officer decides each item below. AI output does not change the record.</p>
               </div>
             )}
 

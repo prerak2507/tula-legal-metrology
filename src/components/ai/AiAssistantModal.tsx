@@ -156,18 +156,18 @@ export const AiAssistantModal: React.FC<AiAssistantModalProps> = ({ isOpen, onCl
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="relative w-full max-w-3xl h-[88vh] max-h-[820px] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-slate-200">
+      <div className="relative w-full max-w-3xl h-[88vh] max-h-[820px] bg-white rounded-lg shadow-2xl flex flex-col overflow-hidden border border-slate-200">
         
         {/* Header */}
-        <div className="px-5 py-3.5 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white flex items-center justify-between shrink-0 border-b border-indigo-900/50">
+        <div className="px-5 py-3.5 bg-gradient-to-r from-slate-900 via-gov-950 to-slate-900 text-white flex items-center justify-between shrink-0 border-b border-gov-900/50">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center shadow-md border border-purple-400/30">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-brass to-gov-600 flex items-center justify-center shadow-md border border-brass-400/30">
               <Sparkles className="w-5 h-5 text-white animate-pulse" />
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="font-bold text-sm tracking-tight text-white flex items-center gap-1.5">
-                  TULA AI Metrology Advisor
+                  TULA help assistant
                 </h3>
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
@@ -175,7 +175,7 @@ export const AiAssistantModal: React.FC<AiAssistantModalProps> = ({ isOpen, onCl
                 </span>
               </div>
               <p className="text-[11px] text-slate-300 font-medium">
-                Official Regulatory Intelligence • Legal Metrology Act 2009 &amp; General Rules 2011
+                Guidance on the Legal Metrology Act, 2009 and General Rules, 2011. It never decides anything.
               </p>
             </div>
           </div>
@@ -199,12 +199,12 @@ export const AiAssistantModal: React.FC<AiAssistantModalProps> = ({ isOpen, onCl
         </div>
 
         {/* Live Model Banner */}
-        <div className="bg-indigo-50/90 border-b border-indigo-100 px-5 py-1.5 flex items-center justify-between text-[11px] text-indigo-900">
+        <div className="bg-gov-50/90 border-b border-gov-100 px-5 py-1.5 flex items-center justify-between text-[11px] text-gov-900">
           <span className="flex items-center gap-1.5 font-medium">
-            <span className="inline-block w-2 h-2 rounded-full bg-indigo-600" />
-            Active Model: <strong className="font-mono">gemini-3.5-flash</strong> (Dept. of Consumer Affairs metrological grounding)
+            <span className="inline-block w-2 h-2 rounded-full bg-gov-600" />
+            Model: <strong className="font-mono">gemini-3.5-flash</strong> (falls back to a lighter Gemini model if busy). Not official advice.
           </span>
-          <span className="text-[10px] text-indigo-600 font-semibold uppercase tracking-wider hidden sm:inline">
+          <span className="text-[10px] text-gov-600 font-semibold uppercase tracking-wider hidden sm:inline">
             SIH 2026 Problem 26036
           </span>
         </div>
@@ -219,16 +219,16 @@ export const AiAssistantModal: React.FC<AiAssistantModalProps> = ({ isOpen, onCl
               {msg.sender !== 'user' && (
                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 shadow-xs ${
                   msg.sender === 'gemini' 
-                    ? 'bg-gradient-to-br from-indigo-600 to-purple-700 text-white' 
+                    ? 'bg-gradient-to-br from-gov-600 to-brass-700 text-white' 
                     : 'bg-rose-600 text-white'
                 }`}>
                   <Bot className="w-4 h-4" />
                 </div>
               )}
 
-              <div className={`max-w-[85%] rounded-2xl p-4 text-xs leading-relaxed shadow-xs ${
+              <div className={`max-w-[85%] rounded-lg p-4 text-xs leading-relaxed shadow-xs ${
                 msg.sender === 'user'
-                  ? 'bg-blue-600 text-white rounded-tr-xs'
+                  ? 'bg-gov-600 text-white rounded-tr-xs'
                   : msg.sender === 'gemini'
                   ? 'bg-white text-slate-800 border border-slate-200/80 rounded-tl-xs'
                   : 'bg-rose-50 text-rose-900 border border-rose-200 rounded-tl-xs'
@@ -236,12 +236,12 @@ export const AiAssistantModal: React.FC<AiAssistantModalProps> = ({ isOpen, onCl
                 {/* Header inside bubble */}
                 <div className="flex items-center justify-between gap-4 mb-2 pb-1 border-b border-black/5">
                   <span className={`font-bold text-[10px] uppercase tracking-wider ${
-                    msg.sender === 'user' ? 'text-blue-100' : 'text-slate-500'
+                    msg.sender === 'user' ? 'text-gov-100' : 'text-slate-500'
                   }`}>
                     {msg.sender === 'user' ? 'You' : msg.sender === 'gemini' ? 'TULA AI Advisor' : 'System Notice'}
                   </span>
                   <div className="flex items-center gap-2">
-                    <span className={`text-[10px] ${msg.sender === 'user' ? 'text-blue-200' : 'text-slate-400'}`}>
+                    <span className={`text-[10px] ${msg.sender === 'user' ? 'text-gov-200' : 'text-slate-400'}`}>
                       {msg.timestamp}
                     </span>
                     {msg.sender === 'gemini' && (
@@ -272,7 +272,7 @@ export const AiAssistantModal: React.FC<AiAssistantModalProps> = ({ isOpen, onCl
                           
                           return (
                             <div key={j} className={isBullet ? 'flex items-start gap-2 pl-2' : ''}>
-                              {isBullet && <span className="text-purple-600 font-bold shrink-0">•</span>}
+                              {isBullet && <span className="text-brass-600 font-bold shrink-0">•</span>}
                               <span dangerouslySetInnerHTML={{
                                 __html: cleanLine
                                   .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
@@ -289,7 +289,7 @@ export const AiAssistantModal: React.FC<AiAssistantModalProps> = ({ isOpen, onCl
               </div>
 
               {msg.sender === 'user' && (
-                <div className="w-8 h-8 rounded-lg bg-blue-700 text-white flex items-center justify-center shrink-0 shadow-xs">
+                <div className="w-8 h-8 rounded-lg bg-gov-700 text-white flex items-center justify-center shrink-0 shadow-xs">
                   <User className="w-4 h-4" />
                 </div>
               )}
@@ -299,11 +299,11 @@ export const AiAssistantModal: React.FC<AiAssistantModalProps> = ({ isOpen, onCl
           {/* Loading indicator */}
           {isLoading && (
             <div className="flex gap-3 justify-start animate-in fade-in duration-150">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-600 to-purple-700 text-white flex items-center justify-center shrink-0 shadow-xs">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-gov-600 to-brass-700 text-white flex items-center justify-center shrink-0 shadow-xs">
                 <Bot className="w-4 h-4" />
               </div>
-              <div className="bg-white border border-slate-200 rounded-2xl rounded-tl-xs p-4 shadow-xs text-xs text-slate-600 flex items-center gap-3">
-                <Loader2 className="w-4 h-4 text-purple-600 animate-spin" />
+              <div className="bg-white border border-slate-200 rounded-lg rounded-tl-xs p-4 shadow-xs text-xs text-slate-600 flex items-center gap-3">
+                <Loader2 className="w-4 h-4 text-brass-600 animate-spin" />
                 <span>Consulting Legal Metrology Act 2009 &amp; generating statutory response...</span>
               </div>
             </div>
@@ -315,7 +315,7 @@ export const AiAssistantModal: React.FC<AiAssistantModalProps> = ({ isOpen, onCl
         {/* Preset query chips */}
         <div className="px-4 py-2 bg-slate-100/80 border-t border-slate-200/80 flex items-center gap-2 overflow-x-auto no-scrollbar">
           <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider shrink-0 flex items-center gap-1">
-            <Sparkles className="w-3 h-3 text-purple-600" />
+            <Sparkles className="w-3 h-3 text-brass-600" />
             Quick Topics:
           </span>
           {PRESET_QUERIES.map((preset, idx) => {
@@ -326,9 +326,9 @@ export const AiAssistantModal: React.FC<AiAssistantModalProps> = ({ isOpen, onCl
                 type="button"
                 disabled={isLoading}
                 onClick={() => handleSend(preset.query)}
-                className="shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white hover:bg-purple-50 text-slate-700 hover:text-purple-900 border border-slate-200 hover:border-purple-300 text-[11px] font-medium transition-all shadow-2xs disabled:opacity-50"
+                className="shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white hover:bg-paper-50 text-slate-700 hover:text-ink border border-slate-200 hover:border-brass-300 text-[11px] font-medium transition-all shadow-2xs disabled:opacity-50"
               >
-                <Icon className="w-3 h-3 text-purple-600" />
+                <Icon className="w-3 h-3 text-brass-600" />
                 <span>{preset.title}</span>
                 <ChevronRight className="w-2.5 h-2.5 text-slate-400" />
               </button>
@@ -353,13 +353,13 @@ export const AiAssistantModal: React.FC<AiAssistantModalProps> = ({ isOpen, onCl
                 onKeyDown={handleKeyDown}
                 placeholder="Ask about Legal Metrology Act, statutory fees, MPE tolerances, Section 24, GATC rules..."
                 rows={1}
-                className="w-full resize-none py-2.5 pl-3.5 pr-10 text-xs text-slate-900 bg-slate-50 rounded-xl border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:border-transparent placeholder:text-slate-400"
+                className="w-full resize-none py-2.5 pl-3.5 pr-10 text-xs text-slate-900 bg-slate-50 rounded-xl border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-gov-500 focus:border-transparent placeholder:text-slate-400"
               />
             </div>
             <button
               type="submit"
               disabled={!input.trim() || isLoading}
-              className="p-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 disabled:opacity-50 text-white rounded-xl font-bold transition-all shadow-xs flex items-center justify-center shrink-0 cursor-pointer"
+              className="p-2.5 bg-gradient-to-r from-brass-600 to-gov-600 hover:from-brass-700 hover:to-gov-700 disabled:opacity-50 text-white rounded-xl font-bold transition-all shadow-xs flex items-center justify-center shrink-0 cursor-pointer"
               title="Send (Enter)"
             >
               {isLoading ? (

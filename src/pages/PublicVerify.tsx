@@ -252,7 +252,7 @@ export const PublicVerify: React.FC = () => {
           {!online && <p className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1"><WifiOff className="w-3.5 h-3.5" /> Offline: signatures are still checked. Revocations use the last saved list.</p>}
         </div>
 
-        <section className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+        <section className="bg-white rounded-lg border border-slate-200 overflow-hidden">
           <div className="grid grid-cols-3 border-b border-slate-200" role="tablist">
             {([['camera', T.tabs[0], Camera], ['upload', T.tabs[1], Upload], ['manual', T.tabs[2], Keyboard]] as const).map(([key, label, Icon]) => (
               <button key={key} role="tab" aria-selected={tab === key} onClick={() => { setTab(key); if (key !== 'camera') stopCamera(); }}
@@ -311,7 +311,7 @@ export const PublicVerify: React.FC = () => {
         {busy && <div className="flex items-center justify-center gap-2 text-sm text-slate-600 py-6"><Loader2 className="w-5 h-5 animate-spin" /> {T.checking}</div>}
 
         {!busy && outcome && (
-          <section aria-live="polite" className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+          <section aria-live="polite" className="bg-white rounded-lg border border-slate-200 overflow-hidden">
             {outcome.kind === 'GENUINE' && (
               <Banner tone="green" icon={<ShieldCheck className="w-7 h-7" />} title={T.genuine}
                 text={T.genuineText(outcome.payload.exp)} />
@@ -453,7 +453,7 @@ const ReportModal: React.FC<{ onClose: () => void; context: { certNo: string; in
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/60 flex items-end sm:items-center justify-center p-0 sm:p-4" role="dialog" aria-modal="true" aria-labelledby="report-title">
-      <div className="bg-white w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl max-h-[90dvh] overflow-y-auto">
+      <div className="bg-white w-full sm:max-w-md rounded-t-2xl sm:rounded-lg max-h-[90dvh] overflow-y-auto">
         <div className="flex items-center justify-between p-4 border-b border-slate-200">
           <h2 id="report-title" className="font-bold text-slate-900">Report a problem</h2>
           <button onClick={onClose} className="p-2 rounded-lg hover:bg-slate-100" aria-label="Close"><X className="w-5 h-5" /></button>

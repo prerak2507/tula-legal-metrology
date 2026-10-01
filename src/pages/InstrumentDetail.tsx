@@ -313,11 +313,11 @@ export const InstrumentDetail: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Cryptographic Hash */}
-                <div className="mt-3 p-2 bg-slate-900 rounded text-slate-300 font-mono text-[10px] break-all">
-                  <span className="text-amber-400 font-bold block mb-0.5">SHA-256 Canonical Digest:</span>
-                  {currentCert.sha256Hash}
-                </div>
+                <p className="mt-3 text-[11px] text-ink-600">
+                  {currentCert.signatureStatus === 'SIGNED'
+                    ? <>Signed with ECDSA P-256 key <span className="font-readout">{currentCert.signingKid}</span>. The QR carries the signed details.</>
+                    : 'Digital signature pending.'}
+                </p>
               </div>
 
               <div className="mt-4 pt-3 border-t border-slate-200 flex gap-2">
@@ -381,7 +381,6 @@ export const InstrumentDetail: React.FC = () => {
                 <p className="text-slate-600">
                   Issued by {cert.issuingOfficerName} ({cert.issuingAuthority}). Valid till <strong>{cert.validUntil}</strong>.
                 </p>
-                <div className="mt-2 font-mono text-[10px] text-slate-500">SHA-256: {cert.sha256Hash}</div>
               </div>
             </div>
           ))}
@@ -433,7 +432,7 @@ export const InstrumentDetail: React.FC = () => {
           {/* Applications Event */}
           {applications.map(app => (
             <div key={app.id} className="relative">
-              <div className="absolute -left-6 top-1 w-4 h-4 rounded-full bg-sky-500 ring-4 ring-sky-100" />
+              <div className="absolute -left-6 top-1 w-4 h-4 rounded-full bg-gov-500 ring-4 ring-gov-100" />
               <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 text-xs">
                 <div className="flex items-center justify-between mb-1">
                   <span className="font-bold text-slate-900 text-sm">

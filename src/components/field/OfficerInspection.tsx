@@ -246,7 +246,7 @@ export const OfficerInspection: React.FC = () => {
       )}
 
       {practiceMsg && (
-        <div role="status" className="p-4 rounded-xl bg-sky-50 border border-sky-300 text-sm text-sky-900 flex gap-2">
+        <div role="status" className="p-4 rounded-xl bg-gov-50 border border-gov-300 text-sm text-gov-900 flex gap-2">
           <Info className="w-5 h-5 shrink-0" /><span>{practiceMsg}</span>
         </div>
       )}
@@ -291,7 +291,7 @@ export const OfficerInspection: React.FC = () => {
         ) : (
           <>
             {practice && (
-              <p className="p-3 rounded-lg bg-sky-50 border border-sky-200 text-xs text-sky-900 font-semibold">Practice run on {app.id}. Everything works the same, but nothing is saved or issued.</p>
+              <p className="p-3 rounded-lg bg-gov-50 border border-gov-200 text-xs text-gov-900 font-semibold">Practice run on {app.id}. Everything works the same, but nothing is saved or issued.</p>
             )}
             {/* Instrument + location */}
             <section className="bg-white p-4 rounded-xl border border-slate-200 space-y-3">

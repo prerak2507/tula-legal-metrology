@@ -56,7 +56,7 @@ export const PendencyPanel: React.FC<{ user: UserProfile }> = ({ user }) => {
         <section className="bg-white rounded-xl border border-slate-200 p-4 space-y-2">
           <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900">Pending by district</h3>
           {m.byDistrict.length === 0 ? <p className="text-xs text-slate-500">Nothing pending.</p>
-            : m.byDistrict.slice(0, 6).map(d => <Bar key={d.district} label={d.district} value={d.count} max={m.byDistrict[0].count} tone="bg-sky-600" />)}
+            : m.byDistrict.slice(0, 6).map(d => <Bar key={d.district} label={d.district} value={d.count} max={m.byDistrict[0].count} tone="bg-gov-600" />)}
         </section>
       </div>
 

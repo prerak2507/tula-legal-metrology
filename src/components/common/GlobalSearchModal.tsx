@@ -87,7 +87,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, on
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-16 sm:pt-24 px-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full border border-slate-200 overflow-hidden flex flex-col max-h-[80vh]">
+      <div className="bg-white rounded-lg shadow-2xl max-w-2xl w-full border border-slate-200 overflow-hidden flex flex-col max-h-[80vh]">
         {/* Search Input Bar */}
         <div className="p-4 border-b border-slate-200 flex items-center gap-3 bg-slate-50/50">
           <Search className="w-5 h-5 text-slate-400 shrink-0" />
@@ -235,15 +235,15 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, on
                   className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-100/80 cursor-pointer transition-colors group"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center shrink-0">
+                    <div className="w-8 h-8 rounded-lg bg-gov-50 text-gov-700 flex items-center justify-center shrink-0">
                       <FileText className="w-4 h-4" />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs font-bold text-slate-900 group-hover:text-blue-800">
+                        <span className="font-mono text-xs font-bold text-slate-900 group-hover:text-gov-800">
                           {app.id}
                         </span>
-                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-blue-100 text-blue-800 font-medium">
+                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-gov-100 text-gov-800 font-medium">
                           {app.status}
                         </span>
                       </div>

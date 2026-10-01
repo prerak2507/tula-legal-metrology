@@ -123,10 +123,9 @@ export async function generateCertificatePdf(cert: VerificationCertificate): Pro
   doc.setFont('courier', 'normal');
   doc.setFontSize(7.5);
   doc.setTextColor(60, 60, 60);
-  doc.text(`SHA-256 record hash: ${cert.sha256Hash.slice(0, 32)}`, 20, 214);
-  doc.text(`                     ${cert.sha256Hash.slice(32)}`, 20, 218);
-  doc.text(cert.signatureStatus === 'SIGNED' ? `Signed: ECDSA P-256, key ${cert.signingKid}, ${cert.signedAt?.slice(0, 10)}` : 'Digital signature: pending', 20, 224);
-  doc.text('Scan the QR to check this certificate. Works offline.', 20, 230);
+  doc.text(cert.signatureStatus === 'SIGNED' ? `Signed: ECDSA P-256, key ${cert.signingKid}, ${cert.signedAt?.slice(0, 10)}` : 'Digital signature: pending', 20, 214);
+  doc.text('The QR carries the signed details. Any phone can check it, even offline.', 20, 220);
+  doc.text('An edited copy fails the check.', 20, 226);
   doc.addImage(qrDataUrl, 'PNG', 155, 203, 38, 38);
 
   // Signatures

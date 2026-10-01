@@ -74,7 +74,7 @@ export const NotFound: React.FC = () => {
             404
           </span>
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="w-20 h-20 rounded-2xl bg-white shadow-xl border border-slate-200 flex items-center justify-center text-gov-800 animate-bounce duration-1000">
+            <div className="w-20 h-20 rounded-lg bg-white shadow-xl border border-slate-200 flex items-center justify-center text-gov-800 animate-bounce duration-1000">
               <Scale className="w-10 h-10 text-gov-600" />
             </div>
           </div>
@@ -120,7 +120,7 @@ export const NotFound: React.FC = () => {
             to="/"
             className="p-4 rounded-xl bg-white border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all group"
           >
-            <div className="w-9 h-9 rounded-lg bg-sky-50 text-gov-600 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
+            <div className="w-9 h-9 rounded-lg bg-gov-50 text-gov-600 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
               <Home className="w-5 h-5" />
             </div>
             <h2 className="text-xs sm:text-sm font-bold text-slate-900 group-hover:text-gov-600 transition-colors flex items-center justify-between">
@@ -154,7 +154,7 @@ export const NotFound: React.FC = () => {
             to="/login"
             className="p-4 rounded-xl bg-white border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all group"
           >
-            <div className="w-9 h-9 rounded-lg bg-indigo-50 text-gov-800 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
+            <div className="w-9 h-9 rounded-lg bg-gov-50 text-gov-800 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
               <LogIn className="w-5 h-5" />
             </div>
             <h2 className="text-xs sm:text-sm font-bold text-slate-900 group-hover:text-gov-800 transition-colors flex items-center justify-between">

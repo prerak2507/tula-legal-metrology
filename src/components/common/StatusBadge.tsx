@@ -57,7 +57,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, size = 'md' })
     case 'DRAFT':
     case 'UNDER_VERIFICATION':
     case 'OPEN':
-      colorClasses = 'bg-sky-50 text-sky-800 border-sky-300 ring-1 ring-sky-500/20';
+      colorClasses = 'bg-gov-50 text-gov-800 border-gov-300 ring-1 ring-gov-500/20';
       break;
   }
 

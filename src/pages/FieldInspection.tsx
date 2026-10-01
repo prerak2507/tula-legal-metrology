@@ -12,7 +12,7 @@ const BusinessVisits: React.FC<{ currentUser: UserProfile; applications: Applica
   return (
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
-        <div className="bg-gradient-to-r from-gov-800 to-gov-950 text-white p-6 rounded-2xl shadow-md border border-gov-700">
+        <div className="bg-gradient-to-r from-gov-800 to-gov-950 text-white p-6 rounded-lg shadow-md border border-gov-700">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2 mb-1.5">
@@ -81,7 +81,7 @@ const BusinessVisits: React.FC<{ currentUser: UserProfile; applications: Applica
                       </div>
                       <p className="text-xs text-slate-500 mt-1">Instrument UID: <strong className="font-mono text-slate-700">{app.instrumentId}</strong></p>
                     </div>
-                    <span className="px-3 py-1 rounded-full text-xs font-bold bg-sky-100 text-sky-800 border border-sky-200">
+                    <span className="px-3 py-1 rounded-full text-xs font-bold bg-gov-100 text-gov-800 border border-gov-200">
                       Visit Scheduled
                     </span>
                   </div>

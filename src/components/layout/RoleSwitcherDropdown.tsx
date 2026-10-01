@@ -99,11 +99,11 @@ export const RoleSwitcherDropdown: React.FC<RoleSwitcherDropdownProps> = ({
 
       {/* Role Switcher Dropdown Popover */}
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-80 sm:w-[360px] bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden z-50 divide-y divide-slate-100 animate-in fade-in slide-in-from-top-2 duration-150">
+        <div className="absolute right-0 top-full mt-2 w-80 sm:w-[360px] bg-white rounded-lg shadow-2xl border border-slate-200 overflow-hidden z-50 divide-y divide-slate-100 animate-in fade-in slide-in-from-top-2 duration-150">
           {/* Header — Identity Card */}
           <div className="p-4 bg-gradient-to-r from-gov-800 to-gov-950 text-white">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] uppercase font-bold tracking-wider text-sky-300">
+              <span className="text-[10px] uppercase font-bold tracking-wider text-gov-300">
                 Active Session
               </span>
               <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-300 bg-emerald-950/60 border border-emerald-500/40 px-2 py-0.5 rounded-full">
@@ -112,7 +112,7 @@ export const RoleSwitcherDropdown: React.FC<RoleSwitcherDropdownProps> = ({
               </span>
             </div>
             <h4 className="font-extrabold text-base text-white">{currentUser.fullName}</h4>
-            <p className="text-[11px] text-sky-200 font-medium mt-0.5">{currentUser.organization}</p>
+            <p className="text-[11px] text-gov-200 font-medium mt-0.5">{currentUser.organization}</p>
           </div>
 
           {/* Session Credentials */}
@@ -133,7 +133,7 @@ export const RoleSwitcherDropdown: React.FC<RoleSwitcherDropdownProps> = ({
               <p className="text-[11px] text-slate-600 leading-relaxed">{currentRoleConfig.description}</p>
             </div>
 
-            <div className="p-2.5 rounded-xl bg-blue-50/70 border border-blue-200/80 text-[11px] text-blue-900 space-y-1">
+            <div className="p-2.5 rounded-xl bg-gov-50/70 border border-gov-200/80 text-[11px] text-gov-900 space-y-1">
               <p className="font-bold flex items-center gap-1.5 text-gov-800">
                 <Shield className="w-3.5 h-3.5 text-gov-600" />
                 <span>Audit &amp; Security Compliance</span>

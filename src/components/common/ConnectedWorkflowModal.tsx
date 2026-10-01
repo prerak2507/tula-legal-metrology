@@ -48,7 +48,7 @@ export const ConnectedWorkflowModal: React.FC<ConnectedWorkflowModalProps> = ({ 
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/60 sm:p-4" role="dialog" aria-modal="true" aria-labelledby="wf-title" onClick={onClose}>
-      <div className="bg-white w-full sm:max-w-2xl rounded-t-2xl sm:rounded-2xl shadow-2xl max-h-[92dvh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+      <div className="bg-white w-full sm:max-w-2xl rounded-t-2xl sm:rounded-lg shadow-2xl max-h-[92dvh] overflow-y-auto" onClick={e => e.stopPropagation()}>
         <div className="sticky top-0 bg-slate-900 text-white px-5 py-4 flex items-start justify-between gap-3">
           <div>
             <h2 id="wf-title" className="font-bold text-base">How one application moved through TULA</h2>

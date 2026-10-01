@@ -72,7 +72,7 @@ export const DemoControlModal: React.FC<DemoControlModalProps> = ({ isOpen, onCl
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/60 sm:p-4" role="dialog" aria-modal="true" aria-labelledby="demo-controls-title" onClick={onClose}>
-      <div className="bg-slate-50 w-full sm:max-w-xl rounded-t-2xl sm:rounded-2xl shadow-2xl max-h-[92dvh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+      <div className="bg-slate-50 w-full sm:max-w-xl rounded-t-2xl sm:rounded-lg shadow-2xl max-h-[92dvh] overflow-y-auto" onClick={e => e.stopPropagation()}>
         <div className="sticky top-0 z-10 bg-slate-900 text-white px-5 py-4 flex items-start justify-between gap-3">
           <div>
             <h2 id="demo-controls-title" className="font-bold text-base">Presenter shortcuts</h2>
@@ -164,12 +164,12 @@ export const DemoControlModal: React.FC<DemoControlModalProps> = ({ isOpen, onCl
           )}
 
           <section className={section}>
-            <h3 className="font-bold text-slate-900 flex items-center gap-2"><Bell className="w-4 h-4 text-sky-600" /> Send due reminders now</h3>
+            <h3 className="font-bold text-slate-900 flex items-center gap-2"><Bell className="w-4 h-4 text-gov-600" /> Send due reminders now</h3>
             <p className="text-xs text-slate-600">Runs the daily reminder check (30, 15, 7 and 1 days before expiry) for instruments you can see. Each milestone is sent once.</p>
             <button disabled={busy} onClick={() => act(() => {
               const n = storage.runExpiryReminderJob();
               return n ? `${n} reminder(s) sent. See SMS / Email Updates.` : 'Nothing due that has not already been reminded.';
-            })} className={`${button} bg-sky-600 hover:bg-sky-700 w-full sm:w-auto`}><Bell className="w-4 h-4" /> Run reminder check</button>
+            })} className={`${button} bg-gov-600 hover:bg-gov-700 w-full sm:w-auto`}><Bell className="w-4 h-4" /> Run reminder check</button>
           </section>
 
           <section className={section}>

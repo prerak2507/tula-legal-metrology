@@ -242,7 +242,7 @@ export const ReportsView: React.FC = () => {
                   <div className="text-right">
                     <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                       inst.status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-800' :
-                      inst.status === 'EXPIRED' ? 'bg-rose-100 text-rose-800' : 'bg-sky-100 text-sky-800'
+                      inst.status === 'EXPIRED' ? 'bg-rose-100 text-rose-800' : 'bg-gov-100 text-gov-800'
                     }`}>
                       {inst.status}
                     </span>
