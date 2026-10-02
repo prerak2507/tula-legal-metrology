@@ -5,10 +5,6 @@ import { storage } from './storage';
 import { quarterMark, DEFAULT_VALIDITY_RULES } from './rulesEngine';
 import { SOURCES } from '../config/sources';
 
-const GOVERNMENTS: Record<string, string> = {
-  Delhi: 'Government of National Capital Territory of Delhi',
-  Gujarat: 'Government of Gujarat',
-};
 const RULES_SOURCE: Record<string, { title: string; url: string }> = {
   Delhi: { title: 'Delhi Legal Metrology (Enforcement) Rules, 2011', url: SOURCES.DL_ENF.url },
   Gujarat: { title: 'Gujarat Legal Metrology (Enforcement) Rules, 2011', url: SOURCES.GJ_ENF.url },
@@ -24,9 +20,10 @@ export function certificateFacts(cert: VerificationCertificate) {
   // A Government Approved Test Centre verifies under the GATC Rules, 2013, not the State's Schedule VIII.
   const gatc = /^GATC/i.test(cert.issuingOfficerBadgeOrGATC || '') || /test centre|GATC/i.test(cert.issuingAuthority || '');
   return {
-    government: gatc ? 'Government Approved Test Centre' : GOVERNMENTS[cert.state] || `Government of ${cert.state}`,
-    office: gatc ? cert.issuingAuthority : `Office of the Controller, Legal Metrology, ${cert.state}`,
-    form: gatc ? 'Legal Metrology (Government Approved Test Centre) Rules, 2013' : `Schedule VIII [see rule 15(3)], ${rules.title}`,
+    // TULA is a student prototype. The layout follows the legal form, but no government is named as issuer.
+    government: 'TULA · SIH 2026 student prototype',
+    office: gatc ? `Demo test centre (fictional), ${cert.state}. Not issued by any government office.` : `Demo ${cert.state} office (fictional). Not issued by any government office.`,
+    form: gatc ? 'Layout follows the Legal Metrology (Government Approved Test Centre) Rules, 2013' : `Layout follows Schedule VIII [see rule 15(3)], ${rules.title}`,
     formUrl: gatc ? SOURCES.DOCA_LM.url : rules.url,
     quarterMark: mark,
     quarterText: quarter > 0 ? `${mark}: quarter ${quarter} (${['Jan to Mar', 'Apr to Jun', 'Jul to Sep', 'Oct to Dec'][quarter - 1]}) of 20${mark.slice(-2)}` : mark,
@@ -36,6 +33,9 @@ export function certificateFacts(cert: VerificationCertificate) {
     paidOn: app?.paidAt?.slice(0, 10),
     feeStatus: app?.feeStatus,
     validityRule: validity?.statutoryReference || `Re-verification every ${cert.validityMonths} months`,
+    // Rule 27 periods as published by a State consumer affairs department.
+    validityUrl: SOURCES.GR_27.url,
+    validitySource: 'Food, Civil Supplies & Consumer Affairs Department, Government of Assam',
     displayRule: `Rule 22, ${rules.title}: display this certificate in a conspicuous place where the instrument is used.`,
   };
 }

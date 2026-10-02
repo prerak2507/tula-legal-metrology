@@ -107,6 +107,12 @@ describe('fees from Schedule IX of the Delhi and Gujarat Enforcement Rules', () 
     expect(f.lateQuarters).toBe(2);
     expect(f.lateFee).toBe(2000);
   });
+  it('counts a part quarter as a full one, even ten days late in the same calendar quarter (rule 16(3))', () => {
+    const f = at('WEIGHBRIDGE', 'Delhi', '60 t', 'CLASS_III', { dueDate: '2026-01-10', on: new Date('2026-01-20') });
+    expect(f.lateQuarters).toBe(1);
+    expect(f.lateFee).toBe(1000);
+    expect(at('WEIGHBRIDGE', 'Delhi', '60 t', 'CLASS_III', { dueDate: '2026-01-10', on: new Date('2026-01-09') }).lateQuarters).toBe(0);
+  });
   it('falls back to Delhi for a State without a loaded schedule, and says so', () => {
     const f = at('PLATFORM_SCALE', 'Maharashtra', '150 kg');
     expect(f.statutory).toBe(200);

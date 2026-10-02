@@ -234,7 +234,7 @@ export const AppShell: React.FC = () => {
         <div className="bg-brass-200/50 border-b border-brass/30 px-3 sm:px-5 py-1.5 flex items-center justify-between gap-4 text-[11px] text-ink">
           <p className="min-w-0 truncate">
             <span className="font-readout font-semibold tracking-wider text-brass-700 mr-2">DEMO</span>
-            <span className="hidden sm:inline">Live database. Payments and SMS / email gateways are simulated. </span>
+            <span className="hidden sm:inline">Names, businesses, offices and certificates are demo data. Fees, rules and model approvals come from government sources, linked where shown. Payments and SMS / email are simulated. </span>
             <Link to="/status" className="underline font-semibold">Built vs planned</Link>
           </p>
           <div className="flex items-center gap-3 shrink-0">

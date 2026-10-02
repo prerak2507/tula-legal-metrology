@@ -394,7 +394,7 @@ export const InstrumentDetail: React.FC = () => {
               <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 text-xs">
                 <div className="flex items-center justify-between mb-1">
                   <span className="font-bold text-gov-900 text-sm flex items-center gap-1.5">
-                    <ShieldCheck className="w-4 h-4 text-gov-700" /> Official Seal Stamped: {stamp.id}
+                    <ShieldCheck className="w-4 h-4 text-gov-700" /> Seal record: {stamp.id}
                   </span>
                   <span className="text-[11px] text-slate-500">{new Date(stamp.stampedAt).toLocaleDateString()}</span>
                 </div>

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { SOURCES } from '../../config/sources';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { storage, WorkflowError } from '../../services/storage';
 import { Application, InspectionChecklistItem, InspectionRecord, TestReadingRow, StampingRecord } from '../../types';
@@ -348,7 +349,7 @@ export const OfficerInspection: React.FC = () => {
                 <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 flex items-center gap-1.5"><Scale className="w-4 h-4 text-gov-700" /> Test readings</h3>
                 <button type="button" onClick={fillSample} className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg border border-dashed border-slate-400 text-slate-600" title="For demos without test weights">Fill sample readings (demo)</button>
               </div>
-              <p className="text-[11px] text-slate-500">Type what the instrument shows. Error and pass / fail are calculated against the limit. {draft.readings[0]?.mpeRule && <>Limits: {draft.readings[0].mpeRule}.</>}</p>
+              <p className="text-[11px] text-slate-500">Type what the instrument shows. Error and pass / fail are calculated against the limit. {draft.readings[0]?.mpeRule && <>Limits: {draft.readings[0].mpeRule}. <a href={SOURCES.GR_SPECS.url} target="_blank" rel="noreferrer" className="underline">Source: Department of Consumer Affairs</a></>}</p>
               {draft.readings.map(r => (
                 <div key={r.id} className={`p-3 rounded-lg border ${r.result === 'FAIL' ? 'border-rose-300 bg-rose-50' : r.result === 'PASS' ? 'border-emerald-200 bg-emerald-50/40' : 'border-slate-200 bg-slate-50'}`}>
                   <div className="flex flex-wrap items-center justify-between gap-1">

@@ -719,8 +719,8 @@ class MetrologyStorageService {
     const seq = await newId(certs.map(c => c.id), `CERT-${year}-`, 5);
     const certNum = `${code}/LM/${year}/${seq.slice(-5)}`;
     const issuingAuthority = officer.role === 'GATC'
-      ? `${officer.organization} (Government Approved Test Centre)`
-      : `Controller of Legal Metrology, ${inst.state} (demo)`;
+      ? `${officer.organization} (demo test centre, TULA prototype)`
+      : `Demo ${inst.state} office (TULA prototype)`;
 
     const sha256Hash = await generateCertificateSha256({
       certificateNumber: certNum, instrumentId: inst.id, serialNumber: inst.serialNumber, applicantOrganization: inst.organization,

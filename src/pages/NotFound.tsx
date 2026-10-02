@@ -145,7 +145,7 @@ export const NotFound: React.FC = () => {
               <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:translate-x-1 transition-transform" />
             </h2>
             <p className="text-[11px] text-slate-500 mt-1">
-              Open to 100% of citizens. Verify any commercial stamping certificate in real-time.
+              No login needed. Checks certificates issued through TULA and model approval marks against DoCA's register.
             </p>
           </Link>
 

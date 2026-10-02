@@ -41,6 +41,11 @@ export const SOURCES: Record<string, Source> = {
     url: 'https://lmdca.gujarat.gov.in/clmdca/documents/the-legal-metrology-enforcement-rules-2011.pdf', official: true,
     usedFor: 'Gujarat rules text (scanned copy)',
   },
+  GR_27: {
+    id: 'GR_27', title: 'Re-verification periods, rule 27 of the Legal Metrology (General) Rules, 2011', publisher: 'Food, Civil Supplies & Consumer Affairs Department, Government of Assam',
+    url: 'https://fcsca.assam.gov.in/information-services/re-verification-weights-measures-0', official: true,
+    usedFor: 'Validity: 24 months for weights, measures, beam scales and counter machines; 60 months for storage tanks; 12 months for all others',
+  },
   GR_2011: {
     id: 'GR_2011', title: 'Legal Metrology (General) Rules, 2011, rule 27 (text)', publisher: 'Indian Kanoon (secondary copy of the notified rules)',
     url: 'https://indiankanoon.org/doc/67045693/', official: false,
@@ -82,7 +87,7 @@ export const source = (id: keyof typeof SOURCES) => SOURCES[id];
 
 export const LEGAL_LINKS: { label: string; url: string; note?: string }[] = [
   { label: 'Legal Metrology Act, 2009', url: SOURCES.LM_ACT.url },
-  { label: 'General Rules, 2011 (rule 27)', url: SOURCES.GR_2011.url, note: 'secondary copy' },
+  { label: 'General Rules, 2011 (rule 27)', url: SOURCES.GR_27.url },
   { label: 'Delhi Enforcement Rules, 2011', url: SOURCES.DL_ENF.url },
   { label: 'Delhi Schedule XI, amended 2026', url: SOURCES.DL_ENF_2026.url },
   { label: 'GATC Rules, 2013 (DoCA)', url: SOURCES.DOCA_LM.url },

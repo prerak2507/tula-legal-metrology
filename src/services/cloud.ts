@@ -333,6 +333,20 @@ export const cloud = {
   },
 
   /** Looks up an approval mark (e.g. IND/09/25/235) in the copy of DoCA's Model Approval register. */
+  /** The approval mark and maker on a certificate's instrument (public: both are on the nameplate). */
+  async certificateApproval(term: string): Promise<{ mark: string | null; manufacturer: string | null } | null> {
+    if (!sb || !navigator.onLine) return null;
+    const { data, error } = await sb.rpc('public_certificate_approval', { term });
+    return error || !data ? null : data as { mark: string | null; manufacturer: string | null };
+  },
+
+  /** Approval marks for a DoCA certificate URL. */
+  async approvalByPdf(url: string): Promise<{ year: number; number: number }[] | null> {
+    if (!sb || !navigator.onLine) return null;
+    const { data, error } = await sb.rpc('model_approval_by_pdf', { url });
+    return error ? null : (data as { year: number; number: number }[]) || [];
+  },
+
   async lookupModelApproval(mark: string): Promise<unknown | null> {
     if (!sb || !navigator.onLine) return null;
     const { data, error } = await sb.rpc('lookup_model_approval', { mark });

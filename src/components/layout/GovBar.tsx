@@ -23,8 +23,8 @@ export const GovBar: React.FC<{ mainId?: string }> = ({ mainId = 'main' }) => {
       </a>
       <div className="max-w-[1400px] mx-auto px-3 sm:px-5 h-8 flex items-center justify-between gap-3">
         <p className="truncate">
-          <span className="hidden sm:inline">Built for the Department of Consumer Affairs · </span>
-          <span>SIH 2026 student prototype</span>
+          <span className="hidden sm:inline">SIH 2026 problem statement 26036 (Department of Consumer Affairs) · </span>
+          <span>Student prototype, not a government website</span>
         </p>
         <div className="flex items-center gap-1 shrink-0" role="group" aria-label="Reading preferences">
           {sizeBtn('sm', 'A−', 'Smaller text')}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MARK_PATTERN, sameMaker } from '../services/modelApproval';
+import { MARK_PATTERN, sameMaker, approvalFromText } from '../services/modelApproval';
 
 describe('approval mark format', () => {
   it('accepts marks as printed on nameplates', () => {
@@ -17,5 +17,16 @@ describe('same maker', () => {
   });
   it('flags a different company', () => {
     expect(sameMaker('METTLER-TOLEDO INDIA PRIVATE LIMITED', 'Sartorius India Pvt Ltd')).toBe(false);
+  });
+});
+
+describe('approvalFromText (public check page)', () => {
+  it('finds an approval mark in plain or messy scanned text', async () => {
+    expect(await approvalFromText('IND/09/25/47')).toEqual({ kind: 'mark', mark: 'IND/09/25/47' });
+    expect(await approvalFromText('Approval: IND / 09 / 2024 / 0536')).toEqual({ kind: 'mark', mark: 'IND/09/24/536' });
+  });
+  it('returns nothing for a QR that is neither a mark nor a DoCA link', async () => {
+    expect(await approvalFromText('https://example.com/menu')).toBeNull();
+    expect(await approvalFromText('DL/LM/2026/08913')).toBeNull();
   });
 });

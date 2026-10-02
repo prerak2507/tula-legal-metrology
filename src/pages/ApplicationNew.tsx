@@ -192,7 +192,7 @@ export const ApplicationNew: React.FC = () => {
             </div>
             <p className="text-[11px] text-slate-500">
               {fee.citation}.{' '}
-              {fee.sourceUrl && <a href={fee.sourceUrl} target="_blank" rel="noreferrer" className="underline font-semibold">Official schedule</a>}
+              {fee.sourceUrl && <a href={fee.sourceUrl} target="_blank" rel="noreferrer" className="underline font-semibold">Official schedule, published by {fee.jurisdiction === 'GJ' ? 'Government of Gujarat' : 'Government of NCT of Delhi'}</a>}
               {!fee.inSitu && ' Visit expenses above ₹100 (transport of working standards) are assessed by the office.'}
               {!fee.listed && ' This instrument is not in the schedule, so the amount is a placeholder until the Controller fixes it.'}
             </p>

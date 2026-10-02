@@ -47,10 +47,11 @@ function parse(html) {
     // Dates appear as 2026-01-31, 31/01/2020, 31-01-2021, 13.01.12 or 7.1.16 depending on the year.
     const iso = cells[1].match(/^(\d{4})-(\d{2})-(\d{2})/);
     const dmy = cells[1].match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{2}|\d{4})\b/);
-    if (!iso && !dmy) continue;
+    // A few rows have the date cell blank or garbled (e.g. "5.11.8"). They are still approvals, so keep
+    // them with no issue date rather than telling an owner their real mark is missing.
     const pad = v => String(v).padStart(2, '0');
     const issueDate = iso ? `${iso[1]}-${iso[2]}-${iso[3]}`
-      : `${dmy[3].length === 2 ? `20${dmy[3]}` : dmy[3]}-${pad(dmy[2])}-${pad(dmy[1])}`;
+      : dmy ? `${dmy[3].length === 2 ? `20${dmy[3]}` : dmy[3]}-${pad(dmy[2])}-${pad(dmy[1])}` : null;
     // One certificate can cover a range of approval numbers; the column is free text in older years.
     const range = certRange(cells[5], cells[6]);
     rows.push({

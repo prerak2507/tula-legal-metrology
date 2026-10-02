@@ -190,7 +190,11 @@ export const EnforcementList: React.FC = () => {
                 <span className="text-slate-500">Compounding fee (Schedule XI):</span>
                 {c.penaltyAmount !== undefined && c.penaltyAmount !== null
                   ? <span className="font-extrabold text-slate-900">₹{c.penaltyAmount.toLocaleString('en-IN')}</span>
-                  : <span className="font-semibold text-slate-600 text-right">To be fixed by the Controller ({c.state} Schedule XI not loaded)</span>}
+                  : c.status === 'SEIZED'
+                    ? <span className="font-semibold text-slate-600 text-right">Not compounded: sent for prosecution</span>
+                    : compoundingFee(c.state, c.offenseCategory)
+                      ? <span className="font-semibold text-slate-800 text-right">₹{compoundingFee(c.state, c.offenseCategory)!.amount.toLocaleString('en-IN')} ({compoundingFee(c.state, c.offenseCategory)!.item}), not yet collected</span>
+                      : <span className="font-semibold text-slate-600 text-right">To be fixed by the Controller ({c.state} Schedule XI not loaded)</span>}
               </div>
             </div>
 
@@ -317,7 +321,7 @@ export const EnforcementList: React.FC = () => {
                   />
                   <p className="mt-1 text-[11px] text-slate-500">
                     {scheduleFee
-                      ? <>{selectedInst?.state} {scheduleFee.item}, {scheduleFee.section}. <a href={SOURCES.DL_ENF.url} target="_blank" rel="noreferrer" className="underline">Official schedule</a></>
+                      ? <>{selectedInst?.state} {scheduleFee.item}, {scheduleFee.section}. <a href={SOURCES.DL_ENF_2026.url} target="_blank" rel="noreferrer" className="underline">Official schedule (Delhi Gazette, 28 Jan 2026, Government of NCT of Delhi)</a></>
                       : `${selectedInst?.state || 'This State'}'s Schedule XI is not loaded for this offence. Enter the amount from the schedule, or leave it for the Controller.`}
                   </p>
                 </div>

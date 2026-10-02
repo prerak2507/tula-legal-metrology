@@ -114,12 +114,15 @@ export function parseCapacity(capacity?: string): number | undefined {
   return v;
 }
 
-/** Quarters of the year after the one in which validity ended, counting a part quarter as one (rule 16(3)). */
+/** Three-month periods since validity ended, a part period counting as one (rule 16(3): "for every
+ *  quarter of the year or part thereof"). One day late is one quarter. */
 export function quartersLate(dueDate: string, on: Date = new Date()): number {
   const due = new Date(dueDate);
   if (Number.isNaN(due.getTime()) || on <= due) return 0;
-  const q = (d: Date) => d.getFullYear() * 4 + Math.floor(d.getMonth() / 3);
-  return Math.max(0, q(on) - q(due));
+  let k = 1;
+  const end = (n: number) => { const d = new Date(due); d.setMonth(d.getMonth() + 3 * n); return d; };
+  while (end(k) < on) k++;
+  return k;
 }
 
 export interface FeeBreakdown {
@@ -282,7 +285,7 @@ function row(id: string, testName: string, nominal: number, unit: string, mpe: n
 /** Builds the test plan for an instrument, sized to its real capacity and class. */
 export function buildTestPlan(inst: Pick<Instrument, 'category' | 'capacity' | 'scaleInterval' | 'accuracyClass'>): TestReadingRow[] {
   if (isDispenser(inst.category)) {
-    const r = 'OIML R 117-1 class 0.5 (±0.5 %)';
+    const r = 'LM (General) Rules 2011, Eighth Schedule (OIML R 117-1), class 0.5: ±0.5 %';
     return [
       row('tr-1', 'Minimum flow rate delivery', 5, 'L', dispenserMpeLitres(5), r),
       row('tr-2', 'Maximum flow rate delivery', 20, 'L', dispenserMpeLitres(20), r),
@@ -294,7 +297,7 @@ export function buildTestPlan(inst: Pick<Instrument, 'category' | 'capacity' | '
     const max = parseMassKg(inst.capacity) ?? 50;
     const e = parseScaleIntervalKg(inst.scaleInterval) ?? niceRound(max / 3000);
     const cls = inst.accuracyClass === 'NOT_APPLICABLE' || inst.accuracyClass === 'SPECIAL' ? 'CLASS_III' : inst.accuracyClass;
-    const r = `OIML R 76-1, ${cls.replace('CLASS_', 'Class ')}, e = ${fmt(e, 'kg')}`;
+    const r = `LM (General) Rules 2011, Seventh Schedule (OIML R 76-1), ${cls.replace('CLASS_', 'Class ')}, e = ${fmt(e, 'kg')}`;
     const points: [string, number][] = [
       ['Zero load', 0],
       ['25 % of Max', niceRound(max * 0.25)],

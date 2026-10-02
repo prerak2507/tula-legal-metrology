@@ -10,6 +10,8 @@ import { checkRevocation, RevocationCheck } from '../services/revocation';
 import { cloud, cloudEnabled } from '../services/cloud';
 import { VerificationCertificate } from '../types';
 import { TulaLogo } from '../components/common/TulaLogo';
+import { ModelApprovalCheck } from '../components/common/ModelApprovalCheck';
+import { approvalFromText, REGISTER_URL } from '../services/modelApproval';
 import {
   ShieldCheck, ShieldAlert, ShieldX, Search, Camera, Upload, Keyboard, Clock, Flag, Loader2, WifiOff, Info, X, CheckCircle2, LayoutDashboard, Home,
 } from 'lucide-react';
@@ -22,6 +24,8 @@ type Outcome =
   | { kind: 'UNKNOWN_KEY'; kid: string }
   | { kind: 'UNSIGNED'; cert: VerificationCertificate }
   | { kind: 'NOT_FOUND'; term: string }
+  | { kind: 'APPROVAL'; mark: string | null; viaLink: boolean; text: string }
+  | { kind: 'UNRECOGNISED'; text: string }
   | { kind: 'ERROR'; reason: string };
 
 const SAMPLE_ID = 'CERT-2026-08912';
@@ -32,15 +36,20 @@ const TEXT = {
     title: "Check an instrument's certificate",
     intro: 'Scan the QR on the certificate or seal. The check runs on your phone, needs no login, and works without internet.',
     tabs: ['Scan', 'Upload photo', 'Type number'],
-    point: 'Point the camera at the QR code', start: 'Start camera', sample: 'Try a sample',
+    point: 'Point the camera at the QR code', start: 'Start camera', sample: 'Try a demo certificate',
     samples: ['Genuine', 'Edited copy', 'Expired', 'Revoked'],
     sampleNote: '"Edited copy" takes the genuine certificate and changes only its expiry date. The signature no longer matches, so the check fails.',
     checking: 'Checking…',
-    genuine: 'Genuine and valid', genuineText: (d: string) => `Signed by the issuing authority and valid until ${d}. The signature was checked on this device.`,
+    genuine: 'Genuine and valid', genuineText: (d: string) => `Signed by TULA's issuing server and valid until ${d}. The signature was checked on this device. TULA is a student prototype, not a government office.`,
     expired: 'Genuine but expired', expiredText: (d: string) => `This certificate expired on ${d}. The instrument must be re-verified before it is used for trade.`,
     revoked: 'Revoked. Do not rely on this instrument', revokedFallback: 'Revoked by the issuing office',
     fake: 'Fake or edited certificate', fakeText: (reason: string, claim?: string) => `${reason}${claim ? ` It claims to be ${claim}.` : ''} Report it so the district office can inspect.`,
-    notFound: 'No certificate found', notFoundText: (t: string) => `Nothing matches "${t}". A certificate printed on an instrument should scan as a QR. If this number came from a seal or sticker, report it.`,
+    notFound: 'No certificate with this number', notFoundText: (t: string) => `TULA's registry has no certificate "${t}". TULA can only confirm certificates issued through TULA. Certificates that State offices issue on paper are not published in any government database online, so they cannot be checked here. Ask the seller to show the paper certificate. If this number is on a seal or sticker that claims to be from TULA, report it.`,
+    approval: 'This is a model approval mark, not a certificate', approvalText: 'A model approval says the design of an instrument was approved by the Government of India. It does not say that this particular instrument was verified and stamped. Below is what the government register says about this mark.',
+    approvalLinkMissing: 'This is a DoCA certificate link that TULA has no record of', approvalLinkMissingText: "The link points to the Department of Consumer Affairs website, but it does not match any entry in TULA's copy of the Model Approval register. Open the link to read the certificate on the government site.",
+    unrecognised: 'Not something TULA can check', unrecognisedText: 'This QR is not a TULA certificate and not a model approval mark, so there is no record to show. State offices issue certificates of verification on paper and do not publish them online, so no government database exists to check this against. Ask the seller to show the certificate of verification.',
+    scanned: 'What the QR contains',
+    govRecord: 'Government record for this model', govRecordNone: 'No model approval mark is recorded for this instrument, so there is no government record to show.', govRecordOffline: "Connect to the internet to see the government's model approval record for this instrument.", govRecordUnavailable: 'The government record could not be loaded just now. The certificate check above is not affected. Try again in a minute.',
     labels: { cert: 'Certificate', iid: 'Instrument ID', inst: 'Instrument', cap: 'Capacity / class', sn: 'Serial number', owner: 'Owner', place: 'Place', on: 'Verified on', until: 'Valid until', seal: 'Seal', by: 'Verified by' },
     problem: 'Weight or reading looks wrong, seal broken, or certificate expired?', report: 'Report a problem',
     rightsTitle: 'Your right as a buyer',
@@ -50,15 +59,20 @@ const TEXT = {
     title: 'तौल या माप उपकरण का प्रमाणपत्र जाँचें',
     intro: 'प्रमाणपत्र या सील पर लगा QR स्कैन करें। जाँच आपके फ़ोन पर ही होती है, लॉगिन की ज़रूरत नहीं, और इंटरनेट के बिना भी चलती है।',
     tabs: ['स्कैन करें', 'फ़ोटो अपलोड करें', 'नंबर लिखें'],
-    point: 'कैमरा QR कोड की ओर रखें', start: 'कैमरा चालू करें', sample: 'नमूना आज़माएँ',
+    point: 'कैमरा QR कोड की ओर रखें', start: 'कैमरा चालू करें', sample: 'डेमो प्रमाणपत्र आज़माएँ',
     samples: ['असली', 'बदली हुई कॉपी', 'अवधि समाप्त', 'रद्द'],
     sampleNote: '"बदली हुई कॉपी" असली प्रमाणपत्र की सिर्फ़ समाप्ति तिथि बदलती है। हस्ताक्षर मेल नहीं खाता, इसलिए जाँच विफल होती है।',
     checking: 'जाँच हो रही है…',
-    genuine: 'असली और मान्य', genuineText: (d: string) => `जारी करने वाले प्राधिकरण द्वारा हस्ताक्षरित, ${d} तक मान्य। हस्ताक्षर इसी फ़ोन पर जाँचा गया।`,
+    genuine: 'असली और मान्य', genuineText: (d: string) => `TULA के सर्वर द्वारा हस्ताक्षरित, ${d} तक मान्य। हस्ताक्षर इसी फ़ोन पर जाँचा गया। TULA एक छात्र प्रोटोटाइप है, सरकारी कार्यालय नहीं।`,
     expired: 'असली, पर अवधि समाप्त', expiredText: (d: string) => `यह प्रमाणपत्र ${d} को समाप्त हो गया। व्यापार में उपयोग से पहले उपकरण का दोबारा सत्यापन ज़रूरी है।`,
     revoked: 'रद्द किया गया। इस उपकरण पर भरोसा न करें', revokedFallback: 'जारी करने वाले कार्यालय ने रद्द किया',
     fake: 'नकली या बदला हुआ प्रमाणपत्र', fakeText: (_r: string, claim?: string) => `हस्ताक्षर प्रमाणपत्र के विवरण से मेल नहीं खाता।${claim ? ` यह ${claim} होने का दावा करता है।` : ''} शिकायत करें ताकि ज़िला कार्यालय जाँच कर सके।`,
-    notFound: 'कोई प्रमाणपत्र नहीं मिला', notFoundText: (t: string) => `"${t}" से मेल खाता कोई प्रमाणपत्र नहीं है। अगर यह नंबर किसी सील या स्टिकर पर है, तो शिकायत करें।`,
+    notFound: 'इस नंबर का कोई प्रमाणपत्र नहीं', notFoundText: (t: string) => `TULA के रजिस्टर में "${t}" नंबर का कोई प्रमाणपत्र नहीं है। TULA सिर्फ़ TULA से जारी प्रमाणपत्रों की पुष्टि कर सकता है। राज्य कार्यालयों के कागज़ी प्रमाणपत्र किसी सरकारी ऑनलाइन डेटाबेस में प्रकाशित नहीं होते, इसलिए उनकी जाँच यहाँ नहीं हो सकती। विक्रेता से कागज़ी प्रमाणपत्र दिखाने को कहें। अगर यह नंबर TULA के नाम वाली किसी सील या स्टिकर पर है, तो शिकायत करें।`,
+    approval: 'यह मॉडल अनुमोदन चिह्न है, प्रमाणपत्र नहीं', approvalText: 'मॉडल अनुमोदन का अर्थ है कि उपकरण का डिज़ाइन भारत सरकार ने अनुमोदित किया है। इससे यह साबित नहीं होता कि यही उपकरण सत्यापित और मुहरबंद है। नीचे इस चिह्न के बारे में सरकारी रजिस्टर की जानकारी है।',
+    approvalLinkMissing: 'यह DoCA प्रमाणपत्र का लिंक है, पर TULA के पास इसका रिकॉर्ड नहीं', approvalLinkMissingText: 'यह लिंक उपभोक्ता मामले विभाग की वेबसाइट का है, पर TULA की मॉडल अनुमोदन रजिस्टर की प्रति में इससे मेल खाती कोई प्रविष्टि नहीं है। प्रमाणपत्र सरकारी साइट पर देखने के लिए लिंक खोलें।',
+    unrecognised: 'इसकी जाँच TULA नहीं कर सकता', unrecognisedText: 'यह QR न TULA का प्रमाणपत्र है, न मॉडल अनुमोदन चिह्न, इसलिए दिखाने को कोई रिकॉर्ड नहीं है। राज्य कार्यालय सत्यापन प्रमाणपत्र कागज़ पर जारी करते हैं और ऑनलाइन प्रकाशित नहीं करते, इसलिए इसकी जाँच के लिए कोई सरकारी डेटाबेस नहीं है। विक्रेता से सत्यापन प्रमाणपत्र दिखाने को कहें।',
+    scanned: 'QR में क्या लिखा है',
+    govRecord: 'इस मॉडल का सरकारी रिकॉर्ड', govRecordNone: 'इस उपकरण का कोई मॉडल अनुमोदन चिह्न दर्ज नहीं है, इसलिए दिखाने को कोई सरकारी रिकॉर्ड नहीं है।', govRecordOffline: 'इस उपकरण का सरकारी मॉडल अनुमोदन रिकॉर्ड देखने के लिए इंटरनेट से जुड़ें।', govRecordUnavailable: 'सरकारी रिकॉर्ड अभी लोड नहीं हो सका। ऊपर की प्रमाणपत्र जाँच पर इसका असर नहीं है। एक मिनट बाद फिर कोशिश करें।',
     labels: { cert: 'प्रमाणपत्र', iid: 'उपकरण आईडी', inst: 'उपकरण', cap: 'क्षमता / श्रेणी', sn: 'क्रम संख्या', owner: 'मालिक', place: 'स्थान', on: 'सत्यापन तिथि', until: 'कब तक मान्य', seal: 'सील', by: 'सत्यापनकर्ता' },
     problem: 'वज़न या रीडिंग गलत लगे, सील टूटी हो, या प्रमाणपत्र समाप्त हो?', report: 'शिकायत करें',
     rightsTitle: 'खरीदार के रूप में आपका अधिकार',
@@ -119,6 +133,8 @@ export const PublicVerify: React.FC = () => {
   const lookup = useCallback(async (raw: string): Promise<Outcome> => {
     const t = raw.trim();
     if (!t) return { kind: 'ERROR', reason: 'Enter a certificate number.' };
+    const approval = await approvalFromText(t);
+    if (approval) return { kind: 'APPROVAL', mark: approval.mark, viaLink: approval.kind === 'doca_link', text: t };
     let cert = storage.getCertificateById(t);
     if (!cert && cloudEnabled) {
       // Not on this device: ask the live registry (public, no login).
@@ -136,7 +152,15 @@ export const PublicVerify: React.FC = () => {
     setBusy(true);
     try {
       const { id, p, s } = parseQrText(text);
-      const out = p && s ? await verifySigned(p, s) : await lookup(id || text);
+      const t = text.trim();
+      // A TULA link, or something shaped like a certificate number, is looked up; anything else is said plainly.
+      const isTulaLink = /\/verify\//.test(t);
+      const looksLikeCert = /^[A-Z]{2}\/LM\/\d{4}\/\d+$/i.test(t) || /^CERT-\d{4}-\w+$/i.test(t);
+      const approval = p && s ? null : await approvalFromText(t);
+      const out: Outcome = p && s ? await verifySigned(p, s)
+        : approval ? { kind: 'APPROVAL', mark: approval.mark, viaLink: approval.kind === 'doca_link', text: t }
+        : isTulaLink || looksLikeCert ? await lookup(id || t)
+        : { kind: 'UNRECOGNISED', text: t };
       setOutcome(out);
       if (id) setTerm(id);
     } finally {
@@ -244,6 +268,21 @@ export const PublicVerify: React.FC = () => {
   }, [outcome, busy]);
 
   const shown = outcome && 'payload' in outcome ? outcome.payload : undefined;
+  // The government's model approval record for the certificate's instrument (looked up live, never made up).
+  const [gov, setGov] = useState<{ state: 'loading' | 'none' | 'offline' | 'unavailable' } | { state: 'ok'; mark: string; manufacturer?: string } | null>(null);
+  useEffect(() => {
+    if (!shown) { setGov(null); return; }
+    if (!online) { setGov({ state: 'offline' }); return; }
+    let live = true;
+    setGov({ state: 'loading' });
+    void cloud.certificateApproval(shown.id).then(r => {
+      if (!live) return;
+      if (!r) setGov({ state: navigator.onLine ? 'unavailable' : 'offline' });
+      else if (!r.mark) setGov({ state: 'none' });
+      else setGov({ state: 'ok', mark: r.mark, manufacturer: r.manufacturer || undefined });
+    });
+    return () => { live = false; };
+  }, [shown, online]);
 
   return (
     <div className="min-h-screen w-full flex flex-col bg-paper-50">
@@ -360,6 +399,23 @@ export const PublicVerify: React.FC = () => {
                 text={T.notFoundText(outcome.term)} />
             )}
             {outcome.kind === 'ERROR' && <Banner tone="slate" icon={<Info className="w-7 h-7" />} title="Could not check" text={outcome.reason} />}
+            {outcome.kind === 'APPROVAL' && (outcome.mark
+              ? <Banner tone="slate" icon={<Info className="w-7 h-7" />} title={T.approval} text={T.approvalText} />
+              : <Banner tone="amber" icon={<Info className="w-7 h-7" />} title={T.approvalLinkMissing} text={T.approvalLinkMissingText} />)}
+            {outcome.kind === 'APPROVAL' && (
+              <div className="p-5 space-y-3">
+                {outcome.mark && <ModelApprovalCheck mark={outcome.mark} publicView />}
+                {outcome.viaLink && <p className="text-xs text-slate-600">{T.scanned}: <a href={outcome.text} target="_blank" rel="noreferrer" className="underline break-all">{outcome.text}</a></p>}
+                {!outcome.viaLink && !outcome.mark && <p className="text-xs"><a href={REGISTER_URL} target="_blank" rel="noreferrer" className="underline">{REGISTER_URL}</a></p>}
+              </div>
+            )}
+            {outcome.kind === 'UNRECOGNISED' && <Banner tone="slate" icon={<Info className="w-7 h-7" />} title={T.unrecognised} text={T.unrecognisedText} />}
+            {outcome.kind === 'UNRECOGNISED' && (
+              <div className="p-5 text-xs text-slate-600">
+                <p className="font-semibold text-slate-700">{T.scanned}</p>
+                <p className="font-readout break-all mt-1">{outcome.text.length > 160 ? `${outcome.text.slice(0, 160)}…` : outcome.text}</p>
+              </div>
+            )}
 
             {(shown || (outcome.kind === 'UNSIGNED' && outcome.cert)) && (
               <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 p-5 text-sm">
@@ -378,10 +434,22 @@ export const PublicVerify: React.FC = () => {
 
             {shown && (
               <div className="px-5 pb-4 text-[11px] text-slate-500 space-y-1">
+                <p className="font-semibold text-slate-600">Demo data: the owner, place, officer and seal on TULA certificates are made up for the prototype.</p>
                 <p className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> ECDSA P-256 signature, key {shown.kid}, signed {shown.iat.slice(0, 10)}{outcome.kind === 'GENUINE' && outcome.demoKey ? ' (prototype demo key)' : ''}.</p>
                 {'revocation' in outcome && (
                   <p>Revocation list: {outcome.revocation.source === 'live' ? 'checked online just now' : outcome.revocation.source === 'cached' ? `saved copy from ${outcome.revocation.listUpdated?.slice(0, 10) || 'earlier'}` : 'not available on this device yet'}.</p>
                 )}
+              </div>
+            )}
+
+            {shown && gov && (
+              <div className="px-5 pb-5 space-y-2">
+                <p className="text-xs font-bold text-slate-800">{T.govRecord}</p>
+                {gov.state === 'loading' && <p className="text-xs text-slate-500 flex items-center gap-1.5"><Loader2 className="w-3.5 h-3.5 animate-spin" /> {T.checking}</p>}
+                {gov.state === 'none' && <p className="text-xs text-slate-600">{T.govRecordNone}</p>}
+                {gov.state === 'offline' && <p className="text-xs text-slate-600">{T.govRecordOffline}</p>}
+                {gov.state === 'unavailable' && <p className="text-xs text-slate-600">{T.govRecordUnavailable}</p>}
+                {gov.state === 'ok' && <ModelApprovalCheck mark={gov.mark} manufacturer={gov.manufacturer} publicView />}
               </div>
             )}
 
