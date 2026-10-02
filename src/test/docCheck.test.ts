@@ -4,7 +4,7 @@ import { maskSensitive, precheckQr, safeAiText } from '../../api/_lib/qrcheck.js
 
 const app = { modelApprovalNumber: 'IND/09/25/49', manufacturer: 'Jayan Electronics', capacity: '30 kg', accuracyClass: 'CLASS_III' };
 const register = { company: 'M/s. JAYAN ELECTRONICS', equipment: 'Non-automatic Weighing Instrument', issueDate: '2025-02-21', pdf: 'https://lm.doca.gov.in/x.pdf' };
-const fields = { readable: true, approvalMark: 'IND/09/25/49', company: 'M/s Jayan Electronics', maxCapacity: '30 kg', accuracyClass: 'accuracy class-III', issueDate: '21.02.2025' };
+const fields = { readable: true, approvalMark: 'IND/09/25/49', company: 'M/s Jayan Electronics', maxCapacities: ['30 kg'], accuracyClass: 'accuracy class-III', issueDate: '21.02.2025' };
 const base = (over: Partial<DocCheckResponse> = {}): DocCheckResponse =>
   ({ exact: false, officialChecked: true, register, uploaded: { ...fields }, official: { ...fields }, visualHints: [], ...over });
 
@@ -29,7 +29,12 @@ describe('compareDocument', () => {
   it('flags a capacity above what the model is approved for', () => {
     const v = compareDocument(base(), { ...app, capacity: '150 kg' });
     expect(v.status).toBe('mismatch');
-    expect(v.findings.find(f => f.level === 'warn')?.text).toMatch(/approved model goes up to 30 kg/);
+    expect(v.findings.find(f => f.level === 'warn')?.text).toMatch(/approved models go up to 30 kg/);
+  });
+  it('accepts a page that shows one of the several capacities DoCA\'s copy lists', () => {
+    // Real case: page 1 of IND/09/25/49 shows 30kg; DoCA's full copy also covers 60kg and names a C3 load cell.
+    const v = compareDocument(base({ uploaded: { ...fields, maxCapacities: ['30kg'] }, official: { ...fields, maxCapacities: ['30kg', '60kg'], accuracyClass: 'C3' } }), app);
+    expect(v.status).toBe('match');
   });
   it('flags a different company, mark and class', () => {
     const v = compareDocument(base({ uploaded: { ...fields, company: 'Avery India', approvalMark: 'IND/09/25/50', accuracyClass: 'Class II' } }), app);
@@ -39,8 +44,8 @@ describe('compareDocument', () => {
     expect(warns).toMatch(/Class II/);
   });
   it('flags a document that differs from DoCA\'s published copy', () => {
-    const v = compareDocument(base({ official: { ...fields, maxCapacity: '15 kg' } }), app);
-    expect(v.findings.some(f => /published copy \(15 kg\)/.test(f.text))).toBe(true);
+    const v = compareDocument(base({ official: { ...fields, maxCapacities: ['15 kg'] } }), app);
+    expect(v.findings.some(f => /lists 30 kg, which DoCA's published copy does not \(15 kg\)/.test(f.text))).toBe(true);
   });
   it('warns when the mark is not in the register, and says when it could not read the file', () => {
     expect(compareDocument(base({ register: null, official: null }), app).status).toBe('mismatch');

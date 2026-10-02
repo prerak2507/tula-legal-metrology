@@ -6,7 +6,13 @@ import { parseCapacity } from './rulesEngine';
 
 export interface CertFields {
   readable: boolean; approvalMark: string; company: string; brand?: string; series?: string;
-  instrumentType?: string; maxCapacity: string; accuracyClass: string; issueDate: string;
+  instrumentType?: string; maxCapacities: string[]; accuracyClass: string; issueDate: string;
+}
+
+/** A certificate often covers several models; returns every capacity it lists, in kg. */
+function capacitiesOf(f: CertFields): number[] {
+  return (Array.isArray(f.maxCapacities) ? f.maxCapacities : [])
+    .map(c => parseCapacity(c)).filter((c): c is number => c !== undefined);
 }
 export interface DocCheckResponse {
   exact: boolean; officialChecked: boolean; model?: string;
@@ -43,8 +49,9 @@ export function normaliseDate(d: string | null | undefined): string | null {
 function compareToOfficial(up: CertFields, off: CertFields, add: (l: FindingLevel, t: string) => void) {
   if (!off.readable) return add('info', "DoCA's published copy could not be read, so only the register entry was compared.");
   if (off.company && up.company && !sameMaker(off.company, up.company)) add('warn', `Company differs from DoCA's published copy (${off.company}).`);
-  const capUp = parseCapacity(up.maxCapacity), capOff = parseCapacity(off.maxCapacity);
-  if (capUp !== undefined && capOff !== undefined && capUp !== capOff) add('warn', `Maximum capacity differs from DoCA's published copy (${off.maxCapacity}).`);
+  const capsOff = capacitiesOf(off);
+  const extra = capsOff.length ? capacitiesOf(up).filter(c => !capsOff.includes(c)) : [];
+  if (extra.length) add('warn', `Document lists ${extra.map(c => `${c} kg`).join(', ')}, which DoCA's published copy does not (${off.maxCapacities.join(', ')}).`);
   const clUp = normaliseClass(up.accuracyClass), clOff = normaliseClass(off.accuracyClass);
   if (clUp && clOff && clUp !== clOff) add('warn', `Accuracy class differs from DoCA's published copy (Class ${clOff}).`);
   const dUp = normaliseDate(up.issueDate), dOff = normaliseDate(off.issueDate);
@@ -71,8 +78,9 @@ export function compareDocument(res: DocCheckResponse, app: ApplicationFacts): D
   if (up.company && app.manufacturer && !sameMaker(up.company, app.manufacturer)) add('warn', `Document names ${up.company}; application says ${app.manufacturer}.`);
   else if (up.company) add('ok', `Company ${up.company} matches.`);
 
-  const capDoc = parseCapacity(up.maxCapacity), capApp = parseCapacity(app.capacity);
-  if (capDoc !== undefined && capApp !== undefined && capApp > capDoc) add('warn', `Application says ${app.capacity}; the approved model goes up to ${up.maxCapacity}.`);
+  const capsDoc = capacitiesOf(up), capApp = parseCapacity(app.capacity);
+  const capMax = capsDoc.length ? Math.max(...capsDoc) : undefined;
+  if (capMax !== undefined && capApp !== undefined && capApp > capMax) add('warn', `Application says ${app.capacity}; the approved models go up to ${capMax} kg.`);
   const clDoc = normaliseClass(up.accuracyClass), clApp = normaliseClass(app.accuracyClass);
   if (clDoc && clApp && clDoc !== clApp) add('warn', `Document approves Class ${clDoc}; application says Class ${clApp}.`);
 

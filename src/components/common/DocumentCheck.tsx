@@ -65,7 +65,7 @@ export const DocumentCheck: React.FC<{ app: Application; instrument: Instrument 
             ))}
           </ul>
           <p className="text-[11px] text-ink-600">
-            Advisory only: you decide. {result.res.exact ? 'Compared byte for byte with DoCA\'s file.' : `Fields read by AI (${result.res.model || 'Gemini'}) and compared by TULA.`}
+            Advisory only: you decide. {result.res.exact ? 'Compared byte for byte with DoCA\'s file.' : result.res.model ? `Fields read by AI (${result.res.model}) and compared by TULA.` : 'Checked against DoCA\'s register without AI.'}
             {result.res.register?.pdf && <> <a href={result.res.register.pdf} target="_blank" rel="noreferrer" className="underline inline-flex items-center gap-0.5">DoCA's certificate <ExternalLink className="w-3 h-3" /></a></>}
           </p>
         </div>
