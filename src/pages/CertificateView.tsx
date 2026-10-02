@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { storage } from '../services/storage';
 import { VerificationCertificate } from '../types';
@@ -14,6 +14,17 @@ export const CertificateView: React.FC = () => {
   const [cert, setCert] = useState<VerificationCertificate | undefined>(undefined);
 
   const [signing, setSigning] = useState(false);
+  const sheetBox = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+  useEffect(() => {
+    const el = sheetBox.current;
+    if (!el) return;
+    const fit = () => setScale(Math.min(1, el.clientWidth / 794));
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [cert]);
   useEffect(() => {
     if (!id) return;
     const load = () => setCert(storage.getCertificateById(decodeURIComponent(id)));
@@ -77,21 +88,22 @@ export const CertificateView: React.FC = () => {
       </div>
 
       {/* Certificate of verification in the form of Schedule VIII (rule 15(3)), print-ready */}
-      <div className="relative bg-white text-ink border border-paper-400 shadow-xl print-page overflow-hidden font-plex">
+      <div ref={sheetBox} className="cert-a4-box" style={{ height: `calc(297mm * ${scale})` }}>
+      <div className="cert-a4 relative bg-white text-ink border border-paper-400 shadow-xl overflow-hidden font-plex" style={{ transform: `scale(${scale})` }}>
         {/* Specimen marking: a prototype certificate, never valid for trade */}
         <div aria-hidden="true" className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <span className="font-display text-[110px] sm:text-[150px] font-semibold text-seal/[0.06] -rotate-[24deg] select-none tracking-widest">SPECIMEN</span>
+          <span className="font-display text-[150px] font-semibold text-seal/[0.06] -rotate-[24deg] select-none tracking-widest">SPECIMEN</span>
         </div>
-        <div className="relative m-2 sm:m-3 border-[3px] border-double border-ink/70 p-5 sm:p-8 space-y-5">
+        <div className="relative m-3 h-[calc(100%-1.5rem)] flex flex-col gap-5 border-[3px] border-double border-ink/70 p-8">
           {/* Heading, as in Schedule VIII */}
           <header className="text-center space-y-0.5">
             <p className="text-[11px] tracking-[0.18em] uppercase text-ink-600">{facts.form}</p>
-            <p className="font-display text-lg sm:text-xl font-semibold uppercase tracking-wide">{facts.government}</p>
+            <p className="font-display text-xl font-semibold uppercase tracking-wide">{facts.government}</p>
             <p className="text-sm font-semibold">{facts.office}</p>
-            <p className="font-display text-2xl sm:text-3xl font-semibold tracking-tight pt-2">Certificate of Verification</p>
+            <p className="font-display text-3xl font-semibold tracking-tight pt-2">Certificate of Verification</p>
           </header>
 
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 border-y border-ink/20 py-2.5 text-sm">
+          <div className="flex flex-row items-end justify-between gap-2 border-y border-ink/20 py-2.5 text-sm">
             <p>Name of Legal Metrology officer: <strong>{cert.issuingOfficerName}</strong>, {cert.issuingOfficerDesignation}</p>
             <p>No. <strong className="font-readout">{cert.certificateNumber}</strong></p>
           </div>
@@ -103,8 +115,8 @@ export const CertificateView: React.FC = () => {
           </p>
 
           {/* Schedule VIII table */}
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs border border-ink/30 min-w-[640px]">
+          <div>
+            <table className="w-full text-xs border border-ink/30">
               <thead className="bg-paper-100">
                 <tr className="text-left">
                   {['Instrument (type)', 'Capacity', 'Class', 'Manufacturer', 'Model and serial no.', 'Qty', 'Verification fee (₹)', 'Carriage, conveyance, adjusting (₹)'].map(h => (
@@ -127,7 +139,7 @@ export const CertificateView: React.FC = () => {
             </table>
           </div>
 
-          <div className="grid sm:grid-cols-2 gap-x-6 gap-y-2 text-sm">
+          <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
             <p>Total ₹ <strong className="font-readout">{facts.feeTotal !== undefined ? facts.feeTotal.toLocaleString('en-IN') : '—'}</strong>{' '}
               {facts.receipt ? <>deposited vide receipt no. <strong className="font-readout">{facts.receipt}</strong>{facts.paidOn ? <> dated {facts.paidOn}</> : null}</> : facts.feeStatus === 'EXEMPT' ? '(exempt)' : '(receipt not recorded)'}
             </p>
@@ -137,7 +149,7 @@ export const CertificateView: React.FC = () => {
           </div>
 
           {/* Next verification due, signature and QR */}
-          <div className="flex flex-col sm:flex-row items-stretch justify-between gap-5 border-t border-ink/20 pt-4">
+          <div className="flex flex-row items-stretch justify-between gap-5 border-t border-ink/20 pt-4">
             <div className="flex-1 space-y-3">
               <div className="inline-block border-2 border-ink px-4 py-2">
                 <p className="text-[11px] uppercase tracking-[0.14em] text-ink-600">Next verification due on</p>
@@ -157,7 +169,7 @@ export const CertificateView: React.FC = () => {
                 </div>
               )}
             </div>
-            <div className="flex sm:flex-col items-center sm:items-end gap-4 sm:gap-2 text-right">
+            <div className="flex flex-col items-end gap-2 text-right">
               <div className="text-center">
                 <QRCodeSVG value={cert.qrPayloadUrl} size={132} level="M" includeMargin className="border border-ink/30" />
                 <p className="text-[10px] font-semibold">Scan to check</p>
@@ -170,7 +182,7 @@ export const CertificateView: React.FC = () => {
             </div>
           </div>
 
-          <footer className="border-t border-ink/20 pt-3 space-y-1 text-[11px] text-ink-600">
+          <footer className="mt-auto border-t border-ink/20 pt-3 space-y-1 text-[11px] text-ink-600">
             <p>{facts.displayRule}</p>
             <p>A rejected instrument gets a separate certificate of rejection with reasons (Schedule VIII, note).</p>
             <p className="text-seal-700 font-semibold">Specimen generated by the TULA prototype for Smart India Hackathon 2026 (PS 26036). Not issued by any government office and not valid for trade.</p>
@@ -178,6 +190,7 @@ export const CertificateView: React.FC = () => {
             <p className="no-print">Format: <a href={facts.formUrl} target="_blank" rel="noreferrer" className="underline">{facts.form}</a> · <Link to="/sources" className="underline">All sources</Link> · <Link to={cert.qrPayloadUrl.replace(/^https?:\/\/[^/]+/, '')} className="underline">Open the public check</Link></p>
           </footer>
         </div>
+      </div>
       </div>
     </div>
   );

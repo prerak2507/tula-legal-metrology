@@ -247,3 +247,16 @@
 
 /* ━━━━━━━━━━━ ACCESSIBILITY ━━━━━━━━━━━ */
 :focus-visible { outline: 2px solid #B07D2B; outline-offset: 2px; }
+
+
+/* ━━━━━━━━━━━ CERTIFICATE ON A4 ━━━━━━━━━━━ */
+/* The certificate is always an A4 sheet. On screen it scales down to fit; printed, it fills one A4 page. */
+@page { size: A4; margin: 0; }
+.cert-a4-box { width: 100%; overflow: hidden; }
+.cert-a4 { width: 210mm; height: 297mm; margin: 0 auto; transform-origin: top left; }
+@media print {
+  html, body { height: 297mm !important; overflow: hidden !important; }
+  body * { visibility: hidden; }
+  .cert-a4, .cert-a4 * { visibility: visible; }
+  .cert-a4 { position: fixed; top: 0; left: 0; transform: none !important; box-shadow: none !important; border: none !important; }
+}
