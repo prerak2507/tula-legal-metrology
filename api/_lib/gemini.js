@@ -19,6 +19,7 @@ async function post(apiKey, model, body, timeoutMs) {
 /** contents: Gemini "contents" array. schema: optional JSON response schema. */
 export async function callGemini(apiKey, { contents, system, schema, timeoutMs = 20_000 }) {
   let lastError = 'no model responded';
+  let lastStatus = 0;
   for (const model of MODELS) {
     try {
       const body = {
@@ -40,11 +41,14 @@ export async function callGemini(apiKey, { contents, system, schema, timeoutMs =
       }
       if (out.ok && out.text) return { model, text: out.text };
       lastError = `${model}: ${out.status} ${out.data?.error?.message || ''}`.trim();
+      lastStatus = out.status;
     } catch (e) {
       lastError = `${model}: ${e.message}`;
+      lastStatus = 0;
     }
   }
-  throw new Error(lastError);
+  // status 400 from the last model means it rejected the input itself (for example an empty PDF).
+  throw Object.assign(new Error(lastError), { status: lastStatus });
 }
 
 /** Parses a JSON answer; returns null when the model returned something else. */

@@ -52,7 +52,7 @@ export const DocumentCheck: React.FC<{ app: Application; instrument: Instrument 
         {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileSearch className="w-3.5 h-3.5 text-brass-600" />}
         {busy ? 'Reading the certificate…' : 'Check the uploaded approval certificate'}
       </button>
-      {error && <p className="text-xs text-ink-700 bg-paper-50 border border-paper-300 rounded-md p-2.5">{error} Check the document by hand.</p>}
+      {error && <p className="text-xs text-ink-700 bg-paper-50 border border-paper-300 rounded-md p-2.5">{error}{/by hand/i.test(error) ? '' : ' Check the document by hand.'}</p>}
       {result && (
         <div className={`rounded-md border p-3 text-xs space-y-1.5 ${cls}`} role="status" aria-live="polite">
           <p className="font-semibold flex items-start gap-1.5">

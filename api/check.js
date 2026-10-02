@@ -16,6 +16,7 @@ export const config = { maxDuration: 60 };
 const OFFICER_ROLES = ['LMO', 'GATC', 'CONTROLLER', 'STATE_ADMIN', 'CENTRAL_ADMIN'];
 const DOC_TYPES = ['application/pdf', 'image/jpeg', 'image/png'];
 const MAX_UPLOAD_B64 = 2_200_000;          // the form allows 1.5 MB files
+const MIN_UPLOAD_BYTES = 1024;             // smaller than any real scan or certificate PDF
 const MAX_OFFICIAL_BYTES = 10 * 1024 * 1024;
 const DOCA_HOST = 'lm.doca.gov.in';
 const AI_EXPLAINS = ['link', 'text'];      // the plain checks already explain payment, wifi, contact, phone, product codes
@@ -125,8 +126,12 @@ async function checkDocument(apiKey, req, res, body) {
   if (!entry) return send(res, 200, { exact: false, officialChecked: false, register: null, uploaded: null, official: null, visualHints: [] });
 
   const register = { company: entry.company, equipment: entry.equipment, issueDate: entry.issueDate, pdf: entry.pdf };
+  const upload = Buffer.from(file.data, 'base64');
+  const unreadable = { exact: false, officialChecked: false, register, uploaded: { readable: false }, official: null, visualHints: [] };
+  // A file this small has no readable page; no need to ask the AI.
+  if (upload.length < MIN_UPLOAD_BYTES) return send(res, 200, unreadable);
   const official = entry.pdf ? await officialPdf(entry.pdf) : null;
-  if (official && sha256(official) === sha256(Buffer.from(file.data, 'base64'))) {
+  if (official && sha256(official) === sha256(upload)) {
     return send(res, 200, { exact: true, officialChecked: true, register, uploaded: null, official: null, visualHints: [] });
   }
   try {
@@ -143,6 +148,8 @@ async function checkDocument(apiKey, req, res, body) {
     });
   } catch (e) {
     console.error('doc_ai_error', e.message);
+    // 400 means the AI rejected the file itself (corrupt or blank), which is an answer, not an outage.
+    if (e.status === 400) return send(res, 200, unreadable);
     return send(res, 502, { error: 'ai_unavailable', message: 'The AI service did not respond. Check the document by hand.' });
   }
 }
