@@ -66,6 +66,44 @@ export async function analyzeApplicationScrutiny(application: Record<string, str
   return post<ScrutinyResult>({ mode: 'scrutiny', application });
 }
 
+// ---------- /api/check: unknown QRs and uploaded certificates ----------
+
+export interface QrExplanation {
+  precheck: { kind: string; host?: string; flags: { level: 'warn' | 'info'; message: string }[] };
+  ai: { explanation: string; flags: string[] } | null;
+}
+
+async function postCheck<T>(body: unknown, accessToken?: string): Promise<T> {
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) throw new AiUnavailableError('You are offline. This check needs a connection.');
+  let r: Response;
+  try {
+    r = await fetch('/api/check', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}) },
+      body: JSON.stringify(body),
+    });
+  } catch {
+    throw new AiUnavailableError('Could not reach the checking service.');
+  }
+  const data = await r.json().catch(() => ({}));
+  if (r.status === 404 || r.status === 503) throw new AiUnavailableError('AI checks are not switched on for this deployment.');
+  if (r.status === 429) throw new AiUnavailableError('Too many checks. Wait a minute and try again.');
+  if (!r.ok) throw new AiUnavailableError(data.message || 'The check did not finish.');
+  return data as T;
+}
+
+/** Explains a QR TULA could not match. Plain checks always come back; the AI part may be null. */
+export function explainQr(text: string): Promise<QrExplanation> {
+  return postCheck<QrExplanation>({ mode: 'qr', text });
+}
+
+/** Officers only: reads an uploaded model approval certificate and returns the raw fields to compare. */
+export function checkCertificateDocument(mark: string, dataUrl: string, accessToken?: string) {
+  const m = dataUrl.match(/^data:([^;]+);base64,(.*)$/);
+  if (!m) return Promise.reject(new AiUnavailableError('This document is not stored in a form that can be checked.'));
+  return postCheck<import('./docCheck').DocCheckResponse>({ mode: 'document', mark, file: { mimeType: m[1], data: m[2] } }, accessToken);
+}
+
 /** Kept for the rules screen health check. */
 export async function testGeminiConnection(): Promise<{ ok: boolean; message: string }> {
   try {

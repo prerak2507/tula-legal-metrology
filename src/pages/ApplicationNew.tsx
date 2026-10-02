@@ -149,7 +149,7 @@ export const ApplicationNew: React.FC = () => {
 
         <section className="bg-white p-5 rounded-xl border border-slate-200 space-y-3">
           <h2 className="font-bold text-sm text-slate-900 flex items-center gap-2"><span className="w-6 h-6 rounded-full bg-gov-700 text-white text-xs flex items-center justify-center">3</span> Documents</h2>
-          <p className="text-xs text-slate-500">PDF, JPG or PNG, up to 1.5 MB each. A clear phone photo is fine.</p>
+          <p className="text-xs text-slate-500">PDF, JPG or PNG, up to 1.5 MB each. A clear phone photo is fine. The officer can check the model approval certificate against the copy DoCA publishes; to read a scan, that certificate (and only that one) is sent to Google Gemini. Do not upload personal documents in that slot.</p>
           <div className="space-y-2">
             {DOC_TYPES.map(d => {
               const up = docs.find(x => x.type === d.type);

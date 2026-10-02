@@ -4,8 +4,7 @@
 // Gemini only assists: it never computes fees, MPE limits or pass/fail.
 
 import { guard, readJson, send } from './_lib/common.js';
-
-const MODELS = ['gemini-3.5-flash', 'gemini-flash-latest', 'gemini-3.1-flash-lite'];
+import { callGemini } from './_lib/gemini.js';
 
 const ASSISTANT_PROMPT = `You are the TULA help assistant for the Legal Metrology verification system in India.
 Answer questions about the Legal Metrology Act, 2009, the Legal Metrology (General) Rules, 2011,
@@ -41,48 +40,6 @@ const SCRUTINY_SCHEMA = {
   },
   required: ['summary', 'flags'],
 };
-
-async function callGemini(apiKey, { contents, system, schema }) {
-  let lastError = 'no model responded';
-  for (const model of MODELS) {
-    try {
-      const body = {
-        contents,
-        systemInstruction: { parts: [{ text: system }] },
-        // Newer Flash models "think" before answering; minimal thinking keeps answers fast and
-        // stops the reasoning from eating the output budget (which truncated the JSON).
-        generationConfig: { temperature: 0.2, maxOutputTokens: 2048, thinkingConfig: { thinkingLevel: 'minimal' } },
-      };
-      if (schema) {
-        body.generationConfig.responseMimeType = 'application/json';
-        body.generationConfig.responseSchema = schema;
-      }
-      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
-        body: JSON.stringify(body),
-        signal: AbortSignal.timeout(20_000),
-      });
-      const data = await r.json().catch(() => ({}));
-      if (r.status === 400 && body.generationConfig.thinkingConfig && /thinking/i.test(data?.error?.message || '')) {
-        // Model does not accept a thinking level: retry the same model without it.
-        delete body.generationConfig.thinkingConfig;
-        const r2 = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
-          method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey }, body: JSON.stringify(body), signal: AbortSignal.timeout(20_000),
-        });
-        const d2 = await r2.json().catch(() => ({}));
-        const t2 = d2?.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('').trim();
-        if (r2.ok && t2) return { model, text: t2 };
-      }
-      const text = data?.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('').trim();
-      if (r.ok && text) return { model, text };
-      lastError = `${model}: ${r.status} ${data?.error?.message || ''}`.trim();
-    } catch (e) {
-      lastError = `${model}: ${e.message}`;
-    }
-  }
-  throw new Error(lastError);
-}
 
 const clip = (s, n) => String(s ?? '').slice(0, n);
 

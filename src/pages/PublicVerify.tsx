@@ -12,6 +12,7 @@ import { VerificationCertificate } from '../types';
 import { TulaLogo } from '../components/common/TulaLogo';
 import { ModelApprovalCheck } from '../components/common/ModelApprovalCheck';
 import { approvalFromText, REGISTER_URL } from '../services/modelApproval';
+import { explainQr, QrExplanation } from '../services/gemini';
 import {
   ShieldCheck, ShieldAlert, ShieldX, Search, Camera, Upload, Keyboard, Clock, Flag, Loader2, WifiOff, Info, X, CheckCircle2, LayoutDashboard, Home,
 } from 'lucide-react';
@@ -49,6 +50,8 @@ const TEXT = {
     approvalLinkMissing: 'This is a DoCA certificate link that TULA has no record of', approvalLinkMissingText: "The link points to the Department of Consumer Affairs website, but it does not match any entry in TULA's copy of the Model Approval register. Open the link to read the certificate on the government site.",
     unrecognised: 'Not something TULA can check', unrecognisedText: 'This QR is not a TULA certificate and not a model approval mark, so there is no record to show. State offices issue certificates of verification on paper and do not publish them online, so no government database exists to check this against. Ask the seller to show the certificate of verification.',
     scanned: 'What the QR contains',
+    explain: 'Explain this QR with AI', explaining: 'Reading the QR…',
+    explainNote: 'AI explanation, not a verification. TULA never opens the link. Phone numbers and IDs are hidden before the text is sent.',
     govRecord: 'Government record for this model', govRecordNone: 'No model approval mark is recorded for this instrument, so there is no government record to show.', govRecordOffline: "Connect to the internet to see the government's model approval record for this instrument.", govRecordUnavailable: 'The government record could not be loaded just now. The certificate check above is not affected. Try again in a minute.',
     labels: { cert: 'Certificate', iid: 'Instrument ID', inst: 'Instrument', cap: 'Capacity / class', sn: 'Serial number', owner: 'Owner', place: 'Place', on: 'Verified on', until: 'Valid until', seal: 'Seal', by: 'Verified by' },
     problem: 'Weight or reading looks wrong, seal broken, or certificate expired?', report: 'Report a problem',
@@ -72,6 +75,8 @@ const TEXT = {
     approvalLinkMissing: 'यह DoCA प्रमाणपत्र का लिंक है, पर TULA के पास इसका रिकॉर्ड नहीं', approvalLinkMissingText: 'यह लिंक उपभोक्ता मामले विभाग की वेबसाइट का है, पर TULA की मॉडल अनुमोदन रजिस्टर की प्रति में इससे मेल खाती कोई प्रविष्टि नहीं है। प्रमाणपत्र सरकारी साइट पर देखने के लिए लिंक खोलें।',
     unrecognised: 'इसकी जाँच TULA नहीं कर सकता', unrecognisedText: 'यह QR न TULA का प्रमाणपत्र है, न मॉडल अनुमोदन चिह्न, इसलिए दिखाने को कोई रिकॉर्ड नहीं है। राज्य कार्यालय सत्यापन प्रमाणपत्र कागज़ पर जारी करते हैं और ऑनलाइन प्रकाशित नहीं करते, इसलिए इसकी जाँच के लिए कोई सरकारी डेटाबेस नहीं है। विक्रेता से सत्यापन प्रमाणपत्र दिखाने को कहें।',
     scanned: 'QR में क्या लिखा है',
+    explain: 'AI से यह QR समझें', explaining: 'QR पढ़ा जा रहा है…',
+    explainNote: 'यह AI की व्याख्या है, सत्यापन नहीं। TULA लिंक नहीं खोलता। भेजने से पहले फ़ोन नंबर और आईडी छिपा दिए जाते हैं।',
     govRecord: 'इस मॉडल का सरकारी रिकॉर्ड', govRecordNone: 'इस उपकरण का कोई मॉडल अनुमोदन चिह्न दर्ज नहीं है, इसलिए दिखाने को कोई सरकारी रिकॉर्ड नहीं है।', govRecordOffline: 'इस उपकरण का सरकारी मॉडल अनुमोदन रिकॉर्ड देखने के लिए इंटरनेट से जुड़ें।', govRecordUnavailable: 'सरकारी रिकॉर्ड अभी लोड नहीं हो सका। ऊपर की प्रमाणपत्र जाँच पर इसका असर नहीं है। एक मिनट बाद फिर कोशिश करें।',
     labels: { cert: 'प्रमाणपत्र', iid: 'उपकरण आईडी', inst: 'उपकरण', cap: 'क्षमता / श्रेणी', sn: 'क्रम संख्या', owner: 'मालिक', place: 'स्थान', on: 'सत्यापन तिथि', until: 'कब तक मान्य', seal: 'सील', by: 'सत्यापनकर्ता' },
     problem: 'वज़न या रीडिंग गलत लगे, सील टूटी हो, या प्रमाणपत्र समाप्त हो?', report: 'शिकायत करें',
@@ -414,6 +419,7 @@ export const PublicVerify: React.FC = () => {
               <div className="p-5 text-xs text-slate-600">
                 <p className="font-semibold text-slate-700">{T.scanned}</p>
                 <p className="font-readout break-all mt-1">{outcome.text.length > 160 ? `${outcome.text.slice(0, 160)}…` : outcome.text}</p>
+                <QrExplain key={outcome.text} text={outcome.text} labels={{ button: T.explain, busy: T.explaining, note: T.explainNote }} />
               </div>
             )}
 
@@ -475,6 +481,37 @@ export const PublicVerify: React.FC = () => {
           context={shown ? { certNo: shown.n, instrumentId: shown.iu, org: shown.org, owner: shown.own, state: shown.st, district: shown.dist } : outcome && outcome.kind === 'TAMPERED' ? { certNo: outcome.claimedNo || 'unknown' } : { certNo: term }}
         />
       )}
+    </div>
+  );
+};
+
+/** For a QR TULA could not match: plain checks plus a short AI explanation, only when the buyer asks. */
+const QrExplain: React.FC<{ text: string; labels: { button: string; busy: string; note: string } }> = ({ text, labels }) => {
+  const [state, setState] = useState<{ busy: boolean; data?: QrExplanation; error?: string }>({ busy: false });
+  const run = async () => {
+    setState({ busy: true });
+    try { setState({ busy: false, data: await explainQr(text) }); } catch (e) { setState({ busy: false, error: (e as Error).message }); }
+  };
+  if (!state.data) {
+    return (
+      <div className="mt-3 space-y-1.5">
+        <button type="button" onClick={run} disabled={state.busy}
+          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-bold text-slate-800 min-h-[44px] disabled:opacity-50">
+          {state.busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Info className="w-4 h-4" />} {state.busy ? labels.busy : labels.button}
+        </button>
+        {state.error && <p className="text-xs text-slate-600">{state.error}</p>}
+      </div>
+    );
+  }
+  const { precheck, ai } = state.data;
+  return (
+    <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-1.5 text-xs text-slate-700">
+      {precheck.flags.map((f, i) => <p key={`p${i}`} className={f.level === 'warn' ? 'font-semibold text-rose-700' : ''}>{f.level === 'warn' ? '⚠ ' : '· '}{f.message}</p>)}
+      {ai ? <>
+        <p className="text-slate-800">{ai.explanation}</p>
+        {ai.flags.map((f, i) => <p key={`a${i}`}>· {f}</p>)}
+      </> : <p>The AI explanation is not available right now. The checks above still apply.</p>}
+      <p className="text-[11px] text-slate-500">{labels.note}</p>
     </div>
   );
 };

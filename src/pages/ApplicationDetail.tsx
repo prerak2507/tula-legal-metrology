@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { ModelApprovalCheck } from '../components/common/ModelApprovalCheck';
+import { DocumentCheck } from '../components/common/DocumentCheck';
 import { useParams, Link } from 'react-router-dom';
 import { storage, WorkflowError } from '../services/storage';
 import { Application, Instrument, UserProfile } from '../types';
@@ -227,6 +228,7 @@ export const ApplicationDetail: React.FC = () => {
               <div className="space-y-1.5">
                 <p className="text-xs font-semibold text-ink">Model approval <span className="font-readout font-normal">{instrument.modelApprovalNumber}</span> <span className="font-normal text-ink-600">· {instrument.manufacturer}</span></p>
                 <ModelApprovalCheck mark={instrument.modelApprovalNumber} manufacturer={instrument.manufacturer} />
+                {isOfficer && <DocumentCheck app={app} instrument={instrument} />}
               </div>
             )}
 

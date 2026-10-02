@@ -1,4 +1,4 @@
-# Logs
+﻿# Logs
 logs
 *.log
 npm-debug.log*
@@ -34,7 +34,7 @@ supabase/data/*.json
 /sih-submission/*
 !/sih-submission/08-final-2026-09-30/
 /sih-submission/08-final-2026-09-30/*
-!/sih-submission/08-final-2026-09-30/TULA_SIH2026_FriendlyFire_v15.pptx
-!/sih-submission/08-final-2026-09-30/TULA_SIH2026_FriendlyFire_v15.pdf
+!/sih-submission/08-final-2026-09-30/TULA_SIH2026_FriendlyFire_v17A_same-content.pptx
+!/sih-submission/08-final-2026-09-30/TULA_SIH2026_FriendlyFire_v17A_same-content.pdf
 /sih-submission.7z
 /.claude/

@@ -35,14 +35,14 @@ export function originAllowed(req) {
   }
 }
 
-export async function readJson(req) {
+export async function readJson(req, maxBytes = 64 * 1024) {
   if (req.body && typeof req.body === 'object') return req.body;
   if (typeof req.body === 'string') return JSON.parse(req.body || '{}');
   const chunks = [];
   let size = 0;
   for await (const chunk of req) {
     size += chunk.length;
-    if (size > 64 * 1024) throw new Error('payload_too_large');
+    if (size > maxBytes) throw new Error('payload_too_large');
     chunks.push(chunk);
   }
   return JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}');

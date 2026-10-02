@@ -102,7 +102,7 @@ export const PrivacyPage: React.FC = () => (
     <section>
       <h2>Shared with other services</h2>
       <ul>
-        <li>Google Gemini: only the text of a question to the help assistant, or of an application an officer asks to pre-check. The AI never decides anything.</li>
+        <li>Google Gemini: the text of a question to the help assistant; the fields of an application an officer asks to pre-check; the model approval certificate (a company document) when an officer checks it; and, when a buyer taps "Explain this QR", the text of a QR that TULA could not match, with phone numbers and IDs hidden first. No personal documents are sent, and the AI never decides anything.</li>
         <li>Email and SMS providers: the message and the address or number it goes to, once those services are switched on.</li>
       </ul>
     </section>
