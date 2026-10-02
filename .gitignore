@@ -29,3 +29,12 @@ dist-ssr
 
 !.env.production
 supabase/data/*.json
+
+# Submission work stays on our machines; only the current deck is published
+/sih-submission/*
+!/sih-submission/08-final-2026-09-30/
+/sih-submission/08-final-2026-09-30/*
+!/sih-submission/08-final-2026-09-30/TULA_SIH2026_FriendlyFire_v15.pptx
+!/sih-submission/08-final-2026-09-30/TULA_SIH2026_FriendlyFire_v15.pdf
+/sih-submission.7z
+/.claude/
