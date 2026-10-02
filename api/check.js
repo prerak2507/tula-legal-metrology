@@ -59,7 +59,9 @@ async function explainQr(apiKey, text) {
     const ai = parseJson(out.text);
     const explanation = ai && safeAiText(String(ai.explanation || '').slice(0, 600));
     if (!explanation) return { precheck, ai: null };
-    const flags = (Array.isArray(ai.flags) ? ai.flags : []).map(f => safeAiText(String(f).slice(0, 160))).filter(Boolean).slice(0, 3);
+    // Keep only flags written as sentences; the model sometimes returns tags like "unverified_link".
+    const flags = (Array.isArray(ai.flags) ? ai.flags : []).map(f => safeAiText(String(f).slice(0, 160)))
+      .filter(f => f && /\s/.test(f) && !/_/.test(f)).slice(0, 3);
     return { precheck, ai: { explanation, flags }, model: out.model };
   } catch (e) {
     console.error('qr_ai_error', e.message);
