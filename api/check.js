@@ -15,7 +15,9 @@ export const config = { maxDuration: 60 };
 
 const OFFICER_ROLES = ['LMO', 'GATC', 'CONTROLLER', 'STATE_ADMIN', 'CENTRAL_ADMIN'];
 const DOC_TYPES = ['application/pdf', 'image/jpeg', 'image/png'];
-const MAX_UPLOAD_B64 = 2_200_000;          // the form allows 1.5 MB files
+// The form allows 3 MB files (DoCA's own certificates run up to about 2.7 MB). 3 MB in base64 is
+// 4,194,304 characters, which keeps the request under Vercel's 4.5 MB body limit.
+const MAX_UPLOAD_B64 = 4_194_304;
 const MIN_UPLOAD_BYTES = 1024;             // smaller than any real scan or certificate PDF
 const MAX_OFFICIAL_BYTES = 10 * 1024 * 1024;
 const DOCA_HOST = 'lm.doca.gov.in';
@@ -123,7 +125,7 @@ async function checkDocument(apiKey, req, res, body) {
   const file = body.file && typeof body.file === 'object' ? body.file : {};
   if (!mark) return send(res, 400, { error: 'no_mark', message: 'The application has no approval mark to check against.' });
   if (!DOC_TYPES.includes(file.mimeType) || typeof file.data !== 'string' || !file.data || file.data.length > MAX_UPLOAD_B64) {
-    return send(res, 400, { error: 'bad_file', message: 'Upload a PDF, JPG or PNG under 1.5 MB.' });
+    return send(res, 400, { error: 'bad_file', message: 'Upload a PDF, JPG or PNG under 3 MB.' });
   }
   const entry = await registerEntry(mark);
   // Not in DoCA's register: that is already the answer, no AI needed.
@@ -164,7 +166,7 @@ export default async function handler(req, res) {
   if (!apiKey) return send(res, 503, { error: 'ai_not_configured', message: 'AI checks are not configured on this deployment.' });
   let body;
   try {
-    body = await readJson(req, 3_000_000);
+    body = await readJson(req, 4_400_000);
   } catch {
     return send(res, 400, { error: 'invalid_json' });
   }

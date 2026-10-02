@@ -18,7 +18,7 @@ const DOC_TYPES: { type: ApplicationDocument['type']; title: string; required: b
   { type: 'CALIBRATION_REPORT', title: 'Repairer report (after repair)', required: false },
 ];
 
-const MAX_FILE = 1.5 * 1024 * 1024;
+const MAX_FILE = 3 * 1024 * 1024; // DoCA's own certificate PDFs run up to about 2.7 MB
 
 function readAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -74,7 +74,7 @@ export const ApplicationNew: React.FC = () => {
     if (!file) return;
     setError(null);
     if (!/^(application\/pdf|image\/(jpeg|png|webp))$/.test(file.type)) { setError('Upload a PDF, JPG or PNG file.'); return; }
-    if (file.size > MAX_FILE) { setError('Files must be under 1.5 MB in the prototype. Scan at a lower resolution.'); return; }
+    if (file.size > MAX_FILE) { setError('Files must be under 3 MB. Scan at a lower resolution or upload a phone photo.'); return; }
     const url = await readAsDataUrl(file);
     setDocs(d => [...d.filter(x => x.type !== type), {
       id: `doc-${Date.now()}`, title, type, fileName: file.name, fileSize: `${Math.max(1, Math.round(file.size / 1024))} KB`,
@@ -149,7 +149,7 @@ export const ApplicationNew: React.FC = () => {
 
         <section className="bg-white p-5 rounded-xl border border-slate-200 space-y-3">
           <h2 className="font-bold text-sm text-slate-900 flex items-center gap-2"><span className="w-6 h-6 rounded-full bg-gov-700 text-white text-xs flex items-center justify-center">3</span> Documents</h2>
-          <p className="text-xs text-slate-500">PDF, JPG or PNG, up to 1.5 MB each. A clear phone photo is fine. The officer can check the model approval certificate against the copy DoCA publishes; to read a scan, that certificate (and only that one) is sent to Google Gemini. Do not upload personal documents in that slot.</p>
+          <p className="text-xs text-slate-500">PDF, JPG or PNG, up to 3 MB each. A clear phone photo is fine. The officer can check the model approval certificate against the copy DoCA publishes; to read a scan, that certificate (and only that one) is sent to Google Gemini. Do not upload personal documents in that slot.</p>
           <div className="space-y-2">
             {DOC_TYPES.map(d => {
               const up = docs.find(x => x.type === d.type);
